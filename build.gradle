@@ -1,0 +1,181 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            name = "forge"
+            url = "http://files.minecraftforge.net/maven"
+        }
+        maven {
+            name = "sonatype"
+            url = "https://oss.sonatype.org/content/repositories/snapshots/"
+        }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
+        classpath 'org.ajoberstar:gradle-git:0.10.1'
+    }
+}
+plugins {
+    id 'net.franz-becker.gradle-lombok' version '1.5'
+	id 'com.matthewprenger.cursegradle' version '1.0.7'
+}
+
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'maven-publish'
+
+import org.ajoberstar.grgit.Grgit
+
+def repo = Grgit.open(project.file('.'))
+project.ext.gitHash = ''//repo.log().find().abbreviatedId
+
+boolean dev = System.getenv('RELEASE') == null || System.getenv('RELEASE').equals('false');
+
+ext.buildnumber = 0
+project.buildnumber = System.getenv('BUILD_NUMBER') != null ? System.getenv('BUILD_NUMBER') : project.ext.gitHash
+
+version = "MC${minecraft_version}-${mod_version}.${buildnumber}"
+group = "team.chisel" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = dev ? "CTM_DEV" : "CTM"
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+minecraft {
+    version = "${minecraft_version}-${forge_version}"
+    mappings = 'snapshot_20161116'
+    runDir = "run"
+	
+	useDepAts = true
+
+    clientJvmArgs += '-Dfml.coreMods.load=team.chisel.ctm.client.asm.ChiselCorePlugin'
+
+    replaceIn "Reference.java"
+    replace "@VERSION@", project.version
+}
+
+lombok {
+    version = "1.16.6"
+    sha256 = "e0a471be03e1e6b02bf019480cec7a3ac9801702bf7bf62f15d077ad4df8dd5d"
+}
+
+import net.franz_becker.gradle.lombok.task.DelombokTask
+
+task delombok(type: DelombokTask) {
+    args("src/main/java", "-d", "build/sources/delomboked/java")
+}
+
+// Add external annotations
+eclipse.classpath.file {
+	withXml {
+    	def node = it.asNode()
+        node.get('classpathentry').each {
+        	// Allow external annotations on Minecraft/Forge and JRE
+        	if (it.attribute('path').contains('forgeSrc') || it.attribute('path').contains('JRE_CONTAINER')) {
+        		it.appendNode('attributes').appendNode('attribute', [name: 'annotationpath', value: '/ConnectedTexturesMod/externalannotations/'])
+        	}
+        }
+    }
+}
+
+tasks.eclipse.dependsOn installLombok
+
+processResources {
+    // this will ensure that this task is redone when the versions change.
+    inputs.property "version", project.version
+    inputs.property "mcversion", project.minecraft.version
+
+    // replace stuff in mcmod.info, nothing else
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+
+        // replace version and mcversion
+		expand 'version': project.version, 'mcversion': project.minecraft.version
+    }
+
+    // copy everything else, thats not the mcmod.info
+    from(sourceSets.main.resources.srcDirs) {
+		exclude 'mcmod.info'
+    }
+}
+
+jar.manifest {
+    attributes 'FMLAT': 'ctm_at.cfg'
+    attributes 'FMLCorePlugin': 'team.chisel.ctm.client.asm.CTMCorePlugin'
+	attributes 'FMLCorePluginContainsFMLMod': 'true'
+}
+
+// Create API jar with sources and compiled files
+task apiJar(type: Jar) {
+    from sourceSets.main.allSource
+    from sourceSets.main.output
+	include 'team/chisel/ctm/api/**/*'
+    classifier = 'api'
+}
+
+publishing {
+    tasks.publish.dependsOn 'build'
+    publications {
+        mavenJava(MavenPublication) {
+            artifact jar
+            artifact sourceJar
+            artifact apiJar
+        }
+    }
+
+    repositories {
+        if (project.hasProperty('mavendir')) {
+            maven { url mavendir }
+        }
+    }
+}
+
+String getChangelogText() {
+    def changelogFile = file('changelog.txt')
+    String str = ''
+    int lineCount = 0
+    boolean done = false
+    changelogFile.eachLine {
+        if (done || it == null) {
+            return
+        }
+        if (it.size() > 1) {
+            def temp = it
+            if (lineCount == 0) {
+                temp = "CTM ${version}"
+                temp = "<h2>$temp</h2>"
+            } else if (it.startsWith('-')) {
+                temp = "&nbsp;&nbsp;&nbsp;$temp"
+            } else {
+                temp = "<h4>$temp</h4>"
+            }
+            str += "$temp<br/>"
+            lineCount++
+            return
+        } else {
+            done = true
+        }
+    }
+    return str
+}
+
+tasks.curseforge.enabled = !dev && project.hasProperty('curseforge_key')
+    
+curseforge {
+    if (project.hasProperty('curseforge_key')) {
+        apiKey = project.curseforge_key
+    }
+
+    project {
+        id = project.projectId
+        changelog = System.getenv('CHANGELOG') == null || System.getenv('CHANGELOG').equals('none') ? getChangelogText() : System.getenv('CHANGELOG')
+        changelogType = 'html'
+        releaseType = 'alpha'
+		addGameVersion '1.10'
+		addGameVersion '1.10.2'
+        mainArtifact(jar) {
+            displayName = "CTM - ${version}"
+        }
+        addArtifact(apiJar)
+    }
+}
+
