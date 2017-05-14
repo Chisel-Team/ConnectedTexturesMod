@@ -47,7 +47,7 @@ minecraft {
 	
 	useDepAts = true
 
-    clientJvmArgs += '-Dfml.coreMods.load=team.chisel.ctm.client.asm.ChiselCorePlugin'
+    clientJvmArgs += '-Dfml.coreMods.load=team.chisel.ctm.client.asm.CTMCorePlugin'
 
     replaceIn "Reference.java"
     replace "@VERSION@", project.version
