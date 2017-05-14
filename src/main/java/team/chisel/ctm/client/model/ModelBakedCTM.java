@@ -15,6 +15,7 @@ import com.google.common.collect.ObjectArrays;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.WeightedBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.BlockRenderLayer;
@@ -31,21 +32,19 @@ import team.chisel.ctm.client.state.ChiselExtendedState;
 @ParametersAreNonnullByDefault
 public class ModelBakedCTM extends AbstractCTMBakedModel {
     
-    private final IBakedModel parent;
-    
     public ModelBakedCTM(IModelCTM model, IBakedModel parent) {
         super(model, parent);
-        this.parent = parent;
     }
 
     private static final EnumFacing[] FACINGS = ObjectArrays.concat(EnumFacing.VALUES, (EnumFacing) null);
 
     @Override
-    protected AbstractCTMBakedModel createModel(@Nullable IBlockState state, IModelCTM model, @Nullable RenderContextList ctx) {
+    protected AbstractCTMBakedModel createModel(@Nullable IBlockState state, IModelCTM model, @Nullable RenderContextList ctx, long rand) {
+        IBakedModel parent = getParent(rand);
         AbstractCTMBakedModel ret = new ModelBakedCTM(model, parent);
         for (BlockRenderLayer layer : LAYERS) {
             for (EnumFacing facing : FACINGS) {
-                List<BakedQuad> parentQuads = parent.getQuads(state, facing, 0);
+                List<BakedQuad> parentQuads = parent.getQuads(state, facing, rand);
                 List<BakedQuad> quads;
                 if (facing != null) {
                     ret.faceQuads.put(layer, facing, quads = new ArrayList<>());
@@ -71,15 +70,15 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
 
     @Override
     public @Nonnull TextureAtlasSprite getParticleTexture() {
-        return parent.getParticleTexture();
+        return getParent().getParticleTexture();
     }
     
     @Override
     public Pair<? extends IBakedModel, Matrix4f> handlePerspective(TransformType cameraTransformType) {
-        if (parent instanceof IPerspectiveAwareModel) {
-            return ((IPerspectiveAwareModel) parent).handlePerspective(cameraTransformType);
+        if (getParent() instanceof IPerspectiveAwareModel) {
+            return ((IPerspectiveAwareModel) getParent()).handlePerspective(cameraTransformType);
         } else {
-            return Pair.of(this, new TRSRTransformation(parent.getItemCameraTransforms().getTransform(cameraTransformType)).getMatrix());
+            return Pair.of(this, new TRSRTransformation(getParent().getItemCameraTransforms().getTransform(cameraTransformType)).getMatrix());
         }
     }
 }

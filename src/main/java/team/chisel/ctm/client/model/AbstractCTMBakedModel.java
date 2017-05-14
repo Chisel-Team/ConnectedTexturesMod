@@ -24,11 +24,12 @@ import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 
 import gnu.trove.set.TLongSet;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.Value;
+import lombok.ToString;
+import lombok.experimental.FieldDefaults;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -37,6 +38,7 @@ import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.block.model.ItemOverrideList;
+import net.minecraft.client.renderer.block.model.WeightedBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.Item;
@@ -78,15 +80,54 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
         @SneakyThrows
         public IBakedModel handleItemState(IBakedModel originalModel, ItemStack stack, World world, EntityLivingBase entity) {
             Block block = ((ItemBlock) stack.getItem()).getBlock();
-            return itemcache.get(Pair.of(stack.getItem(), stack.getItemDamage()), () -> createModel(block.getDefaultState(), model, null));
+            return itemcache.get(Pair.of(stack.getItem(), stack.getItemDamage()), () -> createModel(block.getDefaultState(), model, null, 0));
         }
     }
     
-    @Value
-    @AllArgsConstructor
+    @Getter 
+    @RequiredArgsConstructor 
+    @ToString
     private static class State {
-        IBlockState cleanState;
-        TLongSet serializedContext;
+        private final IBlockState cleanState;
+        private final TLongSet serializedContext;
+        private final IBakedModel parent;
+        
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            State other = (State) obj;
+            
+            if (cleanState != other.cleanState) {
+                return false;
+            }
+            if (parent != other.parent) {
+                return false;
+            }
+
+            if (serializedContext == null) {
+                if (other.serializedContext != null) {
+                    return false;
+                }
+            } else if (!serializedContext.equals(other.serializedContext)) {
+                return false;
+            }
+            return true;
+        }
+        
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((cleanState == null) ? 0 : cleanState.hashCode());
+            result = prime * result + ((parent == null) ? 0 : parent.hashCode());
+            result = prime * result + ((serializedContext == null) ? 0 : serializedContext.hashCode());
+            return result;
+        }
     }
     
     @Getter
@@ -119,10 +160,10 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
             ProfileUtil.end();
 
             ProfileUtil.start("model_creation");
-            baked = modelcache.get(new State(ext.getClean(), serialized), () -> createModel(state, model, ctxList));
+            baked = modelcache.get(new State(ext.getClean(), serialized, getParent(rand)), () -> createModel(state, model, ctxList, rand));
         } else if (state != null)  {
             ProfileUtil.start("model_creation");
-            baked = modelcache.get(new State(state, null), () -> createModel(state, model, null));
+            baked = modelcache.get(new State(state, null, getParent(rand)), () -> createModel(state, model, null, rand));
         }
 
         ProfileUtil.endAndStart("quad_lookup");
@@ -141,6 +182,16 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
         return ret;
     }
 
+    /**
+     * Random sensitive parent, will proxy to {@link WeightedBakedModel} if possible.
+     */
+    public IBakedModel getParent(long rand) {
+        if (getParent() instanceof WeightedBakedModel) {
+            return ((WeightedBakedModel)parent).getRandomModel(rand);
+        }
+        return getParent();
+    }
+    
     @Override
     public @Nonnull ItemOverrideList getOverrides() {
         return overrides;
@@ -198,6 +249,6 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
     
     protected static final BlockRenderLayer[] LAYERS = BlockRenderLayer.values();
     
-    protected abstract AbstractCTMBakedModel createModel(IBlockState state, @Nonnull IModelCTM model, RenderContextList ctx);
+    protected abstract AbstractCTMBakedModel createModel(IBlockState state, @Nonnull IModelCTM model, RenderContextList ctx, long rand);
 
 }
