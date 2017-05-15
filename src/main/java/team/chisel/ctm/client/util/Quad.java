@@ -28,8 +28,10 @@ import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.client.renderer.vertex.VertexFormatElement.EnumUsage;
 import net.minecraft.util.EnumFacing;
+import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.pipeline.IVertexConsumer;
 import net.minecraftforge.client.model.pipeline.UnpackedBakedQuad;
+import net.minecraftforge.fml.client.FMLClientHandler;
 import team.chisel.ctm.api.texture.ISubmap;
 
 @ToString(of = { "vertPos", "vertUv" })
@@ -381,10 +383,14 @@ public class Quad {
     
     public BakedQuad rebake() {
         @Nonnull VertexFormat format = this.builder.vertexFormat;
-        if (this.blocklight > 0 || this.skylight > 0) {
-            if (format == DefaultVertexFormats.ITEM) { // ITEM is convertable to BLOCK (replace normal+padding with lmap)
-                format = DefaultVertexFormats.BLOCK;
-            } else if (!format.getElements().contains(DefaultVertexFormats.TEX_2S)) { // Otherwise, this format is unknown, add TEX_2S if it does not exist
+        // Sorry OF users
+        boolean hasLightmap = this.blocklight > 0 || this.skylight > 0 && !FMLClientHandler.instance().hasOptifine();
+        if (hasLightmap) {
+            // TODO waiting on https://github.com/MinecraftForge/MinecraftForge/pull/3896
+//            if (format == DefaultVertexFormats.ITEM) { // ITEM is convertable to BLOCK (replace normal+padding with lmap)
+//                format = DefaultVertexFormats.BLOCK;
+//            } else 
+            if (!format.getElements().contains(DefaultVertexFormats.TEX_2S)) { // Otherwise, this format is unknown, add TEX_2S if it does not exist
                 format = new VertexFormat(format).addElement(DefaultVertexFormats.TEX_2S);
             }
         }
