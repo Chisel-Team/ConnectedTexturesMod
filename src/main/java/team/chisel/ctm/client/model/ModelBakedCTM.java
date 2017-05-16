@@ -14,8 +14,8 @@ import com.google.common.collect.ObjectArrays;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BakedQuadRetextured;
 import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.block.model.WeightedBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.BlockRenderLayer;
@@ -28,6 +28,7 @@ import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.state.ChiselExtendedState;
+import team.chisel.ctm.client.util.Quad;
 
 @ParametersAreNonnullByDefault
 public class ModelBakedCTM extends AbstractCTMBakedModel {
@@ -52,7 +53,14 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
                     quads = ret.genQuads.get(layer);
                 }
                 for (BakedQuad q : parentQuads) {
-                    ICTMTexture<?> tex = this.getModel().getTexture(q.getSprite().getIconName());
+                    ICTMTexture<?> tex = this.getModel().getOverrideTexture(q.getTintIndex(), q.getSprite().getIconName());
+                    if (tex == null) {
+                        tex = this.getModel().getTexture(q.getSprite().getIconName());
+                    }
+                    TextureAtlasSprite spriteReplacement = getModel().getOverrideSprite(q.getTintIndex());
+                    if (spriteReplacement != null) {
+                        q = new BakedQuadRetextured(q, spriteReplacement);
+                    }
 
                     if (!(state instanceof ChiselExtendedState) || (tex == null && layer == state.getBlock().getBlockLayer())) {
                         quads.add(q);

@@ -13,6 +13,7 @@ import javax.annotation.Nonnull;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import lombok.SneakyThrows;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.IBakedModel;
@@ -31,9 +32,9 @@ import net.minecraftforge.fml.common.ProgressManager.ProgressBar;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
-import team.chisel.ctm.client.model.ModelCTM;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.client.model.ModelBakedCTM;
+import team.chisel.ctm.client.model.ModelCTM;
 import team.chisel.ctm.client.model.parsing.ModelLoaderCTM;
 import team.chisel.ctm.client.texture.MetadataSectionCTM;
 
@@ -115,7 +116,7 @@ public enum TextureMetadataHandler {
     }
 
     private @Nonnull IBakedModel wrap(IModel model, IBakedModel object) {
-        ModelCTM modelchisel = new ModelCTM(null, model, Collections.emptyMap());
+        ModelCTM modelchisel = new ModelCTM(null, model, Int2ObjectMaps.emptyMap());
         modelchisel.bake(TRSRTransformation.identity(), DefaultVertexFormats.ITEM, rl -> Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(rl.toString()));
         return new ModelBakedCTM(modelchisel, object);
     }

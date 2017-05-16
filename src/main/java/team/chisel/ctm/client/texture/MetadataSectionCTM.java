@@ -1,11 +1,15 @@
 package team.chisel.ctm.client.texture;
 
 import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ObjectArrays;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -14,12 +18,15 @@ import com.google.gson.JsonParseException;
 
 import lombok.Getter;
 import lombok.ToString;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.data.IMetadataSection;
 import net.minecraft.client.resources.data.IMetadataSectionSerializer;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ResourceLocation;
 import team.chisel.ctm.CTM;
+import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureType;
+import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.type.TextureTypeRegistry;
 
 @ParametersAreNonnullByDefault
@@ -36,6 +43,15 @@ public abstract class MetadataSectionCTM implements IMetadataSection {
     public abstract ResourceLocation[] getAdditionalTextures();
     
     public abstract JsonObject getExtraData();
+    
+    @SuppressWarnings("null")
+    public ICTMTexture<?> makeTexture(TextureAtlasSprite sprite, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
+        return getType().makeTexture(new TextureInfo(
+                Arrays.stream(ObjectArrays.concat(new ResourceLocation(sprite.getIconName()), getAdditionalTextures())).map(bakedTextureGetter::apply).toArray(TextureAtlasSprite[]::new), 
+                Optional.of(getExtraData()), 
+                getLayer()
+        ));
+    }
     
     @ToString
     @Getter
