@@ -26,7 +26,7 @@ public class CTMCoreMethods {
         if (model instanceof AbstractCTMBakedModel) {
             ret = ((AbstractCTMBakedModel)model).getModel().canRenderInLayer(state, layer);
         } else {
-            ret = state.getBlock().canRenderInLayer(layer);
+            ret = state.getBlock().getBlockLayer() == layer;
         }
         ProfileUtil.end();
         return ret;
