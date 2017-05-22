@@ -384,7 +384,7 @@ public class Quad {
     public BakedQuad rebake() {
         @Nonnull VertexFormat format = this.builder.vertexFormat;
         // Sorry OF users
-        boolean hasLightmap = this.blocklight > 0 || this.skylight > 0 && !FMLClientHandler.instance().hasOptifine();
+        boolean hasLightmap = (this.blocklight > 0 || this.skylight > 0) && !FMLClientHandler.instance().hasOptifine();
         if (hasLightmap) {
             // TODO waiting on https://github.com/MinecraftForge/MinecraftForge/pull/3896
 //            if (format == DefaultVertexFormats.ITEM) { // ITEM is convertable to BLOCK (replace normal+padding with lmap)
