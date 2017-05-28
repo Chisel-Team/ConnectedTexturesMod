@@ -15,6 +15,7 @@ import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.BlockStateBase;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.common.property.IUnlistedProperty;
@@ -119,4 +120,8 @@ public class ChiselExtendedState extends BlockStateBase implements IExtendedBloc
         return new ChiselExtendedState(wrapped.cycleProperty(property), this);
     }
     
+    // Soft overrides getOffset in 1.11
+    public Vec3d func_191059_e (IBlockAccess world, BlockPos pos) {
+    	return Vec3d.ZERO;
+    }
 }
