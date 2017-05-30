@@ -9,10 +9,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.annotation.Resource;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -44,7 +44,10 @@ import net.minecraftforge.common.model.TRSRTransformation;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.IChiselFace;
+import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.MetadataSectionCTM;
+import team.chisel.ctm.client.texture.render.TextureNormal;
+import team.chisel.ctm.client.texture.type.TextureTypeTypeNormal;
 import team.chisel.ctm.client.util.ResourceUtil;
 
 public class ModelCTM implements IModelCTM {
@@ -67,7 +70,6 @@ public class ModelCTM implements IModelCTM {
     private transient byte layers;
 
     private Map<String, ICTMTexture<?>> textures = new HashMap<>();
-    private boolean hasVanillaTextures;
     
     public ModelCTM(ModelBlock modelinfo, IModel parent, Int2ObjectMap<JsonElement> overrides) {
         this.modelinfo = modelinfo;
@@ -118,16 +120,17 @@ public class ModelCTM implements IModelCTM {
             try {
                 chiselmeta = ResourceUtil.getMetadata(sprite);
             } catch (IOException e) {}
-            if (chiselmeta != null) {
-                final MetadataSectionCTM meta = chiselmeta;
-                textures.computeIfAbsent(sprite.getIconName(), s -> {
-                    ICTMTexture<?> tex = meta.makeTexture(sprite, bakedTextureGetter);
-                    layers |= 1 << tex.getLayer().ordinal();
-                    return tex;
-                });
-            } else {
-                hasVanillaTextures = true;
-            }
+            final MetadataSectionCTM meta = chiselmeta;
+            textures.computeIfAbsent(sprite.getIconName(), s -> {
+                ICTMTexture<?> tex;
+                if (meta == null) {
+                    tex = new TextureNormal(TextureTypeTypeNormal.INSTANCE, new TextureInfo(new TextureAtlasSprite[] { sprite }, Optional.empty(), null));
+                } else {
+                    tex = meta.makeTexture(sprite, bakedTextureGetter);
+                }
+                layers |= 1 << (tex.getLayer() == null ? 8 : tex.getLayer().ordinal());
+                return tex;
+            });
             return sprite;
         });
         if (spriteOverrides == null) {
@@ -188,7 +191,8 @@ public class ModelCTM implements IModelCTM {
     
     @Override
     public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
-        return (hasVanillaTextures && state.getBlock().getBlockLayer() == layer) || ((layers >> layer.ordinal()) & 1) == 1;
+        // sign bit is used to signify that a layer-less (vanilla) texture is present
+        return (layers < 0 && state.getBlock().getBlockLayer() == layer) || ((layers >> layer.ordinal()) & 1) == 1;
     }
 
     @Override

@@ -1,7 +1,10 @@
 package team.chisel.ctm.client.model;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -25,10 +28,7 @@ import net.minecraftforge.common.model.TRSRTransformation;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
-import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.util.RenderContextList;
-import team.chisel.ctm.client.state.ChiselExtendedState;
-import team.chisel.ctm.client.util.Quad;
 
 @ParametersAreNonnullByDefault
 public class ModelBakedCTM extends AbstractCTMBakedModel {
@@ -52,23 +52,36 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
                 } else {
                     quads = ret.genQuads.get(layer);
                 }
+                
+                // Linked to maintain the order of quads
+                Map<BakedQuad, ICTMTexture<?>> texturemap = new LinkedHashMap<>();
+                // Gather all quads and map them to their textures
+                // All quads should have an associated ICTMTexture, so ignore any that do not
                 for (BakedQuad q : parentQuads) {
                     ICTMTexture<?> tex = this.getModel().getOverrideTexture(q.getTintIndex(), q.getSprite().getIconName());
                     if (tex == null) {
                         tex = this.getModel().getTexture(q.getSprite().getIconName());
                     }
-                    TextureAtlasSprite spriteReplacement = getModel().getOverrideSprite(q.getTintIndex());
-                    if (spriteReplacement != null) {
-                        q = new BakedQuadRetextured(q, spriteReplacement);
+
+                    if (tex != null) {
+                        TextureAtlasSprite spriteReplacement = getModel().getOverrideSprite(q.getTintIndex());
+                        if (spriteReplacement != null) {
+                            q = new BakedQuadRetextured(q, spriteReplacement);
+                        }
+
+                        texturemap.put(q, tex);
                     }
+                }
 
-                    if (!(state instanceof ChiselExtendedState) || (tex == null && layer == state.getBlock().getBlockLayer())) {
-                        quads.add(q);
-                    } else if (tex != null && layer == tex.getLayer()) {
-                        ITextureType type = tex.getType();
-
-                        ITextureContext brc = ctx == null ? null : ctx.getRenderContext(tex.getType());
-                        quads.addAll(tex.transformQuad(q, brc, type.getQuadsPerSide()));
+                // Compute the quad goal for a given facing
+                // TODO this means that non-culling (null facing) quads will *all* share the same quad goal, which is excessive
+                // Explore optimizations to quad goal (detecting overlaps??)
+                int quadGoal = ctx == null ? 1 : texturemap.values().stream().mapToInt(tex -> tex.getType().getQuadsPerSide()).max().orElse(1);
+                for (Entry<BakedQuad, ICTMTexture<?>> e : texturemap.entrySet()) {
+                    // If the layer is null, this is a wrapped vanilla texture, so passthrough the layer check to the block
+                    if (e.getValue().getLayer() == layer || (e.getValue().getLayer() == null && layer == state.getBlock().getBlockLayer())) {
+                        ITextureContext tcx = ctx == null ? null : ctx.getRenderContext(e.getValue().getType());
+                        quads.addAll(e.getValue().transformQuad(e.getKey(), tcx, quadGoal));
                     }
                 }
             }
