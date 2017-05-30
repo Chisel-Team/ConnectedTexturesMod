@@ -47,7 +47,7 @@ import team.chisel.ctm.api.texture.IChiselFace;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.MetadataSectionCTM;
 import team.chisel.ctm.client.texture.render.TextureNormal;
-import team.chisel.ctm.client.texture.type.TextureTypeTypeNormal;
+import team.chisel.ctm.client.texture.type.TextureTypeNormal;
 import team.chisel.ctm.client.util.ResourceUtil;
 
 public class ModelCTM implements IModelCTM {
@@ -124,7 +124,7 @@ public class ModelCTM implements IModelCTM {
             textures.computeIfAbsent(sprite.getIconName(), s -> {
                 ICTMTexture<?> tex;
                 if (meta == null) {
-                    tex = new TextureNormal(TextureTypeTypeNormal.INSTANCE, new TextureInfo(new TextureAtlasSprite[] { sprite }, Optional.empty(), null));
+                    tex = new TextureNormal(TextureTypeNormal.INSTANCE, new TextureInfo(new TextureAtlasSprite[] { sprite }, Optional.empty(), null));
                 } else {
                     tex = meta.makeTexture(sprite, bakedTextureGetter);
                 }

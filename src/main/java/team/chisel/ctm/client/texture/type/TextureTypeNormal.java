@@ -13,13 +13,13 @@ import team.chisel.ctm.client.texture.render.TextureNormal;
 /**
  * Normal Block Render Type
  */
-public enum TextureTypeTypeNormal implements ITextureType {
+public enum TextureTypeNormal implements ITextureType {
     
     @TextureType("NORMAL")
     INSTANCE;
 
     @Override
-    public ICTMTexture<TextureTypeTypeNormal> makeTexture(TextureInfo info){
+    public ICTMTexture<TextureTypeNormal> makeTexture(TextureInfo info){
         return new TextureNormal(this, info);
     }
 

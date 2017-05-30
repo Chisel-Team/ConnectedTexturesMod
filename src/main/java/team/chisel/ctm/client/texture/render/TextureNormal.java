@@ -10,14 +10,14 @@ import com.google.common.collect.Lists;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
-import team.chisel.ctm.client.texture.type.TextureTypeTypeNormal;
+import team.chisel.ctm.client.texture.type.TextureTypeNormal;
 
 /**
  * Chisel texture for a normal texture
  */
-public class TextureNormal extends AbstractTexture<TextureTypeTypeNormal> {
+public class TextureNormal extends AbstractTexture<TextureTypeNormal> {
 
-    public TextureNormal(TextureTypeTypeNormal type, TextureInfo info){
+    public TextureNormal(TextureTypeNormal type, TextureInfo info){
         super(type, info);
     }
 
