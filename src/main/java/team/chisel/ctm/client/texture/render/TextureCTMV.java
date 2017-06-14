@@ -29,15 +29,16 @@ public class TextureCTMV extends AbstractTexture<TextureTypeCTMV> {
     public List<BakedQuad> transformQuad(BakedQuad quad, ITextureContext context, int quadGoal) {
         if (context == null) {
             if (quad.getFace() != null && quad.getFace().getAxis().isVertical()) {
-                return Lists.newArrayList(makeQuad(quad).transformUVs(sprites[0]).rebake());
+                return Lists.newArrayList(makeQuad(quad, context).transformUVs(sprites[0]).rebake());
             }
-            return Lists.newArrayList(makeQuad(quad).transformUVs(sprites[1], Quad.TOP_LEFT).rebake());
+            return Lists.newArrayList(makeQuad(quad, context).transformUVs(sprites[1], Quad.TOP_LEFT).rebake());
         }
-        return Lists.newArrayList(getQuad(quad, ((TextureContextCTMV) context).getData()));
+        return Lists.newArrayList(getQuad(quad, context));
     }
 
-    private BakedQuad getQuad(BakedQuad in, ConnectionData data) {
-        Quad q = makeQuad(in);
+    private BakedQuad getQuad(BakedQuad in, ITextureContext context) {
+        Quad q = makeQuad(in, context);
+        ConnectionData data = ((TextureContextCTMV)context).getData();
         Connections cons = data.getConnections();
         
         // This is the order of operations for connections

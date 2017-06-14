@@ -21,7 +21,7 @@ public class TextureCTMH extends AbstractTexture<TextureTypeCTMH> {
 
     @Override
     public List<BakedQuad> transformQuad(BakedQuad quad, ITextureContext context, int quadGoal) {
-        Quad q = makeQuad(quad);
+        Quad q = makeQuad(quad, context);
         if (quad.getFace().getAxis().isVertical()) {
             q = q.transformUVs(sprites[0]);
         } else {

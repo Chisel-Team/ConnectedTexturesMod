@@ -23,7 +23,7 @@ public class TextureCTM extends AbstractTexture<TextureTypeCTM> {
 
     @Override
     public List<BakedQuad> transformQuad(BakedQuad bq, ITextureContext context, int quadGoal) {
-        Quad quad = makeQuad(bq);
+        Quad quad = makeQuad(bq, context);
         if (context == null) {
             return Collections.singletonList(quad.transformUVs(sprites[0]).rebake());
         }
