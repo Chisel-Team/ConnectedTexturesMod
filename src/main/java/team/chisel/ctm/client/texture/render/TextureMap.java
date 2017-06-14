@@ -106,6 +106,7 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
 
         protected abstract List<BakedQuad> transformQuad(TextureMap tex, BakedQuad quad, @Nullable ITextureContext context, int quadGoal);
         
+        @Nonnull
         public ITextureContext getContext(@Nonnull BlockPos pos, @Nonnull TextureMap tex) {
             return new TextureContextPosition(pos);
         }
