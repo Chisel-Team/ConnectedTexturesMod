@@ -128,7 +128,7 @@ public class ModelCTM implements IModelCTM {
                 } else {
                     tex = meta.makeTexture(sprite, bakedTextureGetter);
                 }
-                layers |= 1 << (tex.getLayer() == null ? 8 : tex.getLayer().ordinal());
+                layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
                 return tex;
             });
             return sprite;
