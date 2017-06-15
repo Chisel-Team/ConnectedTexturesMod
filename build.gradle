@@ -49,7 +49,7 @@ minecraft {
 
     clientJvmArgs += '-Dfml.coreMods.load=team.chisel.ctm.client.asm.CTMCorePlugin'
 
-    replaceIn "Reference.java"
+    replaceIn "CTM.java"
     replace "@VERSION@", project.version
 }
 
