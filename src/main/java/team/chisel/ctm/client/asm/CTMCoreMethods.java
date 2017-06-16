@@ -7,7 +7,11 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.WeightedBakedModel;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.BlockRenderLayer;
+import net.minecraftforge.common.MinecraftForge;
+import team.chisel.ctm.api.event.TextureCollectedEvent;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 import team.chisel.ctm.client.util.ProfileUtil;
 
@@ -40,5 +44,9 @@ public class CTMCoreMethods {
     
     public static void postDamageModel() {
         renderingDamageModel.set(false);
+    }
+
+    public static void onSpriteRegister(TextureMap map, TextureAtlasSprite sprite) {
+        MinecraftForge.EVENT_BUS.post(new TextureCollectedEvent(map, sprite));
     }
 }

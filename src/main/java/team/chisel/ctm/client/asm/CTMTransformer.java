@@ -4,6 +4,7 @@ import java.util.Iterator;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
@@ -38,15 +39,17 @@ public class CTMTransformer implements IClassTransformer {
     private static final String FORGE_HOOKS_CLIENT_CLASS = "net.minecraftforge.client.ForgeHooksClient";
     private static final String DAMAGE_MODEL_METHOD_NAME = "getDamageModel";
 
+    private static final String TEXTURE_MAP_CLASS_NAME = "net.minecraft.client.renderer.texture.TextureMap";
+    private static final String REGISTER_SPRITE_OBF_NAME = "func_174942_a";
+    private static final String REGISTER_SPRITE_NAME = "registerSprite";
+    private static final String CHISEL_METHODS_SPRITE_REGISTER_NAME = "onSpriteRegister";
+    private static final String CHISEL_METHODS_SPRITE_REGISTER_DESC = "(Lnet/minecraft/client/renderer/texture/TextureMap;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V";
+
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {
         if (transformedName.equals(BLOCK_CLASS)) {
-            System.out.println("Transforming Class [" + transformedName + "], Method [" + EXTENDED_STATE_METHOD_NAME + "]");
 
-            ClassNode classNode = new ClassNode();
-            ClassReader classReader = new ClassReader(basicClass);
-            classReader.accept(classNode, 0);
-
+            ClassNode classNode = preTransform(transformedName, EXTENDED_STATE_METHOD_NAME, basicClass);
             Iterator<MethodNode> methods = classNode.methods.iterator();
 
             while (methods.hasNext()) {
@@ -88,17 +91,11 @@ public class CTMTransformer implements IClassTransformer {
                 }
             }
 
-            ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-            classNode.accept(cw);
-            System.out.println("Transforming " + transformedName + " Finished.");
-            return cw.toByteArray();
+            return finishTransform(transformedName, classNode);
+
         } else if (transformedName.equals(FORGE_HOOKS_CLIENT_CLASS)) {
-            System.out.println("Transforming Class [" + transformedName + "], Method [" + DAMAGE_MODEL_METHOD_NAME + "]");
 
-            ClassNode classNode = new ClassNode();
-            ClassReader classReader = new ClassReader(basicClass);
-            classReader.accept(classNode, 0);
-
+            ClassNode classNode = preTransform(transformedName, DAMAGE_MODEL_METHOD_NAME, basicClass);
             Iterator<MethodNode> methods = classNode.methods.iterator();
 
             while (methods.hasNext()) {
@@ -121,12 +118,54 @@ public class CTMTransformer implements IClassTransformer {
                 }
             }
             
-            ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-            classNode.accept(cw);
-            System.out.println("Transforming " + transformedName + " Finished.");
-            return cw.toByteArray();
+            return finishTransform(transformedName, classNode);
+
+        } else if (transformedName.equals(TEXTURE_MAP_CLASS_NAME)) {
+
+            ClassNode classNode = preTransform(transformedName, REGISTER_SPRITE_NAME, basicClass);
+            Iterator<MethodNode> methods = classNode.methods.iterator();
+
+            while (methods.hasNext()) {
+                MethodNode m = methods.next();
+                if (m.name.equals(REGISTER_SPRITE_NAME) || m.name.equals(REGISTER_SPRITE_OBF_NAME)) {
+                    for (int i = 0; i < m.instructions.size(); i++) {
+                        AbstractInsnNode next = m.instructions.get(i);
+
+                        if (next.getOpcode() == Opcodes.INVOKESTATIC) {
+                            next = next.getNext();
+                            if (next.getOpcode() == ASTORE && ((VarInsnNode) next).var == 2) {
+                                InsnList toInsert = new InsnList();
+                                toInsert.add(new VarInsnNode(ALOAD, 0));
+                                toInsert.add(new VarInsnNode(ALOAD, 2));
+                                toInsert.add(new MethodInsnNode(INVOKESTATIC, CHISEL_METHODS_CLASS_NAME, CHISEL_METHODS_SPRITE_REGISTER_NAME, CHISEL_METHODS_SPRITE_REGISTER_DESC, false));
+                                m.instructions.insert(next, toInsert);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return finishTransform(transformedName, classNode);
         }
         
         return basicClass;
+    }
+
+    private ClassNode preTransform(String transformedName, String methodName, byte[] basicClass) {
+        System.out.println("Transforming Class [" + transformedName + "], Method [" + methodName + "]");
+
+        ClassNode classNode = new ClassNode();
+        ClassReader classReader = new ClassReader(basicClass);
+        classReader.accept(classNode, 0);
+
+        return classNode;
+    }
+
+    private byte[] finishTransform(String transformedName, ClassNode classNode) {
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+        classNode.accept(cw);
+        System.out.println("Transforming " + transformedName + " Finished.");
+        return cw.toByteArray();
     }
 }

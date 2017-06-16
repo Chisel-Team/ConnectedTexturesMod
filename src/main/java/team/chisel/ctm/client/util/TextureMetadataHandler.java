@@ -32,6 +32,7 @@ import net.minecraftforge.fml.common.ProgressManager.ProgressBar;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import team.chisel.ctm.api.event.TextureCollectedEvent;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.client.model.ModelBakedCTM;
 import team.chisel.ctm.client.model.ModelCTM;
@@ -47,28 +48,23 @@ public enum TextureMetadataHandler {
      */
     
     @SubscribeEvent
-    public void onTextureStitch(TextureStitchEvent.Pre event) {
+    public void onTextureStitch(TextureCollectedEvent event) {
         if (Minecraft.getMinecraft().getTextureMapBlocks() != null) {
-            Map<String, TextureAtlasSprite> mapRegisteredSprites = ReflectionHelper.getPrivateValue(TextureMap.class, Minecraft.getMinecraft().getTextureMapBlocks(), "field_110574_e", "mapRegisteredSprites");
-            ProgressBar prog = ProgressManager.push("Loading Chisel metadata", mapRegisteredSprites.size());
-            for (String res : ImmutableMap.copyOf(mapRegisteredSprites).keySet()) {
-                try {
-                    ResourceLocation rel = new ResourceLocation(res);
-                    prog.step(rel.toString());
-                    rel = new ResourceLocation(rel.getResourceDomain(), "textures/" + rel.getResourcePath() + ".png");
-                    MetadataSectionCTM metadata = ResourceUtil.getMetadata(rel);
-                    if (metadata != null) {
-                        for (ResourceLocation r : metadata.getAdditionalTextures()) {
-                            event.getMap().registerSprite(r);
-                        }
+            TextureAtlasSprite sprite = event.getSprite();
+            try {
+                ResourceLocation rel = new ResourceLocation(sprite.getIconName());
+                rel = new ResourceLocation(rel.getResourceDomain(), "textures/" + rel.getResourcePath() + ".png");
+                MetadataSectionCTM metadata = ResourceUtil.getMetadata(rel);
+                if (metadata != null) {
+                    for (ResourceLocation r : metadata.getAdditionalTextures()) {
+                        event.getMap().registerSprite(r);
                     }
                 }
-                catch (FileNotFoundException e) {} // Ignore these, they are reported by vanilla
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
             }
-            ProgressManager.pop(prog);
+            catch (FileNotFoundException e) {} // Ignore these, they are reported by vanilla
+            catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
     

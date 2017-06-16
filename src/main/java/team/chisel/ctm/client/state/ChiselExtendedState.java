@@ -119,9 +119,4 @@ public class ChiselExtendedState extends BlockStateBase implements IExtendedBloc
     public <T extends Comparable<T>> IBlockState cycleProperty(IProperty<T> property) {
         return new ChiselExtendedState(wrapped.cycleProperty(property), this);
     }
-    
-    // Soft overrides getOffset in 1.11
-    public Vec3d func_191059_e (IBlockAccess world, BlockPos pos) {
-    	return Vec3d.ZERO;
-    }
 }
