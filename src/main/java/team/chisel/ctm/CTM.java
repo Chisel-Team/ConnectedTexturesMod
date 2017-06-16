@@ -18,7 +18,7 @@ import team.chisel.ctm.client.texture.type.TextureTypeRegistry;
 import team.chisel.ctm.client.util.CTMPackReloadListener;
 import team.chisel.ctm.client.util.TextureMetadataHandler;
 
-@Mod(name = MOD_NAME, modid = MOD_ID, version = VERSION, acceptedMinecraftVersions = "[1.10.2, 1.12)", clientSideOnly = true)
+@Mod(name = MOD_NAME, modid = MOD_ID, version = VERSION, clientSideOnly = true)
 public class CTM {
     
     public static final String MOD_ID = "ctm";
