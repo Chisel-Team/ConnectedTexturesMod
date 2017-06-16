@@ -171,7 +171,6 @@ curseforge {
         changelogType = 'html'
         releaseType = project.curse_type
 		addGameVersion '1.10.2'
-		addGameVersion '1.11.2'
         mainArtifact(jar) {
             displayName = "CTM - ${version}"
         }
