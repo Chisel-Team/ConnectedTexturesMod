@@ -1,7 +1,10 @@
 package team.chisel.ctm.api.texture;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
+@ParametersAreNonnullByDefault
 public interface ISubmap {
 
     float getYOffset();
