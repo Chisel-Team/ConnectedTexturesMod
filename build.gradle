@@ -170,8 +170,7 @@ curseforge {
         changelog = System.getenv('CHANGELOG') == null || System.getenv('CHANGELOG').equals('none') ? getChangelogText() : System.getenv('CHANGELOG')
         changelogType = 'html'
         releaseType = project.curse_type
-		addGameVersion '1.10.2'
-		addGameVersion '1.11.2'
+		addGameVersion '1.12'
         mainArtifact(jar) {
             displayName = "CTM - ${version}"
         }
