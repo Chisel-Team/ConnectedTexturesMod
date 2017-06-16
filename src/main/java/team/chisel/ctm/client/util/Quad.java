@@ -455,7 +455,7 @@ public class Quad {
         Builder b = new Builder(baked.getFormat(), baked.getSprite());
         //Chisel.debug("Format: " + baked.getFormat().toString());
         baked.pipe(b);
-        return b.build().derotate(); // for now we will ignore rotated UVs
+        return b.build();
     }
     
     @RequiredArgsConstructor

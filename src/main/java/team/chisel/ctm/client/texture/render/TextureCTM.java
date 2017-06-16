@@ -41,4 +41,9 @@ public class TextureCTM extends AbstractTexture<TextureTypeCTM> {
         }
         return Arrays.stream(quads).filter(Objects::nonNull).map(q -> q.rebake()).collect(Collectors.toList());
     }
+    
+    @Override
+    protected Quad makeQuad(BakedQuad bq, ITextureContext context) {
+        return super.makeQuad(bq, context).derotate();
+    }
 }
