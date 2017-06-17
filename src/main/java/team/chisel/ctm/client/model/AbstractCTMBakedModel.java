@@ -79,8 +79,12 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
         @Override
         @SneakyThrows
         public IBakedModel handleItemState(IBakedModel originalModel, ItemStack stack, World world, EntityLivingBase entity) {
-            Block block = ((ItemBlock) stack.getItem()).getBlock();
-            return itemcache.get(Pair.of(stack.getItem(), stack.getItemDamage()), () -> createModel(block.getDefaultState(), model, null, 0));
+            Block block = null;
+            if (stack.getItem() instanceof ItemBlock) {
+                block = ((ItemBlock) stack.getItem()).getBlock();
+            }
+            final IBlockState state = block == null ? null : block.getDefaultState();
+            return itemcache.get(Pair.of(stack.getItem(), stack.getItemDamage()), () -> createModel(state, model, null, 0));
         }
     }
     
