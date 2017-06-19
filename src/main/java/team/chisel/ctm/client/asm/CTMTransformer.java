@@ -1,22 +1,14 @@
 package team.chisel.ctm.client.asm;
 
-import java.util.Iterator;
-
+import net.minecraft.launchwrapper.IClassTransformer;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.TypeInsnNode;
-import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.*;
+
+import java.util.Iterator;
 
 import static org.objectweb.asm.Opcodes.*;
-
-import net.minecraft.launchwrapper.IClassTransformer;
 
 public class CTMTransformer implements IClassTransformer {
 
@@ -32,7 +24,7 @@ public class CTMTransformer implements IClassTransformer {
     private static final String CHISEL_METHODS_CLASS_NAME = "team/chisel/ctm/client/asm/CTMCoreMethods";
     
     private static final String CHISEL_METHODS_LAYER_NAME = "canRenderInLayer";
-    private static final String CHISEL_METHODS_LAYER_DESC = "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/BlockRenderLayer;)Z";
+    private static final String CHISEL_METHODS_LAYER_DESC = "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/BlockRenderLayer;)Ljava/lang/Boolean;";
     private static final String CHISEL_METHODS_DAMAGE_PRE_NAME = "preDamageModel";
     private static final String CHISEL_METHODS_DAMAGE_POST_NAME = "postDamageModel";
     
@@ -82,12 +74,18 @@ public class CTMTransformer implements IClassTransformer {
                         }
                     }
                 } else if (m.name.equals(CAN_RENDER_IN_LAYER_METHOD_NAME) && m.desc.equals(CAN_RENDER_IN_LAYER_METHOD_DESC)) {
-                    m.instructions.clear(); // FIXME probably bad
-
-                    m.instructions.add(new VarInsnNode(ALOAD, 1));
-                    m.instructions.add(new VarInsnNode(ALOAD, 2));
-                    m.instructions.add(new MethodInsnNode(INVOKESTATIC, CHISEL_METHODS_CLASS_NAME, CHISEL_METHODS_LAYER_NAME, CHISEL_METHODS_LAYER_DESC, false));
-                    m.instructions.add(new InsnNode(IRETURN));
+                    InsnList toAdd = new InsnList();
+                    toAdd.add(new VarInsnNode(ALOAD, 1)); // Load state
+                    toAdd.add(new VarInsnNode(ALOAD, 2)); // Load layer
+                    // Invoke hook
+                    toAdd.add(new MethodInsnNode(INVOKESTATIC, CHISEL_METHODS_CLASS_NAME, CHISEL_METHODS_LAYER_NAME, CHISEL_METHODS_LAYER_DESC, false));
+                    toAdd.add(new InsnNode(DUP)); // Copy value on stack, avoids need for local var
+                    toAdd.add(new JumpInsnNode(IFNULL, (LabelNode) m.instructions.getFirst())); // Check if return is null, if it is, jump to vanilla code
+                    toAdd.add(new MethodInsnNode(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false)); // Otherwise evaluate the bool
+                    toAdd.add(new InsnNode(IRETURN)); // And return it
+                    AbstractInsnNode first = m.instructions.getFirst(); // First vanilla instruction
+                    m.instructions.insertBefore(first, toAdd); // Put this before the first instruction (L1 label node)
+                    m.instructions.insert(first, new InsnNode(POP)); // Pop the extra value that vanilla doesn't need
                 }
             }
 
@@ -163,7 +161,7 @@ public class CTMTransformer implements IClassTransformer {
     }
 
     private byte[] finishTransform(String transformedName, ClassNode classNode) {
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
         classNode.accept(cw);
         System.out.println("Transforming " + transformedName + " Finished.");
         return cw.toByteArray();
