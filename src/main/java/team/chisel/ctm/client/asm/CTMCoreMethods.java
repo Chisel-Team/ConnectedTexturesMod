@@ -15,21 +15,30 @@ public class CTMCoreMethods {
     
     @SuppressWarnings("deprecation")
     @SneakyThrows
-    public static boolean canRenderInLayer(@Nonnull IBlockState state, @Nonnull BlockRenderLayer layer) {
+    public static Boolean canRenderInLayer(@Nonnull IBlockState state, @Nonnull BlockRenderLayer layer) {
         ProfileUtil.start("chisel_render_in_layer");
         IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(state);
         if (model instanceof WeightedBakedModel) {
             model = ((WeightedBakedModel)model).baseModel;
         }
         
-        boolean ret;
+        Boolean ret;
         if (model instanceof AbstractCTMBakedModel) {
             ret = ((AbstractCTMBakedModel)model).getModel().canRenderInLayer(state, layer);
         } else {
-            ret = state.getBlock().getBlockLayer() == layer;
+            ret = null;
         }
         ProfileUtil.end();
         return ret;
+    }
+
+    public boolean test(IBlockState state, BlockRenderLayer layer)
+    {
+        Boolean check = CTMCoreMethods.canRenderInLayer(state, layer);
+        if (check != null) {
+            return check.booleanValue();
+        }
+        return state.getBlock().canRenderInLayer(layer);
     }
     
     public static ThreadLocal<Boolean> renderingDamageModel = ThreadLocal.withInitial(() -> false);
