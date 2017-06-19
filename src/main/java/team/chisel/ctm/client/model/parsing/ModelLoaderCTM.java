@@ -50,6 +50,10 @@ public enum ModelLoaderCTM implements ICustomModelLoader {
         if (loading.contains(modelLocation)) {
             return false;
         }
+
+        if (modelLocation.toString().contains("beacon")) {
+            System.out.println();
+        }
         
         JsonElement json = getJSON(modelLocation);
         return json.isJsonObject() && json.getAsJsonObject().has("ctm_version");
