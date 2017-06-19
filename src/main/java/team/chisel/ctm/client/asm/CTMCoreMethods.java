@@ -31,15 +31,6 @@ public class CTMCoreMethods {
         ProfileUtil.end();
         return ret;
     }
-
-    public boolean test(IBlockState state, BlockRenderLayer layer)
-    {
-        Boolean check = CTMCoreMethods.canRenderInLayer(state, layer);
-        if (check != null) {
-            return check.booleanValue();
-        }
-        return state.getBlock().canRenderInLayer(layer);
-    }
     
     public static ThreadLocal<Boolean> renderingDamageModel = ThreadLocal.withInitial(() -> false);
     
