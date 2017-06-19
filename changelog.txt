@@ -1,3 +1,8 @@
+0.1.1:
+Fixes
+- Fix issues with certain mods' blocks (EIO facades, Mekanism cables, etc)
+- Fix crash when resource pack contains invalid metadata files
+
 0.1.0:
 New
 - Initial beta release
