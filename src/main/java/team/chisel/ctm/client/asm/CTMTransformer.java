@@ -161,7 +161,7 @@ public class CTMTransformer implements IClassTransformer {
     }
 
     private byte[] finishTransform(String transformedName, ClassNode classNode) {
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
         classNode.accept(cw);
         System.out.println("Transforming " + transformedName + " Finished.");
         return cw.toByteArray();
