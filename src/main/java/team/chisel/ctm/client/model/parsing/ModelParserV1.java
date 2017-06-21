@@ -37,8 +37,18 @@ public class ModelParserV1 implements IModelParser {
         
         // Hack around circularity detection to load vanilla model
         ResourceLocation prev = _loadingModels.removeLast();
-        IModel vanillamodel = ModelLoaderRegistry.getModel(new ResourceLocation(res.getResourceDomain(), res.getResourcePath().replace("models/", "")));
-        _loadingModels.addLast(prev);
+        IModel vanillamodel;
+        try {
+            vanillamodel = ModelLoaderRegistry.getModel(new ResourceLocation(res.getResourceDomain(), res.getResourcePath().replace("models/", "")));
+        } catch (IllegalStateException e) {
+            IModel parent = ModelLoaderRegistry.getModel(new ResourceLocation(json.get("parent").getAsString()));
+            if (parent instanceof IModelCTM) {
+                return (IModelCTM) parent;
+            }
+            throw new IllegalStateException("CTM model " + res + " cannot have non-CTM parent " + json.get("parent"));
+        } finally {
+            _loadingModels.addLast(prev);
+        }
 
         Map<String, JsonElement> parsed = GSON.fromJson(json.getAsJsonObject("ctm_overrides"), new TypeToken<Map<String, JsonElement>>(){}.getType());
         if (parsed == null) {
