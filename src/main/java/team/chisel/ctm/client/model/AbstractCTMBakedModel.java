@@ -23,13 +23,11 @@ import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 
-import gnu.trove.set.TLongSet;
-import lombok.AccessLevel;
+import gnu.trove.map.TObjectLongMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.ToString;
-import lombok.experimental.FieldDefaults;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -51,6 +49,7 @@ import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.IPerspectiveAwareModel;
 import net.minecraftforge.common.model.TRSRTransformation;
 import team.chisel.ctm.api.model.IModelCTM;
+import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.asm.CTMCoreMethods;
 import team.chisel.ctm.client.state.ChiselExtendedState;
@@ -93,7 +92,7 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
     @ToString
     private static class State {
         private final IBlockState cleanState;
-        private final TLongSet serializedContext;
+        private final TObjectLongMap<ITextureType> serializedContext;
         private final IBakedModel parent;
         
         @Override
@@ -160,7 +159,7 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
             ChiselExtendedState ext = (ChiselExtendedState) state;
             RenderContextList ctxList = ext.getContextList(ext.getClean(), model);
 
-            TLongSet serialized = ctxList.serialized();
+            TObjectLongMap<ITextureType> serialized = ctxList.serialized();
             ProfileUtil.end();
 
             ProfileUtil.start("model_creation");
