@@ -11,7 +11,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
         classpath 'org.ajoberstar:gradle-git:0.10.1'
     }
 }
@@ -42,7 +42,7 @@ targetCompatibility = '1.8'
 
 minecraft {
     version = "${minecraft_version}-${forge_version}"
-    mappings = 'stable_32'
+    mappings = 'snapshot_20170624'
     runDir = "run"
 	
 	useDepAts = true

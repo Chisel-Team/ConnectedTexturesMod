@@ -3,12 +3,12 @@ package team.chisel.ctm.client.texture;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.function.Function;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ObjectArrays;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
@@ -44,7 +44,6 @@ public abstract class MetadataSectionCTM implements IMetadataSection {
     
     public abstract JsonObject getExtraData();
     
-    @SuppressWarnings("null")
     public ICTMTexture<?> makeTexture(TextureAtlasSprite sprite, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
         return getType().makeTexture(new TextureInfo(
                 Arrays.stream(ObjectArrays.concat(new ResourceLocation(sprite.getIconName()), getAdditionalTextures())).map(bakedTextureGetter::apply).toArray(TextureAtlasSprite[]::new), 
@@ -57,7 +56,6 @@ public abstract class MetadataSectionCTM implements IMetadataSection {
     @Getter
     public static class V1 extends MetadataSectionCTM {
         
-        @SuppressWarnings("null")
         private ITextureType type = TextureTypeRegistry.getType("NORMAL");
         private BlockRenderLayer layer = BlockRenderLayer.SOLID;
         private ResourceLocation[] additionalTextures = new ResourceLocation[0];

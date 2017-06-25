@@ -23,8 +23,6 @@ import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformT
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
-import net.minecraftforge.client.model.IPerspectiveAwareModel;
-import net.minecraftforge.common.model.TRSRTransformation;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
@@ -96,10 +94,6 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
     
     @Override
     public Pair<? extends IBakedModel, Matrix4f> handlePerspective(TransformType cameraTransformType) {
-        if (getParent() instanceof IPerspectiveAwareModel) {
-            return ((IPerspectiveAwareModel) getParent()).handlePerspective(cameraTransformType);
-        } else {
-            return Pair.of(this, new TRSRTransformation(getParent().getItemCameraTransforms().getTransform(cameraTransformType)).getMatrix());
-        }
+    	return getParent().handlePerspective(cameraTransformType);
     }
 }

@@ -2,11 +2,11 @@ package team.chisel.ctm.client.state;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 
 import lombok.Getter;
@@ -15,7 +15,6 @@ import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.BlockStateBase;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.common.property.IUnlistedProperty;
@@ -48,7 +47,6 @@ public class ChiselExtendedState extends BlockStateBase implements IExtendedBloc
     
     private @Nullable RenderContextList ctxCache;
     
-    @SuppressWarnings("null")
     public ChiselExtendedState(IBlockState state, IBlockAccess world, BlockPos pos) {
         ProfileUtil.start("chisel_extended_state");
         this.wrapped = state;
@@ -70,7 +68,6 @@ public class ChiselExtendedState extends BlockStateBase implements IExtendedBloc
         this(state, parent.world, parent.pos);
     }
     
-    @SuppressWarnings("null")
     public RenderContextList getContextList(IBlockState state, IModelCTM model) {
         if (ctxCache == null) {
             ctxCache = new RenderContextList(state, model.getChiselTextures(), world, pos);

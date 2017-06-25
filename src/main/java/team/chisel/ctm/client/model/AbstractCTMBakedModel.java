@@ -46,7 +46,6 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
 import net.minecraftforge.client.MinecraftForgeClient;
-import net.minecraftforge.client.model.IPerspectiveAwareModel;
 import net.minecraftforge.common.model.TRSRTransformation;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ITextureType;
@@ -56,7 +55,7 @@ import team.chisel.ctm.client.state.ChiselExtendedState;
 import team.chisel.ctm.client.util.ProfileUtil;
 
 @RequiredArgsConstructor
-public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
+public abstract class AbstractCTMBakedModel implements IBakedModel {
 
     private static Cache<Pair<Item, Integer>, AbstractCTMBakedModel> itemcache = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.SECONDS).<Pair<Item, Integer>, AbstractCTMBakedModel>build();
     private static Cache<State, AbstractCTMBakedModel> modelcache = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).maximumSize(5000).<State, AbstractCTMBakedModel>build();
@@ -74,7 +73,6 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
             super(Lists.newArrayList());
         }
 
-        @SuppressWarnings("null")
         @Override
         @SneakyThrows
         public IBakedModel handleItemState(IBakedModel originalModel, ItemStack stack, World world, EntityLivingBase entity) {
