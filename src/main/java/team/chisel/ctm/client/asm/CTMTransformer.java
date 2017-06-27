@@ -89,7 +89,7 @@ public class CTMTransformer implements IClassTransformer {
                 }
             }
 
-            return finishTransform(transformedName, classNode);
+            return finishTransform(transformedName, classNode, ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
 
         } else if (transformedName.equals(FORGE_HOOKS_CLIENT_CLASS)) {
 
@@ -116,7 +116,7 @@ public class CTMTransformer implements IClassTransformer {
                 }
             }
             
-            return finishTransform(transformedName, classNode);
+            return finishTransform(transformedName, classNode, ClassWriter.COMPUTE_MAXS);
 
         } else if (transformedName.equals(TEXTURE_MAP_CLASS_NAME)) {
 
@@ -144,7 +144,7 @@ public class CTMTransformer implements IClassTransformer {
                 }
             }
 
-            return finishTransform(transformedName, classNode);
+            return finishTransform(transformedName, classNode, ClassWriter.COMPUTE_MAXS);
         }
         
         return basicClass;
@@ -160,8 +160,8 @@ public class CTMTransformer implements IClassTransformer {
         return classNode;
     }
 
-    private byte[] finishTransform(String transformedName, ClassNode classNode) {
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+    private byte[] finishTransform(String transformedName, ClassNode classNode, int flags) {
+        ClassWriter cw = new ClassWriter(flags);
         classNode.accept(cw);
         System.out.println("Transforming " + transformedName + " Finished.");
         return cw.toByteArray();
