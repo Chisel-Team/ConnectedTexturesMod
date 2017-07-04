@@ -151,7 +151,7 @@ public class ModelCTM implements IModelCTM {
                 matches.forEach(part -> bySprite.put(modelinfo.textures.getOrDefault(part.texture.substring(1), part.texture), part));
                 for (val e2 : bySprite.asMap().entrySet()) {
                     ResourceLocation texLoc = new ResourceLocation(e2.getKey());
-                    ICTMTexture<?> tex = e.getValue().makeTexture(bakedTextureGetter.apply(texLoc), bakedTextureGetter);
+                    ICTMTexture<?> tex = e.getValue().makeTexture(spriteOverrides.get(e.getKey()), bakedTextureGetter);
                     textureOverrides.put(Pair.of(e.getKey(), texLoc.toString()), tex);
                 }
             }
