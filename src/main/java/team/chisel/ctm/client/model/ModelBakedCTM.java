@@ -17,7 +17,6 @@ import com.google.common.collect.ObjectArrays;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.BakedQuadRetextured;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -29,6 +28,7 @@ import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.RenderContextList;
+import team.chisel.ctm.client.util.BakedQuadRetextured;
 
 @ParametersAreNonnullByDefault
 public class ModelBakedCTM extends AbstractCTMBakedModel {
