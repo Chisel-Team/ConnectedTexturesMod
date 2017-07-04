@@ -317,7 +317,7 @@ public class CTMLogic {
         boolean ret = ignoreStates ? con.getBlock() == state.getBlock() : con == state;
 
         // no block obscuring this face
-        if (obscuring == null) {
+        if (obscuring == null || con.shouldSideBeRendered(world, connection, dir)) {
             return ret;
         }
 
