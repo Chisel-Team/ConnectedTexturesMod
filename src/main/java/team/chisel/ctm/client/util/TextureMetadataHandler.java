@@ -32,6 +32,7 @@ import net.minecraftforge.fml.common.ProgressManager.ProgressBar;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import team.chisel.ctm.CTM;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.client.model.ModelBakedCTM;
 import team.chisel.ctm.client.model.ModelCTM;
@@ -107,7 +108,11 @@ public enum TextureMetadataHandler {
                         meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex));
                     } catch (IOException e) {} // Fallthrough
                     if (meta != null) {
-                        event.getModelRegistry().putObject(mrl, wrap(model, event.getModelRegistry().getObject(mrl)));
+                        try {
+                            event.getModelRegistry().putObject(mrl, wrap(model, event.getModelRegistry().getObject(mrl)));
+                        } catch (IOException e) {
+                            CTM.logger.error("Could not wrap model " + mrl + ". Aborting...", e);
+                        }
                         break;
                     }
                 }
@@ -115,7 +120,7 @@ public enum TextureMetadataHandler {
         }
     }
 
-    private @Nonnull IBakedModel wrap(IModel model, IBakedModel object) {
+    private @Nonnull IBakedModel wrap(IModel model, IBakedModel object) throws IOException {
         ModelCTM modelchisel = new ModelCTM(null, model, Int2ObjectMaps.emptyMap());
         modelchisel.bake(TRSRTransformation.identity(), DefaultVertexFormats.ITEM, rl -> Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(rl.toString()));
         return new ModelBakedCTM(modelchisel, object);

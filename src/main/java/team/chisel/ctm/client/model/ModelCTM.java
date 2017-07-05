@@ -71,7 +71,7 @@ public class ModelCTM implements IModelCTM {
 
     private Map<String, ICTMTexture<?>> textures = new HashMap<>();
     
-    public ModelCTM(ModelBlock modelinfo, IModel parent, Int2ObjectMap<JsonElement> overrides) {
+    public ModelCTM(ModelBlock modelinfo, IModel parent, Int2ObjectMap<JsonElement> overrides) throws IOException {
         this.modelinfo = modelinfo;
         this.parentmodel = parent;
         this.overrides = overrides;
@@ -82,9 +82,7 @@ public class ModelCTM implements IModelCTM {
             MetadataSectionCTM meta = null;
             if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
                 ResourceLocation rl = new ResourceLocation(e.getValue().getAsString());
-                try {
-                    meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(rl));
-                } catch (IOException e1) {}
+                meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(rl));
                 textureDependencies.add(rl);
             } else if (e.getValue().isJsonObject()) {
                 JsonObject obj = e.getValue().getAsJsonObject();
@@ -97,6 +95,16 @@ public class ModelCTM implements IModelCTM {
             if (meta != null ) {
                 metaOverrides.put(e.getKey(), meta);
                 textureDependencies.addAll(Arrays.asList(meta.getAdditionalTextures()));
+            }
+        }
+        
+        // Validate all texture metadata
+        for (ResourceLocation res : getTextures()) {
+            MetadataSectionCTM meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(res));
+            if (meta != null) {
+                if (meta.getType().requiredTextures() != meta.getAdditionalTextures().length + 1) {
+                    throw new IOException(String.format("Texture type %s requires exactly %d textures. %d were provided.", meta.getType(), meta.getType().requiredTextures(), meta.getAdditionalTextures().length + 1));
+                }
             }
         }
     }

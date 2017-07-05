@@ -1,5 +1,6 @@
 package team.chisel.ctm.client.util;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,13 +8,12 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import com.google.common.base.Throwables;
-
 import com.google.gson.JsonParseException;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.util.ResourceLocation;
-import team.chisel.ctm.CTM;
 import team.chisel.ctm.client.texture.MetadataSectionCTM;
 
 public class ResourceUtil {
@@ -58,10 +58,10 @@ public class ResourceUtil {
         MetadataSectionCTM ret;
         try {
             ret = getResource(res).getMetadata(MetadataSectionCTM.SECTION_NAME);
+        } catch (FileNotFoundException e) {
+            ret = null;  
         } catch (JsonParseException e) {
-            ret = null;
-            CTM.logger.error("Error loading metadata for location {}", res);
-            e.printStackTrace();
+            throw new IOException("Error loading metadata for location " + res, e);
         }
         metadataCache.put(res, ret);
         return ret;
