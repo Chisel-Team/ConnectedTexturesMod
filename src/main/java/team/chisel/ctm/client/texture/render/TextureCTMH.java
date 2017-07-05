@@ -13,7 +13,7 @@ import team.chisel.ctm.client.util.CTMLogic;
 import team.chisel.ctm.client.util.Dir;
 import team.chisel.ctm.client.util.Quad;
 
-public class TextureCTMH extends AbstractTexture<TextureTypeCTMH> {
+public class TextureCTMH extends TextureCTM<TextureTypeCTMH> {
 
     public TextureCTMH(TextureTypeCTMH type, TextureInfo info) {
         super(type, info);

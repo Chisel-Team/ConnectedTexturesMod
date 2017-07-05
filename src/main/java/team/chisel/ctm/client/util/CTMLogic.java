@@ -1,13 +1,19 @@
 package team.chisel.ctm.client.util;
 
+import static team.chisel.ctm.client.util.Dir.BOTTOM;
+import static team.chisel.ctm.client.util.Dir.BOTTOM_LEFT;
+import static team.chisel.ctm.client.util.Dir.BOTTOM_RIGHT;
+import static team.chisel.ctm.client.util.Dir.LEFT;
+import static team.chisel.ctm.client.util.Dir.RIGHT;
+import static team.chisel.ctm.client.util.Dir.TOP;
+import static team.chisel.ctm.client.util.Dir.TOP_LEFT;
+import static team.chisel.ctm.client.util.Dir.TOP_RIGHT;
+
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import com.google.common.base.Optional;
-
-import static team.chisel.ctm.client.util.Dir.*;
 
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -107,7 +113,7 @@ public class CTMLogic {
 	/** Some hardcoded offset values for the different corner indeces */
 	protected static int[] submapOffsets = { 4, 5, 1, 0 };
 
-	public Optional<Boolean> disableObscuredFaceCheck = Optional.absent();
+	public Optional<Boolean> disableObscuredFaceCheck = Optional.empty();
 
     // Mapping the different corner indeces to their respective dirs
 	protected static final Dir[][] submapMap = new Dir[][] {
@@ -304,7 +310,7 @@ public class CTMLogic {
       
         BlockPos pos2 = connection.add(dir.getDirectionVec());
 
-        boolean disableObscured = disableObscuredFaceCheck.or(Configurations.connectInsideCTM);
+        boolean disableObscured = disableObscuredFaceCheck.orElse(Configurations.connectInsideCTM);
 
         IBlockState con = getBlockOrFacade(world, connection, dir);
         IBlockState obscuring = disableObscured ? null : getBlockOrFacade(world, pos2, dir);
