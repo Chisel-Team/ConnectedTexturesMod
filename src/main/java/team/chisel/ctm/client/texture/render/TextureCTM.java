@@ -34,7 +34,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
     public TextureCTM(T type, TextureInfo info) {
         super(type, info);
         this.connectInside = info.getInfo().flatMap(obj -> ParseUtils.getBoolean(obj, "connectInside"));
-        this.ignoreStates = info.getInfo().map(obj -> JsonUtils.getBoolean(obj, "ignoreStates", false)).get(); // Safe get
+        this.ignoreStates = info.getInfo().map(obj -> JsonUtils.getBoolean(obj, "ignoreStates", false)).orElse(false);
     }
 
     @Override
