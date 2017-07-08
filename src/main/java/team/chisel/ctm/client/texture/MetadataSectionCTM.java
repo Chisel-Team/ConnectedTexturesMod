@@ -129,6 +129,8 @@ public abstract class MetadataSectionCTM implements IMetadataSection {
                             return V1.fromJson(obj);
                         }
                     }
+                } else {
+                    throw new JsonParseException("Found ctm section without ctm_version");
                 }
             }
             return null;
