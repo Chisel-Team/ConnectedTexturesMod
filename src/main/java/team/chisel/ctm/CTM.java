@@ -1,9 +1,11 @@
 package team.chisel.ctm;
 
+import static team.chisel.ctm.CTM.MOD_ID;
+import static team.chisel.ctm.CTM.MOD_NAME;
+import static team.chisel.ctm.CTM.VERSION;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import static team.chisel.ctm.CTM.*;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.SimpleReloadableResourceManager;
@@ -13,7 +15,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import team.chisel.ctm.client.model.parsing.ModelLoaderCTM;
-import team.chisel.ctm.client.texture.MetadataSectionCTM;
+import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 import team.chisel.ctm.client.texture.type.TextureTypeRegistry;
 import team.chisel.ctm.client.util.CTMPackReloadListener;
 import team.chisel.ctm.client.util.TextureMetadataHandler;
@@ -36,7 +38,7 @@ public class CTM {
         TextureTypeRegistry.preInit(event);
 
         ModelLoaderRegistry.registerLoader(ModelLoaderCTM.INSTANCE);
-        Minecraft.getMinecraft().metadataSerializer_.registerMetadataSectionType(new MetadataSectionCTM.Serializer(), MetadataSectionCTM.class);
+        Minecraft.getMinecraft().metadataSerializer_.registerMetadataSectionType(new IMetadataSectionCTM.Serializer(), IMetadataSectionCTM.class);
         
         MinecraftForge.EVENT_BUS.register(TextureMetadataHandler.INSTANCE);
         ((SimpleReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(CTMPackReloadListener.INSTANCE);

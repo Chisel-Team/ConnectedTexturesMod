@@ -17,4 +17,9 @@ public class TextureTypeCTMH extends TextureTypeCTM {
     public int getQuadsPerSide() {
         return 1;
     }
+    
+    @Override
+    public int requiredTextures() {
+    	return 1;
+    }
 }

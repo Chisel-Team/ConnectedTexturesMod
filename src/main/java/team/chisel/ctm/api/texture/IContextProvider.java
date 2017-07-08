@@ -34,5 +34,6 @@ public interface IContextProvider {
      * @param data
      *            The compressed data, will match what is produced by {@link ITextureContext#getCompressedData()}.
      */
+    @Deprecated
     ITextureContext getContextFromData(long data);
 }
