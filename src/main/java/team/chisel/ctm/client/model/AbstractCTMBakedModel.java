@@ -58,7 +58,7 @@ import team.chisel.ctm.client.util.ProfileUtil;
 @RequiredArgsConstructor
 public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
 
-    private static Cache<Pair<Item, Integer>, AbstractCTMBakedModel> itemcache = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.SECONDS).<Pair<Item, Integer>, AbstractCTMBakedModel>build();
+    private static Cache<Pair<Item, Integer>, AbstractCTMBakedModel> itemcache = CacheBuilder.newBuilder().expireAfterAccess(0, TimeUnit.SECONDS).<Pair<Item, Integer>, AbstractCTMBakedModel>build();
     private static Cache<State, AbstractCTMBakedModel> modelcache = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).maximumSize(5000).<State, AbstractCTMBakedModel>build();
 
     public static void invalidateCaches()

@@ -14,7 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.util.ResourceLocation;
-import team.chisel.ctm.client.texture.MetadataSectionCTM;
+import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 
 public class ResourceUtil {
     
@@ -48,16 +48,16 @@ public class ResourceUtil {
         }
     }
     
-    private static final Map<ResourceLocation, MetadataSectionCTM> metadataCache = new HashMap<>();
+    private static final Map<ResourceLocation, IMetadataSectionCTM> metadataCache = new HashMap<>();
 
-    public static @Nullable MetadataSectionCTM getMetadata(ResourceLocation res) throws IOException {
+    public static @Nullable IMetadataSectionCTM getMetadata(ResourceLocation res) throws IOException {
         // Note, semantically different from computeIfAbsent, as we DO care about keys mapped to null values
         if (metadataCache.containsKey(res)) {
             return metadataCache.get(res);
         }
-        MetadataSectionCTM ret;
+        IMetadataSectionCTM ret;
         try {
-            ret = getResource(res).getMetadata(MetadataSectionCTM.SECTION_NAME);
+            ret = getResource(res).getMetadata(IMetadataSectionCTM.SECTION_NAME);
         } catch (FileNotFoundException e) {
             ret = null;  
         } catch (JsonParseException e) {
@@ -67,11 +67,11 @@ public class ResourceUtil {
         return ret;
     }
     
-    public static @Nullable MetadataSectionCTM getMetadata(TextureAtlasSprite sprite) throws IOException {
+    public static @Nullable IMetadataSectionCTM getMetadata(TextureAtlasSprite sprite) throws IOException {
         return getMetadata(spriteToAbsolute(toResourceLocation(sprite)));
     }
     
-    public static @Nullable MetadataSectionCTM getMetadataUnsafe(TextureAtlasSprite sprite) {
+    public static @Nullable IMetadataSectionCTM getMetadataUnsafe(TextureAtlasSprite sprite) {
         try {
             return getMetadata(sprite);
         } catch (IOException e) {

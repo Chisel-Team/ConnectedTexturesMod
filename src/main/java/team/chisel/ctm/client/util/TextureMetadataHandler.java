@@ -37,7 +37,7 @@ import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.client.model.ModelBakedCTM;
 import team.chisel.ctm.client.model.ModelCTM;
 import team.chisel.ctm.client.model.parsing.ModelLoaderCTM;
-import team.chisel.ctm.client.texture.MetadataSectionCTM;
+import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 
 public enum TextureMetadataHandler {
 
@@ -57,7 +57,7 @@ public enum TextureMetadataHandler {
                     ResourceLocation rel = new ResourceLocation(res);
                     prog.step(rel.toString());
                     rel = new ResourceLocation(rel.getResourceDomain(), "textures/" + rel.getResourcePath() + ".png");
-                    MetadataSectionCTM metadata = ResourceUtil.getMetadata(rel);
+                    IMetadataSectionCTM metadata = ResourceUtil.getMetadata(rel);
                     if (metadata != null) {
                         for (ResourceLocation r : metadata.getAdditionalTextures()) {
                             event.getMap().registerSprite(r);
@@ -103,7 +103,7 @@ public enum TextureMetadataHandler {
                     textures = partModels.values().stream().map(m -> m.getTextures()).flatMap(Collection::stream).collect(Collectors.toList());
                 }
                 for (ResourceLocation tex : textures) {
-                    MetadataSectionCTM meta = null;
+                    IMetadataSectionCTM meta = null;
                     try {
                         meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex));
                     } catch (IOException e) {} // Fallthrough

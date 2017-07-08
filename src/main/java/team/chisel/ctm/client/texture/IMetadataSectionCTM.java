@@ -30,22 +30,22 @@ import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.type.TextureTypeRegistry;
 
 @ParametersAreNonnullByDefault
-public abstract class MetadataSectionCTM implements IMetadataSection {
+public interface IMetadataSectionCTM extends IMetadataSection {
     
     public static final String SECTION_NAME = "ctm";
     
-    public abstract int getVersion();
+    int getVersion();
     
-    public abstract ITextureType getType();
+    ITextureType getType();
     
-    public abstract BlockRenderLayer getLayer();
+    BlockRenderLayer getLayer();
     
-    public abstract ResourceLocation[] getAdditionalTextures();
+    ResourceLocation[] getAdditionalTextures();
     
-    public abstract JsonObject getExtraData();
+    JsonObject getExtraData();
     
     @SuppressWarnings("null")
-    public ICTMTexture<?> makeTexture(TextureAtlasSprite sprite, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
+    default ICTMTexture<?> makeTexture(TextureAtlasSprite sprite, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
         return getType().makeTexture(new TextureInfo(
                 Arrays.stream(ObjectArrays.concat(new ResourceLocation(sprite.getIconName()), getAdditionalTextures())).map(bakedTextureGetter::apply).toArray(TextureAtlasSprite[]::new), 
                 Optional.of(getExtraData()), 
@@ -55,7 +55,7 @@ public abstract class MetadataSectionCTM implements IMetadataSection {
     
     @ToString
     @Getter
-    public static class V1 extends MetadataSectionCTM {
+    public static class V1 implements IMetadataSectionCTM {
         
         @SuppressWarnings("null")
         private ITextureType type = TextureTypeRegistry.getType("NORMAL");
@@ -68,7 +68,7 @@ public abstract class MetadataSectionCTM implements IMetadataSection {
             return 1;
         }
 
-        public static MetadataSectionCTM fromJson(JsonObject obj) {
+        public static IMetadataSectionCTM fromJson(JsonObject obj) {
             V1 ret = new V1();
 
             if (obj.has("type")) {
@@ -115,10 +115,10 @@ public abstract class MetadataSectionCTM implements IMetadataSection {
         }
     }
     
-    public static class Serializer implements IMetadataSectionSerializer<MetadataSectionCTM> {
+    public static class Serializer implements IMetadataSectionSerializer<IMetadataSectionCTM> {
 
         @Override
-        public @Nullable MetadataSectionCTM deserialize(@Nullable JsonElement json, @Nullable Type typeOfT, @Nullable JsonDeserializationContext context) throws JsonParseException {
+        public @Nullable IMetadataSectionCTM deserialize(@Nullable JsonElement json, @Nullable Type typeOfT, @Nullable JsonDeserializationContext context) throws JsonParseException {
             if (json != null && json.isJsonObject()) {
                 JsonObject obj = json.getAsJsonObject();
                 if (obj.has("ctm_version")) {

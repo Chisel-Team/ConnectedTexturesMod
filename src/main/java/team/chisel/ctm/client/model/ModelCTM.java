@@ -45,21 +45,21 @@ import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.IChiselFace;
 import team.chisel.ctm.api.util.TextureInfo;
-import team.chisel.ctm.client.texture.MetadataSectionCTM;
+import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 import team.chisel.ctm.client.texture.render.TextureNormal;
 import team.chisel.ctm.client.texture.type.TextureTypeNormal;
 import team.chisel.ctm.client.util.ResourceUtil;
 
 public class ModelCTM implements IModelCTM {
     
-    private static final Gson GSON = new GsonBuilder().registerTypeAdapter(MetadataSectionCTM.class, new MetadataSectionCTM.Serializer()).create();
+    private static final Gson GSON = new GsonBuilder().registerTypeAdapter(IMetadataSectionCTM.class, new IMetadataSectionCTM.Serializer()).create();
 
     private final ModelBlock modelinfo;
     private final IModel parentmodel;
 
     // Populated from overrides data during construction
     private final Int2ObjectMap<JsonElement> overrides;
-    protected final Int2ObjectMap<MetadataSectionCTM> metaOverrides = new Int2ObjectArrayMap<>();
+    protected final Int2ObjectMap<IMetadataSectionCTM> metaOverrides = new Int2ObjectArrayMap<>();
     
     // Populated during bake with real texture data
     protected Int2ObjectMap<TextureAtlasSprite> spriteOverrides;
@@ -79,7 +79,7 @@ public class ModelCTM implements IModelCTM {
         this.textureDependencies = new HashSet<>();
         this.textureDependencies.addAll(parentmodel.getTextures());
         for (Entry<Integer, JsonElement> e : this.overrides.entrySet()) {
-            MetadataSectionCTM meta = null;
+            IMetadataSectionCTM meta = null;
             if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
                 ResourceLocation rl = new ResourceLocation(e.getValue().getAsString());
                 meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(rl));
@@ -90,7 +90,7 @@ public class ModelCTM implements IModelCTM {
                     // This model can only be version 1, TODO improve this
                     obj.add("ctm_version", new JsonPrimitive(1));
                 }
-                meta = GSON.fromJson(obj, MetadataSectionCTM.class);
+                meta = GSON.fromJson(obj, IMetadataSectionCTM.class);
             }
             if (meta != null ) {
                 metaOverrides.put(e.getKey(), meta);
@@ -100,7 +100,7 @@ public class ModelCTM implements IModelCTM {
         
         // Validate all texture metadata
         for (ResourceLocation res : getTextures()) {
-            MetadataSectionCTM meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(res));
+            IMetadataSectionCTM meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(res));
             if (meta != null) {
                 if (meta.getType().requiredTextures() != meta.getAdditionalTextures().length + 1) {
                     throw new IOException(String.format("Texture type %s requires exactly %d textures. %d were provided.", meta.getType(), meta.getType().requiredTextures(), meta.getAdditionalTextures().length + 1));
@@ -124,11 +124,11 @@ public class ModelCTM implements IModelCTM {
     public IBakedModel bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
         IBakedModel parent = parentmodel.bake(state, format, rl -> {
             TextureAtlasSprite sprite = bakedTextureGetter.apply(rl);
-            MetadataSectionCTM chiselmeta = null;
+            IMetadataSectionCTM chiselmeta = null;
             try {
                 chiselmeta = ResourceUtil.getMetadata(sprite);
             } catch (IOException e) {}
-            final MetadataSectionCTM meta = chiselmeta;
+            final IMetadataSectionCTM meta = chiselmeta;
             textures.computeIfAbsent(sprite.getIconName(), s -> {
                 ICTMTexture<?> tex;
                 if (meta == null) {
@@ -153,7 +153,7 @@ public class ModelCTM implements IModelCTM {
         }
         if (textureOverrides == null) {
             textureOverrides = new HashMap<>();
-            for (Entry<Integer, MetadataSectionCTM> e : metaOverrides.entrySet()) {
+            for (Entry<Integer, IMetadataSectionCTM> e : metaOverrides.entrySet()) {
                 List<BlockPartFace> matches = modelinfo.getElements().stream().flatMap(b -> b.mapFaces.values().stream()).filter(b -> b.tintIndex == e.getKey()).collect(Collectors.toList());
                 Multimap<String, BlockPartFace> bySprite = HashMultimap.create();
                 matches.forEach(part -> bySprite.put(modelinfo.textures.getOrDefault(part.texture.substring(1), part.texture), part));
