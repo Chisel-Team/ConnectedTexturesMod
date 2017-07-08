@@ -97,7 +97,8 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
     @Override
     public Pair<? extends IBakedModel, Matrix4f> handlePerspective(TransformType cameraTransformType) {
         if (getParent() instanceof IPerspectiveAwareModel) {
-            return ((IPerspectiveAwareModel) getParent()).handlePerspective(cameraTransformType);
+            // FIXME this won't work if parent returns a different model (shouldn't happen for vanilla)
+            return Pair.of(this, ((IPerspectiveAwareModel) getParent()).handlePerspective(cameraTransformType).getRight());
         } else {
             return Pair.of(this, new TRSRTransformation(getParent().getItemCameraTransforms().getTransform(cameraTransformType)).getMatrix());
         }
