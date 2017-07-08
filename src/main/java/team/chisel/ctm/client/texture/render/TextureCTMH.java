@@ -13,7 +13,7 @@ import team.chisel.ctm.client.util.CTMLogic;
 import team.chisel.ctm.client.util.Dir;
 import team.chisel.ctm.client.util.Quad;
 
-public class TextureCTMH extends AbstractTexture<TextureTypeCTMH> {
+public class TextureCTMH extends TextureCTM<TextureTypeCTMH> {
 
     public TextureCTMH(TextureTypeCTMH type, TextureInfo info) {
         super(type, info);
@@ -21,14 +21,10 @@ public class TextureCTMH extends AbstractTexture<TextureTypeCTMH> {
 
     @Override
     public List<BakedQuad> transformQuad(BakedQuad quad, ITextureContext context, int quadGoal) {
-        Quad q = makeQuad(quad);
-        if (quad.getFace().getAxis().isVertical()) {
-            q = q.transformUVs(sprites[0]);
-        } else {
-            CTMLogic ctm = context == null ? null : ((TextureContextCTM) context).getCTM(quad.getFace());
-            ISubmap submap = getQuad(ctm);
-            q = q.transformUVs(sprites[1], submap);
-        }
+        Quad q = makeQuad(quad, context);
+        CTMLogic ctm = context == null ? null : ((TextureContextCTM) context).getCTM(quad.getFace());
+        ISubmap submap = getQuad(ctm);
+        q = q.transformUVs(sprites[0], submap);
         return Collections.singletonList(q.rebake());
     }
 

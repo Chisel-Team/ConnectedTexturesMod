@@ -34,7 +34,7 @@ ext.buildnumber = 0
 project.buildnumber = System.getenv('BUILD_NUMBER') != null ? System.getenv('BUILD_NUMBER') : project.ext.gitHash
 
 version = "MC${minecraft_version}-${mod_version}.${buildnumber}"
-group = "team.chisel" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+group = "team.chisel.ctm" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = dev ? "CTM_DEV" : "CTM"
 
 sourceCompatibility = '1.8'
@@ -47,9 +47,9 @@ minecraft {
 	
 	useDepAts = true
 
-    clientJvmArgs += '-Dfml.coreMods.load=team.chisel.ctm.client.asm.ChiselCorePlugin'
+    clientJvmArgs += '-Dfml.coreMods.load=team.chisel.ctm.client.asm.CTMCorePlugin'
 
-    replaceIn "Reference.java"
+    replaceIn "CTM.java"
     replace "@VERSION@", project.version
 }
 
@@ -169,9 +169,7 @@ curseforge {
         id = project.projectId
         changelog = System.getenv('CHANGELOG') == null || System.getenv('CHANGELOG').equals('none') ? getChangelogText() : System.getenv('CHANGELOG')
         changelogType = 'html'
-        releaseType = 'alpha'
-		addGameVersion '1.10'
-		addGameVersion '1.10.2'
+        releaseType = project.curse_type
         mainArtifact(jar) {
             displayName = "CTM - ${version}"
         }

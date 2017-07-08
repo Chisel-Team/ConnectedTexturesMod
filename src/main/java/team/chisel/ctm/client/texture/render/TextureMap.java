@@ -42,7 +42,7 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
                 float maxV = textureCoords.y * intervalY;
                 ISubmap uvs = new Submap(intervalX, intervalY, maxU - intervalX, maxV - intervalY);
 
-                Quad q = tex.makeQuad(quad).setFullbright(tex.fullbright);
+                Quad q = tex.makeQuad(quad, context).setFullbright(tex.fullbright);
                 
                 // TODO move this code somewhere else, it's copied from below
                 if (quadGoal != 4) {
@@ -80,7 +80,7 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
 
                 ISubmap submap = new Submap(intervalU, intervalV, minU, minV);
 
-                Quad q = tex.makeQuad(quad).setFullbright(tex.fullbright);
+                Quad q = tex.makeQuad(quad, context).setFullbright(tex.fullbright);
                 if (quadGoal != 4) {
                     return Collections.singletonList(q.transformUVs(tex.sprites[0], submap).rebake());
                 } else {
@@ -106,6 +106,7 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
 
         protected abstract List<BakedQuad> transformQuad(TextureMap tex, BakedQuad quad, @Nullable ITextureContext context, int quadGoal);
         
+        @Nonnull
         public ITextureContext getContext(@Nonnull BlockPos pos, @Nonnull TextureMap tex) {
             return new TextureContextPosition(pos);
         }

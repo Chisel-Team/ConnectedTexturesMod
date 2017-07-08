@@ -3,6 +3,9 @@ package team.chisel.ctm.api.texture;
 import java.util.Collection;
 import java.util.List;
 
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.BlockRenderLayer;
@@ -11,6 +14,7 @@ import net.minecraft.util.ResourceLocation;
 /**
  * Represents a CTM Texture/resource
  */
+@ParametersAreNonnullByDefault
 public interface ICTMTexture<T extends ITextureType> {
 
     /**
@@ -24,7 +28,7 @@ public interface ICTMTexture<T extends ITextureType> {
      *            Amount of quads that should be made
      * @return A List of Quads
      */
-    List<BakedQuad> transformQuad(BakedQuad quad, ITextureContext context, int quadGoal);
+    List<BakedQuad> transformQuad(BakedQuad quad, @Nullable ITextureContext context, int quadGoal);
 
     Collection<ResourceLocation> getTextures();
     
@@ -51,5 +55,6 @@ public interface ICTMTexture<T extends ITextureType> {
      * 
      * @return The layer of this texture.
      */
+    @Nullable
     BlockRenderLayer getLayer();
 }

@@ -1,7 +1,10 @@
 package team.chisel.ctm.client.model;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -24,44 +27,61 @@ import net.minecraftforge.common.model.TRSRTransformation;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
-import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.util.RenderContextList;
-import team.chisel.ctm.client.state.ChiselExtendedState;
+import team.chisel.ctm.client.util.BakedQuadRetextured;
 
 @ParametersAreNonnullByDefault
 public class ModelBakedCTM extends AbstractCTMBakedModel {
     
-    private final IBakedModel parent;
-    
     public ModelBakedCTM(IModelCTM model, IBakedModel parent) {
         super(model, parent);
-        this.parent = parent;
     }
 
     private static final EnumFacing[] FACINGS = ObjectArrays.concat(EnumFacing.VALUES, (EnumFacing) null);
 
     @Override
-    protected AbstractCTMBakedModel createModel(@Nullable IBlockState state, IModelCTM model, @Nullable RenderContextList ctx) {
+    protected AbstractCTMBakedModel createModel(@Nullable IBlockState state, IModelCTM model, @Nullable RenderContextList ctx, long rand) {
+        IBakedModel parent = getParent(rand);
         AbstractCTMBakedModel ret = new ModelBakedCTM(model, parent);
         for (BlockRenderLayer layer : LAYERS) {
             for (EnumFacing facing : FACINGS) {
-                List<BakedQuad> parentQuads = parent.getQuads(state, facing, 0);
+                List<BakedQuad> parentQuads = parent.getQuads(state, facing, rand);
                 List<BakedQuad> quads;
                 if (facing != null) {
                     ret.faceQuads.put(layer, facing, quads = new ArrayList<>());
                 } else {
                     quads = ret.genQuads.get(layer);
                 }
+                
+                // Linked to maintain the order of quads
+                Map<BakedQuad, ICTMTexture<?>> texturemap = new LinkedHashMap<>();
+                // Gather all quads and map them to their textures
+                // All quads should have an associated ICTMTexture, so ignore any that do not
                 for (BakedQuad q : parentQuads) {
-                    ICTMTexture<?> tex = this.getModel().getTexture(q.getSprite().getIconName());
+                    ICTMTexture<?> tex = this.getModel().getOverrideTexture(q.getTintIndex(), q.getSprite().getIconName());
+                    if (tex == null) {
+                        tex = this.getModel().getTexture(q.getSprite().getIconName());
+                    }
 
-                    if (!(state instanceof ChiselExtendedState) || (tex == null && layer == state.getBlock().getBlockLayer())) {
-                        quads.add(q);
-                    } else if (tex != null && layer == tex.getLayer()) {
-                        ITextureType type = tex.getType();
+                    if (tex != null) {
+                        TextureAtlasSprite spriteReplacement = getModel().getOverrideSprite(q.getTintIndex());
+                        if (spriteReplacement != null) {
+                            q = new BakedQuadRetextured(q, spriteReplacement);
+                        }
 
-                        ITextureContext brc = ctx == null ? null : ctx.getRenderContext(tex.getType());
-                        quads.addAll(tex.transformQuad(q, brc, type.getQuadsPerSide()));
+                        texturemap.put(q, tex);
+                    }
+                }
+
+                // Compute the quad goal for a given facing
+                // TODO this means that non-culling (null facing) quads will *all* share the same quad goal, which is excessive
+                // Explore optimizations to quad goal (detecting overlaps??)
+                int quadGoal = ctx == null ? 1 : texturemap.values().stream().mapToInt(tex -> tex.getType().getQuadsPerSide()).max().orElse(1);
+                for (Entry<BakedQuad, ICTMTexture<?>> e : texturemap.entrySet()) {
+                    // If the layer is null, this is a wrapped vanilla texture, so passthrough the layer check to the block
+                    if (e.getValue().getLayer() == layer || (e.getValue().getLayer() == null && (state == null || layer == state.getBlock().getBlockLayer()))) {
+                        ITextureContext tcx = ctx == null ? null : ctx.getRenderContext(e.getValue().getType());
+                        quads.addAll(e.getValue().transformQuad(e.getKey(), tcx, quadGoal));
                     }
                 }
             }
@@ -71,15 +91,16 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
 
     @Override
     public @Nonnull TextureAtlasSprite getParticleTexture() {
-        return parent.getParticleTexture();
+        return getParent().getParticleTexture();
     }
     
     @Override
     public Pair<? extends IBakedModel, Matrix4f> handlePerspective(TransformType cameraTransformType) {
-        if (parent instanceof IPerspectiveAwareModel) {
-            return ((IPerspectiveAwareModel) parent).handlePerspective(cameraTransformType);
+        if (getParent() instanceof IPerspectiveAwareModel) {
+            // FIXME this won't work if parent returns a different model (shouldn't happen for vanilla)
+            return Pair.of(this, ((IPerspectiveAwareModel) getParent()).handlePerspective(cameraTransformType).getRight());
         } else {
-            return Pair.of(this, new TRSRTransformation(parent.getItemCameraTransforms().getTransform(cameraTransformType)).getMatrix());
+            return Pair.of(this, new TRSRTransformation(getParent().getItemCameraTransforms().getTransform(cameraTransformType)).getMatrix());
         }
     }
 }

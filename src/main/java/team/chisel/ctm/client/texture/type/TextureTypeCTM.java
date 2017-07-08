@@ -16,12 +16,12 @@ public class TextureTypeCTM implements ITextureType {
 
     @Override
     public ICTMTexture<? extends TextureTypeCTM> makeTexture(TextureInfo info) {
-      return new TextureCTM(this, info);
+      return new TextureCTM<TextureTypeCTM>(this, info);
     }
 
     @Override
     public TextureContextCTM getBlockRenderContext(IBlockState state, IBlockAccess world, BlockPos pos, ICTMTexture<?> tex) {
-        return new TextureContextCTM(state, world, pos);
+        return new TextureContextCTM(state, world, pos, (TextureCTM<?>) tex);
     }
 
     @Override
@@ -34,8 +34,8 @@ public class TextureTypeCTM implements ITextureType {
         return 2;
     }
 
-    @Override
-    public ITextureContext getContextFromData(long data){
-        return new TextureContextCTM(data);
-    }
+	@Override
+	public ITextureContext getContextFromData(long data) {
+		throw new UnsupportedOperationException();
+	}
 }

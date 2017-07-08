@@ -17,6 +17,7 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import team.chisel.ctm.api.texture.ICTMTexture;
+import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.util.NonnullType;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -90,12 +91,14 @@ public abstract class AbstractTexture<T extends ITextureType> implements ICTMTex
         return Arrays.stream(sprites).map(s -> new ResourceLocation(s.getIconName())).collect(Collectors.toList());
     }
 
-    protected Quad makeQuad(BakedQuad bq) {
+    protected Quad makeQuad(BakedQuad bq, @Nullable ITextureContext context) {
         Quad q = Quad.from(bq);
-        if (hasLight) {
-            q = q.setLight(blocklight, skylight);
-        } else {
-            q = q.setFullbright(fullbright);
+        if (context != null) {
+            if (hasLight) {
+                q = q.setLight(blocklight, skylight);
+            } else {
+                q = q.setFullbright(fullbright);
+            }
         }
         return q;
     }

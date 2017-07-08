@@ -1,10 +1,13 @@
 package team.chisel.ctm.api.texture;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import team.chisel.ctm.api.util.TextureInfo;
 
 /**
  * Interface for chisel block render types MUST HAVE A NO ARGS CONSTRUCTOR
  */
+@ParametersAreNonnullByDefault
 public interface ITextureType extends IContextProvider {
 
     /**

@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.util.vector.Vector;
@@ -30,8 +31,11 @@ import net.minecraft.client.renderer.vertex.VertexFormatElement.EnumUsage;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.client.model.pipeline.IVertexConsumer;
 import net.minecraftforge.client.model.pipeline.UnpackedBakedQuad;
+import net.minecraftforge.fml.client.FMLClientHandler;
 import team.chisel.ctm.api.texture.ISubmap;
+import team.chisel.ctm.api.util.NonnullType;
 
+@ParametersAreNonnullByDefault
 @ToString(of = { "vertPos", "vertUv" })
 public class Quad {
     
@@ -46,7 +50,7 @@ public class Quad {
         Vector2f uvs;
     }
 
-    private static final @Nonnull TextureAtlasSprite BASE = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(TextureMap.LOCATION_MISSING_TEXTURE.toString());
+    private static final TextureAtlasSprite BASE = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(TextureMap.LOCATION_MISSING_TEXTURE.toString());
     
     @ToString
     public class UVs {
@@ -55,7 +59,7 @@ public class Quad {
         private float minU, minV, maxU, maxV;
         
         @Getter
-        private final @Nonnull TextureAtlasSprite sprite;
+        private final TextureAtlasSprite sprite;
         
         private final Vector2f[] data;
         
@@ -63,7 +67,7 @@ public class Quad {
             this(BASE, data);
         }
         
-        private UVs(@Nonnull TextureAtlasSprite sprite, Vector2f... data) {
+        private UVs(TextureAtlasSprite sprite, Vector2f... data) {
             this.data = data;
             this.sprite = sprite;
             
@@ -82,7 +86,7 @@ public class Quad {
             this.maxV = maxV;
         }
 
-        public UVs(float minU, float minV, float maxU, float maxV, @Nonnull TextureAtlasSprite sprite) {
+        public UVs(float minU, float minV, float maxU, float maxV, TextureAtlasSprite sprite) {
             this.minU = minU;
             this.minV = minV;
             this.maxU = maxU;
@@ -91,7 +95,7 @@ public class Quad {
             this.data = vectorize();
         }
 
-        public UVs transform(@Nonnull TextureAtlasSprite other, ISubmap submap) {
+        public UVs transform(TextureAtlasSprite other, ISubmap submap) {
             UVs normal = normalize();
             submap = submap.normalize();
 
@@ -144,11 +148,12 @@ public class Quad {
             return new UVs(sprite, lerp(min, max, data));
         }
 
+        @SuppressWarnings("null")
         public Vector2f[] vectorize() {
             return data == null ? new Vector2f[]{ new Vector2f(minU, minV), new Vector2f(minU, maxV), new Vector2f(maxU, maxV), new Vector2f(maxU, minV) } : data;
         }
         
-        private Vector2f[] normalize(Vector2f min, Vector2f max, Vector2f... vecs) {
+        private Vector2f[] normalize(Vector2f min, Vector2f max, @NonnullType Vector2f... vecs) {
             Vector2f[] ret = new Vector2f[vecs.length];
             for (int i = 0; i < ret.length; i++) {
                 ret[i] = normalize(min, max, vecs[i]);
@@ -160,7 +165,7 @@ public class Quad {
             return new Vector2f(Quad.normalize(min.x, max.x, vec.x), Quad.normalize(min.y, max.y, vec.y));
         }
         
-        private Vector2f[] lerp(Vector2f min, Vector2f max, Vector2f... vecs) {
+        private Vector2f[] lerp(Vector2f min, Vector2f max, @NonnullType Vector2f... vecs) {
             Vector2f[] ret = new Vector2f[vecs.length];
             for (int i = 0; i < ret.length; i++) {
                 ret[i] = lerp(min, max, vecs[i]);
@@ -200,16 +205,16 @@ public class Quad {
 
     private final int blocklight, skylight;
     
-    private Quad(Vector3f[] verts, Vector2f[] uvs, Builder builder, @Nonnull TextureAtlasSprite sprite) {
+    private Quad(Vector3f[] verts, Vector2f[] uvs, Builder builder, TextureAtlasSprite sprite) {
         this(verts, uvs, builder, sprite, 0, 0);
     }
 
     @Deprecated
-    private Quad(Vector3f[] verts, Vector2f[] uvs, Builder builder, @Nonnull TextureAtlasSprite sprite, boolean fullbright) {
+    private Quad(Vector3f[] verts, Vector2f[] uvs, Builder builder, TextureAtlasSprite sprite, boolean fullbright) {
         this(verts, uvs, builder, sprite, fullbright ? 15 : 0, fullbright ? 15 : 0);
     }
     
-    private Quad(Vector3f[] verts, Vector2f[] uvs, Builder builder, @Nonnull TextureAtlasSprite sprite, int blocklight, int skylight) {
+    private Quad(Vector3f[] verts, Vector2f[] uvs, Builder builder, TextureAtlasSprite sprite, int blocklight, int skylight) {
         this.vertPos = verts;
         this.vertUv = uvs;
         this.builder = builder;
@@ -230,11 +235,20 @@ public class Quad {
     private Quad(Vector3f[] verts, UVs uvs, Builder builder, int blocklight, int skylight) {
         this(verts, uvs.vectorize(), builder, uvs.getSprite(), blocklight, skylight);
     }
+    
+    public Vector3f getVert(int index) {
+    	return new Vector3f(vertPos[index % 4]);
+    }
+    
+    public Vector2f getUv(int index) {
+    	return new Vector2f(vertUv[index % 4]);
+    }
 
     public void compute() {
 
     }
 
+    @SuppressWarnings("null")
     public Quad[] subdivide(int count) {
         List<Quad> rects = Lists.newArrayList();
 
@@ -256,8 +270,8 @@ public class Quad {
         return rects.toArray(new Quad[rects.size()]);
     }
     
-    @Nullable
-    private Pair<Quad, Quad> divide(boolean vertical) {
+    @SuppressWarnings("null")
+    private Pair<@NonnullType Quad, Quad> divide(boolean vertical) {
         float min, max;
         UVs uvs = getUvs().normalize();
         if (vertical) {
@@ -379,12 +393,17 @@ public class Quad {
         return new Quad(this.vertPos, uvs, builder, blocklight, skylight);
     }
     
+    @SuppressWarnings("null")
     public BakedQuad rebake() {
         @Nonnull VertexFormat format = this.builder.vertexFormat;
-        if (this.blocklight > 0 || this.skylight > 0) {
-            if (format == DefaultVertexFormats.ITEM) { // ITEM is convertable to BLOCK (replace normal+padding with lmap)
-                format = DefaultVertexFormats.BLOCK;
-            } else if (!format.getElements().contains(DefaultVertexFormats.TEX_2S)) { // Otherwise, this format is unknown, add TEX_2S if it does not exist
+        // Sorry OF users
+        boolean hasLightmap = (this.blocklight > 0 || this.skylight > 0) && !FMLClientHandler.instance().hasOptifine();
+        if (hasLightmap) {
+            // TODO waiting on https://github.com/MinecraftForge/MinecraftForge/pull/3896
+//            if (format == DefaultVertexFormats.ITEM) { // ITEM is convertable to BLOCK (replace normal+padding with lmap)
+//                format = DefaultVertexFormats.BLOCK;
+//            } else 
+            if (!format.getElements().contains(DefaultVertexFormats.TEX_2S)) { // Otherwise, this format is unknown, add TEX_2S if it does not exist
                 format = new VertexFormat(format).addElement(DefaultVertexFormats.TEX_2S);
             }
         }
@@ -424,11 +443,11 @@ public class Quad {
         return builder.build();
     }
     
-    public Quad transformUVs(@Nonnull TextureAtlasSprite sprite) {
+    public Quad transformUVs(TextureAtlasSprite sprite) {
         return transformUVs(sprite, CTMLogic.FULL_TEXTURE.normalize());
     }
     
-    public Quad transformUVs(@Nonnull TextureAtlasSprite sprite, ISubmap submap) {
+    public Quad transformUVs(TextureAtlasSprite sprite, ISubmap submap) {
         return new Quad(vertPos, getUvs().transform(sprite, submap), builder, blocklight, skylight);
     }
     
@@ -449,14 +468,13 @@ public class Quad {
         Builder b = new Builder(baked.getFormat(), baked.getSprite());
         //Chisel.debug("Format: " + baked.getFormat().toString());
         baked.pipe(b);
-        return b.build().derotate(); // for now we will ignore rotated UVs
+        return b.build();
     }
     
     @RequiredArgsConstructor
     public static class Builder implements IVertexConsumer {
 
         @Getter
-        @Nonnull
         private final VertexFormat vertexFormat;
         @Getter
         private final TextureAtlasSprite sprite;
@@ -473,7 +491,8 @@ public class Quad {
         private ListMultimap<EnumUsage, float[]> data = MultimapBuilder.enumKeys(EnumUsage.class).arrayListValues().build();
         
         @Override
-        public void put(int element, float... data) {
+        public void put(int element, @Nullable float... data) {
+            if (data == null) return;
             float[] copy = new float[data.length];
             System.arraycopy(data, 0, copy, 0, data.length);
             VertexFormatElement ele = vertexFormat.getElement(element);
@@ -496,6 +515,6 @@ public class Quad {
         }
         
         //@Override //soft override, only exists in new forge versions
-        public void setTexture(TextureAtlasSprite texture) {}
+        public void setTexture(@Nullable TextureAtlasSprite texture) {}
     }
 }

@@ -1,0 +1,24 @@
+0.2.0:
+New
+- CTM (and CTM subtypes, CTMH etc.) now support "ignoreStates" and "connectInside" for their extra{} data.
+- All texture metadata can now specify a "proxy" which is to be used if CTM is present.
+Changes
+- CTMH has been reworked, now only requires one texture
+- If no ctm_version is found inside a metadata section, the texture will fail to load
+- Improved error handling, and a model will fail to load if the wrong number of textures are provided for a type.
+Fixes
+- Fix cache collision when multiple types serialize to the same value
+- Fix overrides with metadata using wrong sprite
+- Fix overriden sprites having incorrect UVs
+- Fix non-full cubes having their CTM obscured on unculled sides
+- Fix Chisel-Team/Chisel#474 crash when CTM is applied to pure item model
+- Fix handlePerspective breaking item models
+
+0.1.1:
+Fixes
+- Fix issues with certain mods' blocks (EIO facades, Mekanism cables, etc)
+- Fix crash when resource pack contains invalid metadata files
+
+0.1.0:
+New
+- Initial beta release

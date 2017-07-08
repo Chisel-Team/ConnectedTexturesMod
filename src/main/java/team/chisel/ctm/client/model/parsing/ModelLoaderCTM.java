@@ -21,6 +21,7 @@ import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.ICustomModelLoader;
 import net.minecraftforge.client.model.IModel;
+import net.minecraftforge.client.model.ModelLoaderRegistry;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.model.IModelParser;
 
@@ -37,20 +38,23 @@ public enum ModelLoaderCTM implements ICustomModelLoader {
     @Override
     public void onResourceManagerReload(@Nonnull IResourceManager resourceManager) {
         this.manager = resourceManager;
+        jsonCache.clear();
         loadedModels.clear();
     }
     
     private final Set<ResourceLocation> loading = new HashSet<>();
+    
+    private ResourceLocation prev;
 
     @Override
-    public boolean accepts(ResourceLocation modelLocation) {
+    public boolean accepts(ResourceLocation modelLocation) {        
         if (modelLocation instanceof ModelResourceLocation) {
             modelLocation = new ResourceLocation(modelLocation.getResourceDomain(), modelLocation.getResourcePath());
         }
         if (loading.contains(modelLocation)) {
             return false;
         }
-        
+
         JsonElement json = getJSON(modelLocation);
         return json.isJsonObject() && json.getAsJsonObject().has("ctm_version");
     }
@@ -58,13 +62,16 @@ public enum ModelLoaderCTM implements ICustomModelLoader {
     @Override
     public IModel loadModel(ResourceLocation modelLocation) throws IOException {
         loading.add(modelLocation);
-        loadedModels.computeIfAbsent(modelLocation, res -> loadFromFile(res, true));
-        IModelCTM model = loadedModels.get(modelLocation);
-        if (model != null) {
-            model.load();
+        try {
+            loadedModels.computeIfAbsent(modelLocation, res -> loadFromFile(res, true));
+            IModelCTM model = loadedModels.get(modelLocation);
+            if (model != null) {
+                model.load();
+            }
+            return model;
+        } finally {
+            loading.remove(modelLocation);
         }
-        loading.remove(modelLocation);
-        return model;
     }
     
     @SuppressWarnings("null")

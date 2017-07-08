@@ -3,13 +3,17 @@ package team.chisel.ctm.client.model.parsing;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.Nonnull;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import lombok.SneakyThrows;
 import net.minecraft.client.renderer.block.model.ModelBlock;
 import net.minecraft.util.ResourceLocation;
@@ -33,13 +37,30 @@ public class ModelParserV1 implements IModelParser {
         
         // Hack around circularity detection to load vanilla model
         ResourceLocation prev = _loadingModels.removeLast();
-        IModel vanillamodel = ModelLoaderRegistry.getModel(new ResourceLocation(res.getResourceDomain(), res.getResourcePath().replace("models/", "")));
-        _loadingModels.addLast(prev);
-
-        Map<String, String[]> faces = GSON.fromJson(json.getAsJsonObject("faces"), new TypeToken<Map<String, String[]>>(){}.getType());
-        if (faces == null) {
-            faces = Collections.emptyMap();
+        IModel vanillamodel;
+        try {
+            vanillamodel = ModelLoaderRegistry.getModel(new ResourceLocation(res.getResourceDomain(), res.getResourcePath().replace("models/", "")));
+        } catch (IllegalStateException e) {
+            IModel parent = ModelLoaderRegistry.getModel(new ResourceLocation(json.get("parent").getAsString()));
+            if (parent instanceof IModelCTM) {
+                return (IModelCTM) parent;
+            }
+            throw new IllegalStateException("CTM model " + res + " cannot have non-CTM parent " + json.get("parent"));
+        } finally {
+            _loadingModels.addLast(prev);
         }
-        return new ModelCTM(modelinfo, vanillamodel, faces);
+
+        Map<String, JsonElement> parsed = GSON.fromJson(json.getAsJsonObject("ctm_overrides"), new TypeToken<Map<String, JsonElement>>(){}.getType());
+        if (parsed == null) {
+            parsed = Collections.emptyMap();
+        }
+        Int2ObjectMap<JsonElement> replacements = new Int2ObjectArrayMap<>(parsed.size());
+        for (Entry<String, JsonElement> e : parsed.entrySet()) {
+            try {
+                int index = Integer.parseInt(e.getKey());
+                replacements.put(index, e.getValue());
+            } catch (NumberFormatException ex) {}
+        }
+        return new ModelCTM(modelinfo, vanillamodel, replacements);
     }
 }

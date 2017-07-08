@@ -1,5 +1,7 @@
 package team.chisel.ctm.client.texture.type;
 
+import javax.annotation.Nonnull;
+
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -13,21 +15,26 @@ import team.chisel.ctm.client.texture.render.TextureNormal;
 /**
  * Normal Block Render Type
  */
-@TextureType("NORMAL")
-public class TextureTypeTypeNormal implements ITextureType {
+public enum TextureTypeNormal implements ITextureType {
+    
+    @TextureType("NORMAL")
+    INSTANCE;
+    
+    @Nonnull
+    private static final ITextureContext EMPTY_CONTEXT = () -> 0L;
 
     @Override
-    public ICTMTexture<TextureTypeTypeNormal> makeTexture(TextureInfo info){
+    public ICTMTexture<TextureTypeNormal> makeTexture(TextureInfo info){
         return new TextureNormal(this, info);
     }
 
     @Override
     public ITextureContext getBlockRenderContext(IBlockState state, IBlockAccess world, BlockPos pos, ICTMTexture<?> tex){
-        return null;
+        return EMPTY_CONTEXT;
     }
 
     @Override
     public ITextureContext getContextFromData(long data){
-        return null;
+        return EMPTY_CONTEXT;
     }
 }
