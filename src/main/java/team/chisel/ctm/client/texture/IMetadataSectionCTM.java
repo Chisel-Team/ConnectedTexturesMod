@@ -1,5 +1,6 @@
 package team.chisel.ctm.client.texture;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Optional;
@@ -28,6 +29,7 @@ import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.type.TextureTypeRegistry;
+import team.chisel.ctm.client.util.ResourceUtil;
 
 @ParametersAreNonnullByDefault
 public interface IMetadataSectionCTM extends IMetadataSection {
@@ -42,14 +44,30 @@ public interface IMetadataSectionCTM extends IMetadataSection {
     
     ResourceLocation[] getAdditionalTextures();
     
+    @Nullable String getProxy();
+    
     JsonObject getExtraData();
     
-    @SuppressWarnings("null")
     default ICTMTexture<?> makeTexture(TextureAtlasSprite sprite, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
-        return getType().makeTexture(new TextureInfo(
-                Arrays.stream(ObjectArrays.concat(new ResourceLocation(sprite.getIconName()), getAdditionalTextures())).map(bakedTextureGetter::apply).toArray(TextureAtlasSprite[]::new), 
-                Optional.of(getExtraData()), 
-                getLayer()
+        IMetadataSectionCTM meta = this;
+        if (getProxy() != null) {
+            TextureAtlasSprite proxySprite = bakedTextureGetter.apply(new ResourceLocation(getProxy()));
+            try {
+                meta = ResourceUtil.getMetadata(proxySprite);
+            } catch (IOException e) {
+                CTM.logger.error("Could not parse metadata of proxy " + getProxy(), e);
+            }
+            if (meta != null) {
+                sprite = proxySprite;
+            } else {
+                CTM.logger.error("Metadata for proxy either missing or errored, reverting to base...");
+                meta = this;
+            }
+        }
+        return meta.getType().makeTexture(new TextureInfo(
+                Arrays.stream(ObjectArrays.concat(new ResourceLocation(sprite.getIconName()), meta.getAdditionalTextures())).map(bakedTextureGetter::apply).toArray(TextureAtlasSprite[]::new), 
+                Optional.of(meta.getExtraData()), 
+                meta.getLayer()
         ));
     }
     
@@ -57,9 +75,9 @@ public interface IMetadataSectionCTM extends IMetadataSection {
     @Getter
     public static class V1 implements IMetadataSectionCTM {
         
-        @SuppressWarnings("null")
         private ITextureType type = TextureTypeRegistry.getType("NORMAL");
         private BlockRenderLayer layer = BlockRenderLayer.SOLID;
+        private String proxy;
         private ResourceLocation[] additionalTextures = new ResourceLocation[0];
         private JsonObject extraData = new JsonObject();
 
@@ -68,8 +86,19 @@ public interface IMetadataSectionCTM extends IMetadataSection {
             return 1;
         }
 
-        public static IMetadataSectionCTM fromJson(JsonObject obj) {
+        public static IMetadataSectionCTM fromJson(JsonObject obj) throws JsonParseException {
             V1 ret = new V1();
+            
+            if (obj.has("proxy")) {
+                JsonElement proxyEle = obj.get("proxy");
+                if (proxyEle.isJsonPrimitive() && proxyEle.getAsJsonPrimitive().isString()) {
+                    ret.proxy = proxyEle.getAsString();
+                }
+                
+                if (obj.entrySet().stream().filter(e -> e.getKey().equals("ctm_version")).count() > 1) {
+                    throw new JsonParseException("Cannot define other fields when using proxy");
+                }
+            }
 
             if (obj.has("type")) {
                 JsonElement typeEle = obj.get("type");

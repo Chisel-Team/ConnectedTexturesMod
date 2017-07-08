@@ -59,6 +59,20 @@ public enum TextureMetadataHandler {
                     rel = new ResourceLocation(rel.getResourceDomain(), "textures/" + rel.getResourcePath() + ".png");
                     IMetadataSectionCTM metadata = ResourceUtil.getMetadata(rel);
                     if (metadata != null) {
+                        // Load proxy data
+                        if (metadata.getProxy() != null) {
+                            ResourceLocation proxysprite = new ResourceLocation(metadata.getProxy());
+                            IMetadataSectionCTM proxymeta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(proxysprite));
+                            if (proxymeta != null) {
+                                // Load proxy's base sprite
+                                event.getMap().registerSprite(proxysprite);
+                                // Load proxy's additional textures
+                                for (ResourceLocation r : proxymeta.getAdditionalTextures()) {
+                                    event.getMap().registerSprite(r);
+                                }
+                            }
+                        }
+                        // Load additional textures
                         for (ResourceLocation r : metadata.getAdditionalTextures()) {
                             event.getMap().registerSprite(r);
                         }
