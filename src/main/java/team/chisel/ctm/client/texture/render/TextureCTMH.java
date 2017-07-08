@@ -24,7 +24,7 @@ public class TextureCTMH extends TextureCTM<TextureTypeCTMH> {
         Quad q = makeQuad(quad, context);
         CTMLogic ctm = context == null ? null : ((TextureContextCTM) context).getCTM(quad.getFace());
         ISubmap submap = getQuad(ctm);
-        q = q.transformUVs(sprites[1], submap);
+        q = q.transformUVs(sprites[0], submap);
         return Collections.singletonList(q.rebake());
     }
 
