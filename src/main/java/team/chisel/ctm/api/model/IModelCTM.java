@@ -26,6 +26,7 @@ public interface IModelCTM extends IModel {
     @Deprecated
     IChiselFace getDefaultFace();
 
+    @Deprecated
     boolean ignoreStates();
 
     boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer);

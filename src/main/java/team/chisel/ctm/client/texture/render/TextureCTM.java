@@ -4,23 +4,37 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.util.JsonUtils;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTM;
 import team.chisel.ctm.client.texture.type.TextureTypeCTM;
 import team.chisel.ctm.client.util.CTMLogic;
+import team.chisel.ctm.client.util.ParseUtils;
 import team.chisel.ctm.client.util.Quad;
 
 @ParametersAreNonnullByDefault
-public class TextureCTM extends AbstractTexture<TextureTypeCTM> {
+@Accessors(fluent = true)
+public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
+	
+	@Getter
+	private final Optional<Boolean> connectInside;
+	
+	@Getter
+	private final boolean ignoreStates;
 
-    public TextureCTM(TextureTypeCTM type, TextureInfo info) {
+    public TextureCTM(T type, TextureInfo info) {
         super(type, info);
+        this.connectInside = info.getInfo().flatMap(obj -> ParseUtils.getBoolean(obj, "connectInside"));
+        this.ignoreStates = info.getInfo().map(obj -> JsonUtils.getBoolean(obj, "ignoreStates", false)).orElse(false);
     }
 
     @Override

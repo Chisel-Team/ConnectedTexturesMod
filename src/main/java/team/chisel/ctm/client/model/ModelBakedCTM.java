@@ -17,7 +17,6 @@ import com.google.common.collect.ObjectArrays;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.BakedQuadRetextured;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -27,6 +26,7 @@ import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.RenderContextList;
+import team.chisel.ctm.client.util.BakedQuadRetextured;
 
 @ParametersAreNonnullByDefault
 public class ModelBakedCTM extends AbstractCTMBakedModel {
@@ -77,7 +77,7 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
                 int quadGoal = ctx == null ? 1 : texturemap.values().stream().mapToInt(tex -> tex.getType().getQuadsPerSide()).max().orElse(1);
                 for (Entry<BakedQuad, ICTMTexture<?>> e : texturemap.entrySet()) {
                     // If the layer is null, this is a wrapped vanilla texture, so passthrough the layer check to the block
-                    if (e.getValue().getLayer() == layer || (e.getValue().getLayer() == null && layer == state.getBlock().getBlockLayer())) {
+                    if (e.getValue().getLayer() == layer || (e.getValue().getLayer() == null && (state == null || layer == state.getBlock().getBlockLayer()))) {
                         ITextureContext tcx = ctx == null ? null : ctx.getRenderContext(e.getValue().getType());
                         quads.addAll(e.getValue().transformQuad(e.getKey(), tcx, quadGoal));
                     }
@@ -94,6 +94,7 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
     
     @Override
     public Pair<? extends IBakedModel, Matrix4f> handlePerspective(TransformType cameraTransformType) {
-    	return getParent().handlePerspective(cameraTransformType);
+    	// FIXME this won't work if parent returns a different model (shouldn't happen for vanilla)
+    	return Pair.of(this, getParent().handlePerspective(cameraTransformType).getRight());
     }
 }

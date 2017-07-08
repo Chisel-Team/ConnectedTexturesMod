@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import lombok.SneakyThrows;
@@ -19,25 +18,22 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.ModelBakeEvent;
-import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.common.model.TRSRTransformation;
-import net.minecraftforge.fml.common.ProgressManager;
-import net.minecraftforge.fml.common.ProgressManager.ProgressBar;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import team.chisel.ctm.CTM;
 import team.chisel.ctm.api.event.TextureCollectedEvent;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.client.model.ModelBakedCTM;
 import team.chisel.ctm.client.model.ModelCTM;
 import team.chisel.ctm.client.model.parsing.ModelLoaderCTM;
-import team.chisel.ctm.client.texture.MetadataSectionCTM;
+import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 
 public enum TextureMetadataHandler {
 
@@ -54,8 +50,22 @@ public enum TextureMetadataHandler {
             try {
                 ResourceLocation rel = new ResourceLocation(sprite.getIconName());
                 rel = new ResourceLocation(rel.getResourceDomain(), "textures/" + rel.getResourcePath() + ".png");
-                MetadataSectionCTM metadata = ResourceUtil.getMetadata(rel);
+                IMetadataSectionCTM metadata = ResourceUtil.getMetadata(rel);
                 if (metadata != null) {
+                    // Load proxy data
+                    if (metadata.getProxy() != null) {
+                        ResourceLocation proxysprite = new ResourceLocation(metadata.getProxy());
+                        IMetadataSectionCTM proxymeta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(proxysprite));
+                        if (proxymeta != null) {
+                            // Load proxy's base sprite
+                            event.getMap().registerSprite(proxysprite);
+                            // Load proxy's additional textures
+                            for (ResourceLocation r : proxymeta.getAdditionalTextures()) {
+                                event.getMap().registerSprite(r);
+                            }
+                        }
+                    }
+                    // Load additional textures
                     for (ResourceLocation r : metadata.getAdditionalTextures()) {
                         event.getMap().registerSprite(r);
                     }
@@ -98,12 +108,16 @@ public enum TextureMetadataHandler {
                     textures = partModels.values().stream().map(m -> m.getTextures()).flatMap(Collection::stream).collect(Collectors.toList());
                 }
                 for (ResourceLocation tex : textures) {
-                    MetadataSectionCTM meta = null;
+                    IMetadataSectionCTM meta = null;
                     try {
                         meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex));
                     } catch (IOException e) {} // Fallthrough
                     if (meta != null) {
-                        event.getModelRegistry().putObject(mrl, wrap(model, event.getModelRegistry().getObject(mrl)));
+                        try {
+                            event.getModelRegistry().putObject(mrl, wrap(model, event.getModelRegistry().getObject(mrl)));
+                        } catch (IOException e) {
+                            CTM.logger.error("Could not wrap model " + mrl + ". Aborting...", e);
+                        }
                         break;
                     }
                 }
@@ -111,7 +125,7 @@ public enum TextureMetadataHandler {
         }
     }
 
-    private @Nonnull IBakedModel wrap(IModel model, IBakedModel object) {
+    private @Nonnull IBakedModel wrap(IModel model, IBakedModel object) throws IOException {
         ModelCTM modelchisel = new ModelCTM(null, model, Int2ObjectMaps.emptyMap());
         modelchisel.bake(TRSRTransformation.identity(), DefaultVertexFormats.ITEM, rl -> Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(rl.toString()));
         return new ModelBakedCTM(modelchisel, object);

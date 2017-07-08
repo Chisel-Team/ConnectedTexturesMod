@@ -235,6 +235,14 @@ public class Quad {
     private Quad(Vector3f[] verts, UVs uvs, Builder builder, int blocklight, int skylight) {
         this(verts, uvs.vectorize(), builder, uvs.getSprite(), blocklight, skylight);
     }
+    
+    public Vector3f getVert(int index) {
+    	return new Vector3f(vertPos[index % 4]);
+    }
+    
+    public Vector2f getUv(int index) {
+    	return new Vector2f(vertUv[index % 4]);
+    }
 
     public void compute() {
 
