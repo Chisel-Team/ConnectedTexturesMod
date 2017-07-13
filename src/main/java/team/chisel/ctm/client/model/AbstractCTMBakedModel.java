@@ -160,16 +160,16 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
             RenderContextList ctxList = ext.getContextList(ext.getClean(), model);
 
             TObjectLongMap<ITextureType> serialized = ctxList.serialized();
-            ProfileUtil.end();
-
-            ProfileUtil.start("model_creation");
+            ProfileUtil.endAndStart("model_creation");
             baked = modelcache.get(new State(ext.getClean(), serialized, getParent(rand)), () -> createModel(state, model, ctxList, rand));
+            ProfileUtil.end();
         } else if (state != null)  {
             ProfileUtil.start("model_creation");
             baked = modelcache.get(new State(state, null, getParent(rand)), () -> createModel(state, model, null, rand));
+            ProfileUtil.end();
         }
 
-        ProfileUtil.endAndStart("quad_lookup");
+        ProfileUtil.start("quad_lookup");
         List<BakedQuad> ret;
         if (side != null && layer != null) {
             ret = baked.faceQuads.get(layer, side);
@@ -181,6 +181,7 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
             ret = Lists.newArrayList(baked.genQuads.values());
         }
         ProfileUtil.end();
+
         ProfileUtil.end();
         return ret;
     }
