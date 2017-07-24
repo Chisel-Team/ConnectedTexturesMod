@@ -29,6 +29,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
+import lombok.Delegate;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
@@ -113,18 +114,6 @@ public class BlockstatePredicateParser {
         @Override
         public boolean test(IBlockState t) {
             return t.getBlock() == block;
-        }
-    }
-    
-    @RequiredArgsConstructor
-    @ToString
-    class DeferringPredicate implements Predicate<IBlockState> {
-        private final Composition type;
-        private final Predicate<IBlockState> parent, child;
-        
-        @Override
-        public boolean test(IBlockState t) {
-            return type.composer.apply(parent, child).test(t);
         }
     }
     
@@ -215,7 +204,7 @@ public class BlockstatePredicateParser {
             if (composition == null) {
                 return child;
             }
-            return new DeferringPredicate(composition, defaultPredicate.get(), child);
+            return composition.composer.apply(defaultPredicate.get(), child);
         }
 
         @SuppressWarnings({ "rawtypes", "unchecked" })
