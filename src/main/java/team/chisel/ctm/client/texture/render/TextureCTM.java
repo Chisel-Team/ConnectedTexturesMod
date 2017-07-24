@@ -2,39 +2,72 @@ package team.chisel.ctm.client.texture.render;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiPredicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import gnu.trove.impl.Constants;
+import gnu.trove.map.TObjectByteMap;
+import gnu.trove.map.hash.TObjectByteHashMap;
 import lombok.Getter;
+import lombok.val;
 import lombok.experimental.Accessors;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.JsonUtils;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTM;
 import team.chisel.ctm.client.texture.type.TextureTypeCTM;
+import team.chisel.ctm.client.util.BlockstatePredicateParser;
 import team.chisel.ctm.client.util.CTMLogic;
+import team.chisel.ctm.client.util.CTMLogic.StateComparisonCallback;
 import team.chisel.ctm.client.util.ParseUtils;
 import team.chisel.ctm.client.util.Quad;
 
 @ParametersAreNonnullByDefault
 @Accessors(fluent = true)
 public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
-	
+
+    private static final BlockstatePredicateParser predicateParser = new BlockstatePredicateParser();
+
 	@Getter
 	private final Optional<Boolean> connectInside;
 	
 	@Getter
 	private final boolean ignoreStates;
+	
+	@Nullable
+	private final BiPredicate<EnumFacing, IBlockState> connectionChecks;
+	
+	private final EnumMap<EnumFacing, TObjectByteMap<IBlockState>> connectionCache = new EnumMap<>(EnumFacing.class);
+	{
+	    for (EnumFacing dir : EnumFacing.VALUES) {
+	        connectionCache.put(dir, new TObjectByteHashMap<>(Constants.DEFAULT_CAPACITY, Constants.DEFAULT_LOAD_FACTOR, (byte) -1));
+	    }
+	}
 
     public TextureCTM(T type, TextureInfo info) {
         super(type, info);
         this.connectInside = info.getInfo().flatMap(obj -> ParseUtils.getBoolean(obj, "connectInside"));
         this.ignoreStates = info.getInfo().map(obj -> JsonUtils.getBoolean(obj, "ignoreStates", false)).orElse(false);
+        this.connectionChecks = info.getInfo().map(obj -> predicateParser.parse(obj.get("connectTo"))).orElse(null);
+    }
+    
+    public boolean connectTo(CTMLogic ctm, IBlockState from, IBlockState to, EnumFacing dir) {
+        byte cached = connectionCache.get(dir).get(to);
+        if (cached == -1) {
+            connectionCache.get(dir).put(to, (byte) ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0));
+        }
+        return cached == 1;
     }
 
     @Override
