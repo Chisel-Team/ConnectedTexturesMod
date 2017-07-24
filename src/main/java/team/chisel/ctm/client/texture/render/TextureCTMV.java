@@ -18,6 +18,7 @@ import team.chisel.ctm.client.texture.ctx.TextureContextCTMV.ConnectionData;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTMV.Connections;
 import team.chisel.ctm.client.texture.type.TextureTypeCTMV;
 import team.chisel.ctm.client.util.Quad;
+import team.chisel.ctm.client.util.Submap;
 
 public class TextureCTMV extends AbstractTexture<TextureTypeCTMV> {
 
@@ -31,7 +32,7 @@ public class TextureCTMV extends AbstractTexture<TextureTypeCTMV> {
             if (quad.getFace() != null && quad.getFace().getAxis().isVertical()) {
                 return Lists.newArrayList(makeQuad(quad, context).transformUVs(sprites[0]).rebake());
             }
-            return Lists.newArrayList(makeQuad(quad, context).transformUVs(sprites[1], Quad.TOP_LEFT).rebake());
+            return Lists.newArrayList(makeQuad(quad, context).transformUVs(sprites[1], Submap.X2[0][0]).rebake());
         }
         return Lists.newArrayList(getQuad(quad, context));
     }
@@ -59,7 +60,7 @@ public class TextureCTMV extends AbstractTexture<TextureTypeCTMV> {
         cons = new Connections(realConnections);
 
         int rotation = 0;
-        ISubmap uvs = Quad.TOP_LEFT;
+        ISubmap uvs = Submap.X2[0][0];
         if (in.getFace().getAxis().isHorizontal() && cons.connectedOr(UP, DOWN)) {
             uvs = getUVs(UP, DOWN, cons);
         } else if (cons.connectedOr(EAST, WEST)) {
@@ -106,12 +107,12 @@ public class TextureCTMV extends AbstractTexture<TextureTypeCTMV> {
     private ISubmap getUVs(EnumFacing face1, EnumFacing face2, Connections cons) {
         ISubmap uvs;
         if (cons.connectedAnd(face1, face2)) {
-            uvs = Quad.BOTTOM_LEFT;
+            uvs = Submap.X2[1][0];
         } else {
             if (cons.connected(face1)) {
-                uvs = Quad.BOTTOM_RIGHT;
+                uvs = Submap.X2[1][1];
             } else {
-                uvs = Quad.TOP_RIGHT;
+                uvs = Submap.X2[0][1];
             }
         }
         return uvs;

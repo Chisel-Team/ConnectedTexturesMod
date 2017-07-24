@@ -38,12 +38,7 @@ import team.chisel.ctm.api.util.NonnullType;
 @ParametersAreNonnullByDefault
 @ToString(of = { "vertPos", "vertUv" })
 public class Quad {
-    
-    public static final ISubmap TOP_LEFT = new Submap(8, 8, 0, 0);
-    public static final ISubmap TOP_RIGHT = new Submap(8, 8, 8, 0);
-    public static final ISubmap BOTTOM_LEFT = new Submap(8, 8, 0, 8);
-    public static final ISubmap BOTTOM_RIGHT = new Submap(8, 8, 8, 8);
-    
+
     @Value
     public static class Vertex {
         Vector3f pos;

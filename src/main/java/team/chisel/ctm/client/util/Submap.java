@@ -9,6 +9,27 @@ import team.chisel.ctm.api.texture.ISubmap;
 @Getter
 @AllArgsConstructor
 public class Submap implements ISubmap {
+    
+    public static final ISubmap X1 = new Submap(16, 16, 0, 0);
+    
+    public static final ISubmap[][] X2 = new ISubmap[][] {
+        { new Submap(8, 8, 0, 0), new Submap(8, 8, 8, 0) },
+        { new Submap(8, 8, 0, 8), new Submap(8, 8, 8, 8) }
+    };
+    
+    private static final float DIV3 = 16 / 3f;
+    public static final ISubmap[][] X3 = new ISubmap[][] {
+        { new Submap(DIV3, DIV3, 0, 0),         new Submap(DIV3, DIV3, DIV3, 0),        new Submap(DIV3, DIV3, DIV3 * 2, 0) },
+        { new Submap(DIV3, DIV3, 0, DIV3),      new Submap(DIV3, DIV3, DIV3, DIV3),     new Submap(DIV3, DIV3, DIV3 * 2, DIV3) },
+        { new Submap(DIV3, DIV3, 0, DIV3 * 2),  new Submap(DIV3, DIV3, DIV3, DIV3 * 2), new Submap(DIV3, DIV3, DIV3 * 2, DIV3 * 2) },
+    };
+    
+    public static final ISubmap[][] X4 = new ISubmap[][] {
+        { new Submap(4, 4, 0, 0),   new Submap(4, 4, 4, 0),     new Submap(4, 4, 8, 0),     new Submap(4, 4, 12, 0) },
+        { new Submap(4, 4, 0, 4),   new Submap(4, 4, 4, 4),     new Submap(4, 4, 8, 4),     new Submap(4, 4, 12, 4) },
+        { new Submap(4, 4, 0, 8),   new Submap(4, 4, 4, 8),     new Submap(4, 4, 8, 8),     new Submap(4, 4, 12, 8) },
+        { new Submap(4, 4, 0, 12),  new Submap(4, 4, 4, 12),    new Submap(4, 4, 8, 12),    new Submap(4, 4, 12, 12) },
+    };
 
     private final float width, height;
     private final float xOffset, yOffset;
