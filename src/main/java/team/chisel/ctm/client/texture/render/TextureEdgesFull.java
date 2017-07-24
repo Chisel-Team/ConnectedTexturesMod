@@ -31,42 +31,46 @@ public class TextureEdgesFull extends TextureEdges {
         CTMLogicEdges ctm = (CTMLogicEdges) ((TextureContextCTM)context).getCTM(bq.getFace());
         TextureAtlasSprite sprite;
         ISubmap submap = null;
-        if (!ctm.isObscured() && !ctm.connectedOr(Dir.VALUES)) {
+        // Short circuit zero connections, as this is almost always the most common case
+        if (!ctm.isObscured() && ctm.connectedNone(Dir.VALUES)) {
             sprite = sprites[0];
             submap = Submap.X1;
-        } else if (ctm.isObscured() || ctm.connectedAnd(Dir.TOP, Dir.BOTTOM) || ctm.connectedAnd(Dir.LEFT, Dir.RIGHT)) {
+        } else {
             sprite = sprites[1];
-            submap = Submap.X3[1][1];
-        } else if (ctm.connectedAnd(Dir.LEFT, Dir.TOP)) {
-            sprite = sprites[2];
-            submap = Submap.X2[0][0];
-        } else if (ctm.connectedAnd(Dir.TOP, Dir.RIGHT)) {
-            sprite = sprites[2];
-            submap = Submap.X2[0][1];
-        } else if (ctm.connectedAnd(Dir.BOTTOM, Dir.LEFT)) {
-            sprite = sprites[2];
-            submap = Submap.X2[1][0];
-        } else if (ctm.connectedAnd(Dir.RIGHT, Dir.BOTTOM)) {
-            sprite = sprites[2];
-            submap = Submap.X2[1][1];
-        }else {
-            sprite = sprites[1];
-            if (ctm.connected(Dir.BOTTOM) || ctm.connectedAnd(Dir.BOTTOM_LEFT, Dir.BOTTOM_RIGHT)) {
-                submap = Submap.X3[0][1];
-            } else if (ctm.connected(Dir.RIGHT) || ctm.connectedAnd(Dir.TOP_RIGHT, Dir.BOTTOM_RIGHT)) {
-                submap = Submap.X3[1][0];
-            } else if (ctm.connected(Dir.LEFT) || ctm.connectedAnd(Dir.TOP_LEFT, Dir.BOTTOM_LEFT)) {
-                submap = Submap.X3[1][2];
-            } else if (ctm.connected(Dir.TOP) || ctm.connectedAnd(Dir.TOP_LEFT, Dir.TOP_RIGHT)) {
-                submap = Submap.X3[2][1];
+            boolean top     = ctm.connected(Dir.TOP)    || ctm.connectedAnd(Dir.TOP_LEFT, Dir.TOP_RIGHT);
+            boolean right   = ctm.connected(Dir.RIGHT)  || ctm.connectedAnd(Dir.TOP_RIGHT, Dir.BOTTOM_RIGHT);
+            boolean bottom  = ctm.connected(Dir.BOTTOM) || ctm.connectedAnd(Dir.BOTTOM_LEFT, Dir.BOTTOM_RIGHT);
+            boolean left    = ctm.connected(Dir.LEFT)   || ctm.connectedAnd(Dir.TOP_LEFT, Dir.BOTTOM_LEFT);
+            if (ctm.isObscured() || (top && bottom) || (right && left)) {
+                submap = Submap.X4[2][1];
+            } else if (!(top || right || bottom || left) && ctm.connectedAnd(Dir.TOP_LEFT, Dir.BOTTOM_RIGHT)) {
+                submap = Submap.X4[0][1];
+            } else if (!(top || right || bottom || left) && ctm.connectedAnd(Dir.TOP_RIGHT, Dir.BOTTOM_LEFT)) {
+                submap = Submap.X4[0][2];
+            } else if (!(bottom || right) && ctm.connectedOr(Dir.LEFT, Dir.BOTTOM_LEFT) && ctm.connectedOr(Dir.TOP, Dir.TOP_RIGHT)) {
+                submap = Submap.X4[0][3];
+            } else if (!(bottom || left) && ctm.connectedOr(Dir.TOP, Dir.TOP_LEFT) && ctm.connectedOr(Dir.RIGHT, Dir.BOTTOM_RIGHT)) {
+                submap = Submap.X4[1][3];
+            } else if (!(top || left) && ctm.connectedOr(Dir.RIGHT, Dir.TOP_RIGHT) && ctm.connectedOr(Dir.BOTTOM, Dir.BOTTOM_LEFT)) {
+                submap = Submap.X4[2][3];
+            } else if (!(top || right) && ctm.connectedOr(Dir.BOTTOM, Dir.BOTTOM_RIGHT) && ctm.connectedOr(Dir.LEFT, Dir.TOP_LEFT)) {
+                submap = Submap.X4[3][3];
+            } else if (bottom) {
+                submap = Submap.X4[1][1];
+            } else if (right) {
+                submap = Submap.X4[2][0];
+            } else if (left) {
+                submap = Submap.X4[2][2];
+            } else if (top) {
+                submap = Submap.X4[3][1];
             } else if (ctm.connected(Dir.BOTTOM_LEFT)) {
-                submap = Submap.X3[0][2];
+                submap = Submap.X4[1][2];
             } else if (ctm.connected(Dir.BOTTOM_RIGHT)) {
-                submap = Submap.X3[0][0];
+                submap = Submap.X4[1][0];
             } else if (ctm.connected(Dir.TOP_RIGHT)) {
-                submap = Submap.X3[2][0];
+                submap = Submap.X4[3][0];
             } else if (ctm.connected(Dir.TOP_LEFT)) {
-                submap = Submap.X3[2][2];
+                submap = Submap.X4[3][2];
             }
             if (submap == null) {
                 submap = Submap.X1;

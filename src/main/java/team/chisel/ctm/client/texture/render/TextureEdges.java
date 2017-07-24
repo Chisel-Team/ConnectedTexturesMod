@@ -50,7 +50,7 @@ public class TextureEdges extends TextureCTM<TextureTypeEdges> {
     public List<BakedQuad> transformQuad(BakedQuad bq, ITextureContext context, int quadGoal) {
         Quad quad = makeQuad(bq, context);
         if (context == null) {
-            return Collections.singletonList(quad.transformUVs(sprites[1], Submap.X2[0][0]).rebake());
+            return Collections.singletonList(quad.transformUVs(sprites[0]).rebake());
         }
         
         CTMLogicEdges logic = (CTMLogicEdges) ((TextureContextCTM)context).getCTM(bq.getFace());

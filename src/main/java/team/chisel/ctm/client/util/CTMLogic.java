@@ -217,7 +217,7 @@ public class CTMLogic {
     }
 
 	@SuppressWarnings("null")
-    private void fillSubmaps(int idx) {
+    protected void fillSubmaps(int idx) {
 		Dir[] dirs = submapMap[idx];
 		if (connectedOr(dirs[0], dirs[1])) {
 			if (connectedAnd(dirs)) {
