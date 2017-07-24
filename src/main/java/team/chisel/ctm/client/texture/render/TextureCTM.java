@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiPredicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -15,9 +14,9 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import gnu.trove.impl.Constants;
 import gnu.trove.map.TObjectByteMap;
-import gnu.trove.map.hash.TObjectByteHashMap;
+import gnu.trove.map.custom_hash.TObjectByteCustomHashMap;
+import gnu.trove.strategy.IdentityHashingStrategy;
 import lombok.Getter;
-import lombok.val;
 import lombok.experimental.Accessors;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -51,7 +50,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
 	private final EnumMap<EnumFacing, TObjectByteMap<IBlockState>> connectionCache = new EnumMap<>(EnumFacing.class);
 	{
 	    for (EnumFacing dir : EnumFacing.VALUES) {
-	        connectionCache.put(dir, new TObjectByteHashMap<>(Constants.DEFAULT_CAPACITY, Constants.DEFAULT_LOAD_FACTOR, (byte) -1));
+	        connectionCache.put(dir, new TObjectByteCustomHashMap<>(new IdentityHashingStrategy<>(), Constants.DEFAULT_CAPACITY, Constants.DEFAULT_LOAD_FACTOR, (byte) -1));
 	    }
 	}
 
@@ -63,11 +62,13 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
     }
     
     public boolean connectTo(CTMLogic ctm, IBlockState from, IBlockState to, EnumFacing dir) {
-        byte cached = connectionCache.get(dir).get(to);
-        if (cached == -1) {
-            connectionCache.get(dir).put(to, (byte) ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0));
+        synchronized (connectionCache) {
+            byte cached = connectionCache.get(dir).get(to);
+            if (cached == -1) {
+                connectionCache.get(dir).put(to, (byte) ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0));
+            }
+            return cached == 1;
         }
-        return cached == 1;
     }
 
     @Override
