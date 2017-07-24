@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumFacing.Axis;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
@@ -27,8 +28,6 @@ public class TextureTypeEdges extends TextureTypeCTM {
     @RequiredArgsConstructor
     public static class CTMLogicEdges extends CTMLogic {
         
-        protected final TextureEdges tex;
-        
         @Setter
         @Getter
         private boolean obscured;
@@ -39,7 +38,7 @@ public class TextureTypeEdges extends TextureTypeCTM {
                 return false;
             }
             IBlockState obscuring = world.getBlockState(current.offset(dir));
-            if (tex.getConnectTo().contains(obscuring.getBlock())) {
+            if (stateComparator(state, obscuring, dir)) {
                 setObscured(true);
                 return false;
             }
@@ -47,13 +46,25 @@ public class TextureTypeEdges extends TextureTypeCTM {
             IBlockState con = world.getBlockState(connection);
             IBlockState obscuringcon = world.getBlockState(connection.offset(dir));
             
-            if (tex.getConnectTo().contains(con.getBlock()) || tex.getConnectTo().contains(obscuringcon.getBlock())) {
+            if (stateComparator(state, con, dir) || stateComparator(state, obscuringcon, dir)) {
                 Vec3d difference = new Vec3d(connection.subtract(current));
                 if (difference.lengthSquared() > 1) {
                     difference = difference.normalize();
-                    BlockPos posA = new BlockPos(difference.rotateYaw((float) Math.PI /  4)).add(current);
-                    BlockPos posB = new BlockPos(difference.rotateYaw((float) Math.PI / -4)).add(current);
-                    return (world.getBlockState(posA) == state && !tex.getConnectTo().contains(world.getBlockState(posA.offset(dir)).getBlock())) || (world.getBlockState(posB) == state && !tex.getConnectTo().contains(world.getBlockState(posB.offset(dir)).getBlock()));
+                    if (dir.getAxis() == Axis.Z) {
+                        difference = difference.rotateYaw((float) -Math.PI / 2);
+                    }
+                    float ang = (float) Math.PI / 4;
+                    Vec3d vA, vB;
+                    if (dir.getAxis().isVertical()) {
+                        vA = difference.rotateYaw(ang);
+                        vB = difference.rotateYaw(-ang);
+                    } else {
+                        vA = difference.rotatePitch(ang);
+                        vB = difference.rotatePitch(-ang);
+                    }
+                    BlockPos posA = new BlockPos(vA).add(current);
+                    BlockPos posB = new BlockPos(vB).add(current);
+                    return (world.getBlockState(posA) == state && !stateComparator(state, world.getBlockState(posA.offset(dir)), dir)) || (world.getBlockState(posB) == state && !stateComparator(state, world.getBlockState(posA.offset(dir)), dir));
                 } else {
                     return true;
                 }
@@ -83,7 +94,12 @@ public class TextureTypeEdges extends TextureTypeCTM {
             
             @Override
             protected CTMLogic createCTM(IBlockState state) {
-                return new CTMLogicEdges((TextureEdges) tex);
+                CTMLogic parent = super.createCTM(state);
+                // FIXME
+                CTMLogic ret = new CTMLogicEdges();
+                ret.ignoreStates(parent.ignoreStates()).stateComparator(parent.stateComparator());
+                ret.disableObscuredFaceCheck = parent.disableObscuredFaceCheck;
+                return ret;
             }
         };
     }
