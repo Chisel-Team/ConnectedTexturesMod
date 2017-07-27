@@ -29,12 +29,14 @@ public class TextureContextCTM implements ITextureContext {
             CTMLogic ctm = createCTM(state);
             ctm.createSubmapIndices(world, pos, face);
             ctmData.put(face, ctm);
-            this.data |= ctm.serialized() << (face.ordinal() * 8);
+            this.data |= ctm.serialized() << (face.ordinal() * 10);
         }
     }
     
     protected CTMLogic createCTM(@Nonnull IBlockState state) {
-        CTMLogic ret = CTMLogic.getInstance().ignoreStates(tex.ignoreStates());
+        CTMLogic ret = CTMLogic.getInstance()
+                .ignoreStates(tex.ignoreStates())
+                .stateComparator(tex::connectTo);
         ret.disableObscuredFaceCheck = tex.connectInside();
         return ret;
     }

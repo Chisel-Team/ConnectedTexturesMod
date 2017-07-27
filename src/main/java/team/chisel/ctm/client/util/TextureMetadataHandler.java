@@ -4,18 +4,20 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.Sets;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import lombok.SneakyThrows;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.ModelBlock;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -83,10 +85,18 @@ public enum TextureMetadataHandler {
      */
 
     private static final Class<?> multipartModelClass;
+    private static final Class<?> vanillaModelWrapperClass;
+    private static final Field multipartPartModels;
+    private static final Field modelWrapperModel;
     static {
         try {
             multipartModelClass = Class.forName("net.minecraftforge.client.model.ModelLoader$MultipartModel");
-        } catch (ClassNotFoundException e) {
+            multipartPartModels = multipartModelClass.getDeclaredField("partModels");
+            multipartPartModels.setAccessible(true);
+            vanillaModelWrapperClass = Class.forName("net.minecraftforge.client.model.ModelLoader$VanillaModelWrapper");
+            modelWrapperModel = vanillaModelWrapperClass.getDeclaredField("model");
+            modelWrapperModel.setAccessible(true);
+        } catch (ClassNotFoundException | NoSuchFieldException | SecurityException e) {
             throw Throwables.propagate(e);
         }
     }
@@ -98,14 +108,20 @@ public enum TextureMetadataHandler {
         Map<ModelResourceLocation, IModel> stateModels = ReflectionHelper.getPrivateValue(ModelLoader.class, event.getModelLoader(), "stateModels");
         for (ModelResourceLocation mrl : event.getModelRegistry().getKeys()) {
             IModel model = stateModels.get(mrl);
-            if (model != null && !(model instanceof IModelCTM) && Collections.disjoint(model.getDependencies(), ModelLoaderCTM.parsedLocations)) {
-                Collection<ResourceLocation> textures = model.getTextures();
+            if (model != null && !(model instanceof IModelCTM) && !ModelLoaderCTM.parsedLocations.contains(mrl)) {
+                Set<ResourceLocation> textures = Sets.newHashSet(model.getTextures());
                 // FORGE WHY
+                if (vanillaModelWrapperClass.isAssignableFrom(model.getClass())) {
+                    ModelBlock parent = ((ModelBlock) modelWrapperModel.get(model)).parent;
+                    while (parent != null) {
+                        textures.addAll(parent.textures.values().stream().filter(s -> !s.startsWith("#")).map(ResourceLocation::new).collect(Collectors.toSet()));
+                        parent = parent.parent;
+                    }
+                }
+                // FORGE WHYYYYY
                 if (multipartModelClass.isAssignableFrom(model.getClass())) {
-                    Field _partModels = multipartModelClass.getDeclaredField("partModels");
-                    _partModels.setAccessible(true);
-                    Map<?, IModel> partModels = (Map<?, IModel>) _partModels.get(model);
-                    textures = partModels.values().stream().map(m -> m.getTextures()).flatMap(Collection::stream).collect(Collectors.toList());
+                    Map<?, IModel> partModels = (Map<?, IModel>) multipartPartModels.get(model);
+                    textures = partModels.values().stream().map(m -> m.getTextures()).flatMap(Collection::stream).collect(Collectors.toSet());
                 }
                 for (ResourceLocation tex : textures) {
                     IMetadataSectionCTM meta = null;

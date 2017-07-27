@@ -12,6 +12,7 @@ import team.chisel.ctm.client.texture.type.TextureTypeCTMH;
 import team.chisel.ctm.client.util.CTMLogic;
 import team.chisel.ctm.client.util.Dir;
 import team.chisel.ctm.client.util.Quad;
+import team.chisel.ctm.client.util.Submap;
 
 public class TextureCTMH extends TextureCTM<TextureTypeCTMH> {
 
@@ -30,13 +31,13 @@ public class TextureCTMH extends TextureCTM<TextureTypeCTMH> {
 
     private ISubmap getQuad(CTMLogic ctm) {
         if (ctm == null || !ctm.connectedOr(Dir.LEFT, Dir.RIGHT)) {
-            return Quad.TOP_LEFT;
+            return Submap.X2[0][0];
         } else if (ctm.connectedAnd(Dir.LEFT, Dir.RIGHT)) {
-            return Quad.TOP_RIGHT;
+            return Submap.X2[0][1];
         } else if (ctm.connected(Dir.LEFT)) {
-            return Quad.BOTTOM_RIGHT;
+            return Submap.X2[1][1];
         } else {
-            return Quad.BOTTOM_LEFT;
+            return Submap.X2[1][0];
         }
     }
 }

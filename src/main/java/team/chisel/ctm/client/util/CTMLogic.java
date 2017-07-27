@@ -15,6 +15,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.block.state.IBlockState;
@@ -76,7 +77,16 @@ import team.chisel.ctm.api.texture.ISubmap;
  * -CptRageToaster-
  */
 @ParametersAreNonnullByDefault
+@Accessors(fluent = true, chain = true)
 public class CTMLogic {
+    
+    public interface StateComparisonCallback {
+        
+        public static final StateComparisonCallback DEFAULT = 
+                (ctm, from, to, dir) -> ctm.ignoreStates ? from.getBlock() == to.getBlock() : from == to;
+        
+        boolean connects(CTMLogic instance, IBlockState from, IBlockState to, EnumFacing dir);
+    }
 	
     /**
      * The Uvs for the specific "magic number" value
@@ -126,9 +136,13 @@ public class CTMLogic {
 	protected byte connectionMap;
 	protected int[] submapCache = new int[] { 18, 19, 17, 16 };
 	
+	@Getter
 	@Setter
-	@Accessors(fluent = true, chain = true)
 	protected boolean ignoreStates;
+	
+	@Getter
+	@Setter
+	protected StateComparisonCallback stateComparator = StateComparisonCallback.DEFAULT;
 
 	public static CTMLogic getInstance() {
 		return new CTMLogic();
@@ -180,10 +194,14 @@ public class CTMLogic {
     }
     
     protected void setConnectedState(Dir dir, boolean connected) {
+        connectionMap = setConnectedState(connectionMap, dir, connected);
+    }
+    
+    private static byte setConnectedState(byte map, Dir dir, boolean connected) {
         if (connected) {
-            connectionMap |= 1 << dir.ordinal();
+            return (byte) (map | (1 << dir.ordinal()));
         } else {
-            connectionMap &= ~(1 << dir.ordinal());
+            return (byte) (map & ~(1 << dir.ordinal()));
         }
     }
 
@@ -213,7 +231,7 @@ public class CTMLogic {
     }
 
 	@SuppressWarnings("null")
-    private void fillSubmaps(int idx) {
+    protected void fillSubmaps(int idx) {
 		Dir[] dirs = submapMap[idx];
 		if (connectedOr(dirs[0], dirs[1])) {
 			if (connectedAnd(dirs)) {
@@ -268,6 +286,27 @@ public class CTMLogic {
 		}
 		return false;
     }
+	
+	public boolean connectedNone(Dir... dirs) {
+	    for (Dir dir : dirs) {
+	        if (connected(dir)) {
+	            return false;
+	        }
+	    }
+	    return true;
+	}
+	
+	public boolean connectedOnly(Dir... dirs) {
+	    byte map = 0;
+	    for (Dir dir : dirs) {
+	        map = setConnectedState(map, dir, true);
+	    }
+	    return map == this.connectionMap;
+	}
+	
+	public int numConnections() {
+	    return Integer.bitCount(connectionMap);
+	}
 
     /**
      * A simple check for if the given block can connect to the given direction on the given side.
@@ -281,7 +320,7 @@ public class CTMLogic {
      *            The {@link EnumFacing side} of the block to check for connection status. This is <i>not</i> the direction to check in.
      * @return True if the given block can connect to the given location on the given side.
      */
-    public boolean isConnected(IBlockAccess world, BlockPos current, BlockPos connection, EnumFacing dir) {
+    public final boolean isConnected(IBlockAccess world, BlockPos current, BlockPos connection, EnumFacing dir) {
 
         IBlockState state = world.getBlockState(current);
         return isConnected(world, current, connection, dir, state);
@@ -320,7 +359,7 @@ public class CTMLogic {
             throw new IllegalStateException("Error, received null blockstate as facade from block " + world.getBlockState(connection));
         }
 
-        boolean ret = ignoreStates ? con.getBlock() == state.getBlock() : con == state;
+        boolean ret = stateComparator(state, con, dir);
 
         // no block obscuring this face
         if (obscuring == null || con.shouldSideBeRendered(world, connection, dir)) {
@@ -331,6 +370,10 @@ public class CTMLogic {
         ret &= !obscuring.equals(state);
 
         return ret;
+    }
+    
+    protected boolean stateComparator(IBlockState from, IBlockState to, EnumFacing dir) {
+        return stateComparator.connects(this, from, to, dir);
     }
 
 //    private boolean connectionBlocked(IBlockAccess world, int x, int y, int z, int side) {
