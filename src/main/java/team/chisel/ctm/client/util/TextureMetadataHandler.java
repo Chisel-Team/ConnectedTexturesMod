@@ -117,9 +117,6 @@ public enum TextureMetadataHandler {
         Map<ModelResourceLocation, IModel> stateModels = ReflectionHelper.getPrivateValue(ModelLoader.class, event.getModelLoader(), "stateModels");
         for (ModelResourceLocation mrl : event.getModelRegistry().getKeys()) {
             IModel model = stateModels.get(mrl);
-            if (mrl.getResourcePath().equals("sand")) {
-                System.out.println();
-            }
             if (model != null && !(model instanceof IModelCTM) && !ModelLoaderCTM.parsedLocations.contains(mrl)) {
                 Set<ResourceLocation> textures = Sets.newHashSet(model.getTextures());
                 // FORGE WHY
