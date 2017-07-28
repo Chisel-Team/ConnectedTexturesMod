@@ -1,4 +1,4 @@
-# ConnectedTexturesMod
+# ConnectedTexturesMod [![Curseforge](http://cf.way2muchnoise.eu/full_ctm_downloads.svg)](https://minecraft.curseforge.com/projects/ctm) [![Curseforge](http://cf.way2muchnoise.eu/versions/For%20MC_ctm_all.svg)](https://minecraft.curseforge.com/projects/ctm)
 
 Extentions to the vanilla model system to allow contextual rendering in much more complex ways.
 
