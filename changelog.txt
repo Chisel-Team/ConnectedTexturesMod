@@ -1,3 +1,10 @@
+0.2.1:
+New
+- Two new render types, EDGES and EDGES_FULL, which can be used to change appearances when adjacent to other certain blocks.
+- CTM (and all CTM subtypes, including EDGES and EDGES_FULL) now support "connectTo" in their extra{} data. See the wiki for documentation on this new feature.
+Fixes
+- Fix crash when shift+F3 was used while a CTM-rendered item was visible.
+ 
 0.2.0:
 New
 - CTM (and CTM subtypes, CTMH etc.) now support "ignoreStates" and "connectInside" for their extra{} data.
