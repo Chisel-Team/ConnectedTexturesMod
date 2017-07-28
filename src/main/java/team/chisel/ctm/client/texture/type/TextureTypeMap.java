@@ -36,9 +36,11 @@ public class TextureTypeMap implements ITextureType {
         return new TextureContextPosition(BlockPos.fromLong(data));
     }
     
-    @TextureType("R")
+    @TextureType("r")
+    @TextureType("random")
     public static final TextureTypeMap R = new TextureTypeMap(MapType.RANDOM);
     
-    @TextureType("V")
+    @TextureType("v")
+    @TextureType("pattern")
     public static final TextureTypeMap V = new TextureTypeMap(MapType.PATTERNED);
 }

@@ -11,7 +11,8 @@ import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTMV;
 import team.chisel.ctm.client.texture.render.TextureCTMV;
 
-@TextureType("CTMV")
+@TextureType("ctmv")
+@TextureType("pillar")
 public class TextureTypeCTMV implements ITextureType {
 
     @Override

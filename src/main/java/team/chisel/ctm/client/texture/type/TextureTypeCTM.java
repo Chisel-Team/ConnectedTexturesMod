@@ -11,7 +11,7 @@ import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTM;
 import team.chisel.ctm.client.texture.render.TextureCTM;
 
-@TextureType("CTM")
+@TextureType("ctm")
 public class TextureTypeCTM implements ITextureType {
 
     @Override

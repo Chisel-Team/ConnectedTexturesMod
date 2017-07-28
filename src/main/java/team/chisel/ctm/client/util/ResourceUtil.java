@@ -63,6 +63,9 @@ public class ResourceUtil {
         } catch (JsonParseException e) {
             throw new IOException("Error loading metadata for location " + res, e);
         }
+        if (ret != null && ret.getType() == null) {
+            System.out.println();
+        }
         metadataCache.put(res, ret);
         return ret;
     }
