@@ -3,6 +3,7 @@ package team.chisel.ctm.client.texture;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -105,7 +106,7 @@ public interface IMetadataSectionCTM extends IMetadataSection {
                 if (typeEle.isJsonPrimitive() && typeEle.getAsJsonPrimitive().isString()) {
                     ITextureType type = TextureTypeRegistry.getType(typeEle.getAsString());
                     if (type == null) {
-                        CTM.logger.error("Invalid render type given: {}", typeEle);
+                        throw new JsonParseException("Invalid render type given: " + typeEle);
                     } else {
                         ret.type = type;
                     }
@@ -118,7 +119,7 @@ public interface IMetadataSectionCTM extends IMetadataSection {
                     try {
                         ret.layer = BlockRenderLayer.valueOf(layerEle.getAsString());
                     } catch (IllegalArgumentException e) {
-                        CTM.logger.error("Invalid block layer given: {}", layerEle);
+                        throw new JsonParseException("Invalid block layer given: " + layerEle);
                     }
                 }
             }

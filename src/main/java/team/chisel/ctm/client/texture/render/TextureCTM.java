@@ -56,9 +56,9 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
 
     public TextureCTM(T type, TextureInfo info) {
         super(type, info);
-        this.connectInside = info.getInfo().flatMap(obj -> ParseUtils.getBoolean(obj, "connectInside"));
-        this.ignoreStates = info.getInfo().map(obj -> JsonUtils.getBoolean(obj, "ignoreStates", false)).orElse(false);
-        this.connectionChecks = info.getInfo().map(obj -> predicateParser.parse(obj.get("connectTo"))).orElse(null);
+        this.connectInside = info.getInfo().flatMap(obj -> ParseUtils.getBoolean(obj, "connect_inside"));
+        this.ignoreStates = info.getInfo().map(obj -> JsonUtils.getBoolean(obj, "ignore_states", false)).orElse(false);
+        this.connectionChecks = info.getInfo().map(obj -> predicateParser.parse(obj.get("connect_to"))).orElse(null);
     }
     
     public boolean connectTo(CTMLogic ctm, IBlockState from, IBlockState to, EnumFacing dir) {

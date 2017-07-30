@@ -17,7 +17,7 @@ import team.chisel.ctm.client.texture.render.TextureEdges;
 import team.chisel.ctm.client.util.CTMLogic;
 import team.chisel.ctm.client.util.Dir;
 
-@TextureType("EDGES")
+@TextureType("edges")
 public class TextureTypeEdges extends TextureTypeCTM {
 
     @Override

@@ -5,7 +5,7 @@ import team.chisel.ctm.api.texture.TextureType;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.render.TextureEdgesFull;
 
-@TextureType("EDGES_FULL")
+@TextureType("edges_full")
 public class TextureTypeEdgesFull extends TextureTypeEdges {
     
     @Override

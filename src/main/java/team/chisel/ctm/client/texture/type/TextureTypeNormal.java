@@ -17,7 +17,7 @@ import team.chisel.ctm.client.texture.render.TextureNormal;
  */
 public enum TextureTypeNormal implements ITextureType {
     
-    @TextureType("NORMAL")
+    @TextureType("normal")
     INSTANCE;
     
     @Nonnull
