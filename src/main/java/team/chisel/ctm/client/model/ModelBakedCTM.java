@@ -79,7 +79,7 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
                 int quadGoal = ctx == null ? 1 : texturemap.values().stream().mapToInt(tex -> tex.getType().getQuadsPerSide()).max().orElse(1);
                 for (Entry<BakedQuad, ICTMTexture<?>> e : texturemap.entrySet()) {
                     // If the layer is null, this is a wrapped vanilla texture, so passthrough the layer check to the block
-                    if (e.getValue().getLayer() == layer || (e.getValue().getLayer() == null && (state == null || layer == state.getBlock().getBlockLayer()))) {
+                    if (e.getValue().getLayer() == layer || (e.getValue().getLayer() == null && (state == null || state.getBlock().canRenderInLayer(state, layer)))) {
                         ITextureContext tcx = ctx == null ? null : ctx.getRenderContext(e.getValue().getType());
                         quads.addAll(e.getValue().transformQuad(e.getKey(), tcx, quadGoal));
                     }
