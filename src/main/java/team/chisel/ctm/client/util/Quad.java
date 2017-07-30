@@ -38,7 +38,16 @@ import team.chisel.ctm.api.util.NonnullType;
 @ParametersAreNonnullByDefault
 @ToString(of = { "vertPos", "vertUv" })
 public class Quad {
-
+    
+    @Deprecated
+    public static final ISubmap TOP_LEFT = Submap.X2[0][0];
+    @Deprecated
+    public static final ISubmap TOP_RIGHT = Submap.X2[0][1];
+    @Deprecated
+    public static final ISubmap BOTTOM_LEFT = Submap.X2[1][0];
+    @Deprecated
+    public static final ISubmap BOTTOM_RIGHT = Submap.X2[1][1];
+    
     @Value
     public static class Vertex {
         Vector3f pos;
