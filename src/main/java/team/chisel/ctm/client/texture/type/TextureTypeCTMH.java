@@ -5,6 +5,7 @@ import team.chisel.ctm.api.texture.TextureType;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.render.TextureCTMH;
 
+@TextureType("ctmh")
 @TextureType("ctm_horizontal")
 public class TextureTypeCTMH extends TextureTypeCTM {
 
