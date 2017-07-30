@@ -81,6 +81,6 @@ public class TextureTypeRegistry {
     }
 
     public static boolean isValid(String name){
-        return map.containsKey(name);
+        return getType(name) != null;
     }
 }
