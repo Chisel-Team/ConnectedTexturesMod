@@ -1,7 +1,9 @@
 0.2.1:
 New
-- Two new render types, EDGES and EDGES_FULL, which can be used to change appearances when adjacent to other certain blocks.
-- CTM (and all CTM subtypes, including EDGES and EDGES_FULL) now support "connectTo" in their extra{} data. See the wiki for documentation on this new feature.
+- Two new render types, edges and edges_full, which can be used to change appearances when adjacent to other certain blocks.
+- CTM (and all CTM subtypes, including edges and edges_full) now support "connect_to" in their extra{} data. See the wiki for documentation on this new feature.
+Changes
+- All texture type names have been changed. Old names will still work, for now. Notable changes: R->random, V->pattern, CTMH->ctm_horizontal, CTMV->pillar. All others were just lowercased.
 Fixes
 - Fix crash when shift+F3 was used while a CTM-rendered item was visible.
  
