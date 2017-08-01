@@ -11,6 +11,8 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector3f;
 
+import net.minecraft.client.renderer.ItemMeshDefinition;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.cache.Cache;
@@ -58,7 +60,7 @@ import team.chisel.ctm.client.util.ProfileUtil;
 @RequiredArgsConstructor
 public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
 
-    private static Cache<Pair<Item, Integer>, AbstractCTMBakedModel> itemcache = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.SECONDS).<Pair<Item, Integer>, AbstractCTMBakedModel>build();
+    private static Cache<ModelResourceLocation, AbstractCTMBakedModel> itemcache = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.SECONDS).<ModelResourceLocation, AbstractCTMBakedModel>build();
     private static Cache<State, AbstractCTMBakedModel> modelcache = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).maximumSize(5000).<State, AbstractCTMBakedModel>build();
 
     public static void invalidateCaches()
@@ -83,7 +85,11 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
                 block = ((ItemBlock) stack.getItem()).getBlock();
             }
             final IBlockState state = block == null ? null : block.getDefaultState();
-            return itemcache.get(Pair.of(stack.getItem(), stack.getItemDamage()), () -> createModel(state, model, null, 0));
+
+            ItemMeshDefinition itemMeshDefinition = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().shapers.get(stack.getItem());
+            ModelResourceLocation modelResourceLocation = itemMeshDefinition.getModelLocation(stack);
+
+            return itemcache.get(modelResourceLocation, () -> createModel(state, model, null, 0));
         }
     }
     
