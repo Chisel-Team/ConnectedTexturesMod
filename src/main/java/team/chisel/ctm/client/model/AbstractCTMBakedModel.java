@@ -1,7 +1,12 @@
 package team.chisel.ctm.client.model;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Field;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -11,10 +16,9 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector3f;
 
-import net.minecraft.client.renderer.ItemMeshDefinition;
-import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import org.apache.commons.lang3.tuple.Pair;
 
+import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
@@ -26,6 +30,7 @@ import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 
 import gnu.trove.map.TObjectLongMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -33,11 +38,14 @@ import lombok.ToString;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ItemMeshDefinition;
+import net.minecraft.client.renderer.ItemModelMesher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.block.model.ItemOverrideList;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.block.model.WeightedBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.entity.EntityLivingBase;
@@ -47,12 +55,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
+import net.minecraftforge.client.ItemModelMesherForge;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.IPerspectiveAwareModel;
 import net.minecraftforge.common.model.TRSRTransformation;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
-import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.asm.CTMCoreMethods;
 import team.chisel.ctm.client.state.ChiselExtendedState;
@@ -70,9 +79,18 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
         modelcache.invalidateAll();
     }
     
+    private static final MethodHandle _locations;
+    static {
+        try {
+            _locations = MethodHandles.lookup().unreflectGetter(ReflectionHelper.findField(ItemModelMesherForge.class, "locations"));
+        } catch (IllegalAccessException e) {
+            throw Throwables.propagate(e);
+        }
+    }
+    
     @ParametersAreNonnullByDefault
     private class Overrides extends ItemOverrideList {
-        
+                
         public Overrides() {
             super(Lists.newArrayList());
         }
@@ -87,8 +105,12 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
             }
             final IBlockState state = block == null ? null : block.getDefaultState();
 
-            ItemMeshDefinition itemMeshDefinition = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().shapers.get(stack.getItem());
-            ModelResourceLocation modelResourceLocation = itemMeshDefinition.getModelLocation(stack);
+            ItemModelMesher mesher = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
+            ItemMeshDefinition itemMeshDefinition = mesher.shapers.get(stack.getItem());
+            ModelResourceLocation modelResourceLocation = Optional.ofNullable(itemMeshDefinition)
+                    .map(mesh -> mesh.getModelLocation(stack))
+                    .orElse(((IdentityHashMap<Item, TIntObjectHashMap<ModelResourceLocation>>) _locations.invoke(mesher))
+                            .get(stack.getItem()).get(mesher.getMetadata(stack)));
 
             return itemcache.get(modelResourceLocation, () -> createModel(state, model, null, 0));
         }
