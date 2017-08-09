@@ -51,6 +51,7 @@ import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.IPerspectiveAwareModel;
 import net.minecraftforge.common.model.TRSRTransformation;
 import team.chisel.ctm.api.model.IModelCTM;
+import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.asm.CTMCoreMethods;
@@ -98,7 +99,7 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
     @ToString
     private static class State {
         private final IBlockState cleanState;
-        private final TObjectLongMap<ITextureType> serializedContext;
+        private final TObjectLongMap<ICTMTexture<?>> serializedContext;
         private final IBakedModel parent;
         
         @Override
@@ -155,6 +156,11 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
             return parent.getQuads(state, side, rand);
         }
         
+        IBakedModel parent = getParent(rand);
+        if (parent instanceof AbstractCTMBakedModel) {
+        	return parent.getQuads(state, side, rand);
+        }
+        
         ProfileUtil.start("chisel_models");
         
         AbstractCTMBakedModel baked = this;
@@ -165,9 +171,9 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
             ChiselExtendedState ext = (ChiselExtendedState) state;
             RenderContextList ctxList = ext.getContextList(ext.getClean(), model);
 
-            TObjectLongMap<ITextureType> serialized = ctxList.serialized();
+            TObjectLongMap<ICTMTexture<?>> serialized = ctxList.serialized();
             ProfileUtil.endAndStart("model_creation");
-            baked = modelcache.get(new State(ext.getClean(), serialized, getParent(rand)), () -> createModel(state, model, ctxList, rand));
+            baked = modelcache.get(new State(ext.getClean(), serialized, parent), () -> createModel(state, model, ctxList, rand));
             ProfileUtil.end();
         } else if (state != null)  {
             ProfileUtil.start("model_creation");
