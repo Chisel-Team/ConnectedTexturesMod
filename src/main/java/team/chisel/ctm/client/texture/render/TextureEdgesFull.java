@@ -2,6 +2,10 @@ package team.chisel.ctm.client.texture.render;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import com.google.common.collect.Lists;
 
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -77,6 +81,15 @@ public class TextureEdgesFull extends TextureEdges {
             }
         }
         
-        return Collections.singletonList(quad.transformUVs(sprite, submap).rebake());
+        quad = quad.transformUVs(sprite, submap);
+        
+        if (quadGoal == 1) {
+            return Collections.singletonList(quad.rebake());
+        }
+        
+        return Lists.newArrayList(quad.subdivide(quadGoal)).stream()
+                .filter(Objects::nonNull)
+                .map(Quad::rebake)
+                .collect(Collectors.toList());
     }
 }
