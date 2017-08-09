@@ -26,7 +26,7 @@ apply plugin: 'maven-publish'
 import org.ajoberstar.grgit.Grgit
 
 def repo = Grgit.open(project.file('.'))
-project.ext.gitHash = ''//repo.log().find().abbreviatedId
+project.ext.gitHash = repo.log().find().abbreviatedId
 
 boolean dev = System.getenv('RELEASE') == null || System.getenv('RELEASE').equals('false');
 
