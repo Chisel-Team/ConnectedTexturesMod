@@ -6,6 +6,7 @@ Fixes
 - Fix #19 item model cache not being sensitive to NBT variants (thommy101)
 - Fix issue that arose when using multiple metadata overrides in a single model
 - Fix #21 z-fighting when edges_full is used as an overlay on a ctm texture
+- Fix #22 connections not working properly when one CTM model is used for multiple blockstates
 
 0.2.1:
 New
