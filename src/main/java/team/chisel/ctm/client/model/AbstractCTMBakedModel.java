@@ -57,6 +57,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
 import net.minecraftforge.client.ItemModelMesherForge;
 import net.minecraftforge.client.MinecraftForgeClient;
+import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.common.model.TRSRTransformation;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import team.chisel.ctm.api.model.IModelCTM;
@@ -104,11 +105,24 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
             final IBlockState state = block == null ? null : block.getDefaultState();
 
             ItemModelMesher mesher = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
-            ItemMeshDefinition itemMeshDefinition = mesher.shapers.get(stack.getItem());
-            ModelResourceLocation modelResourceLocation = Optional.ofNullable(itemMeshDefinition)
-                    .map(mesh -> mesh.getModelLocation(stack))
-                    .orElse(((IdentityHashMap<Item, TIntObjectHashMap<ModelResourceLocation>>) _locations.invoke(mesher))
-                            .get(stack.getItem()).get(mesher.getMetadata(stack)));
+            
+            // First try simple damage overrides
+            ModelResourceLocation modelResourceLocation = Optional.ofNullable(
+                    ((IdentityHashMap<Item, TIntObjectHashMap<ModelResourceLocation>>) _locations.invoke(mesher)))
+                            .map(map -> map.get(stack.getItem()))
+                            .map(map -> map.get(mesher.getMetadata(stack)))
+                            .orElse(null);
+            
+            // Next, try mesh definitions
+            if (modelResourceLocation == null) {
+                ItemMeshDefinition itemMeshDefinition = mesher.shapers.get(stack.getItem());
+                modelResourceLocation = Optional.ofNullable(itemMeshDefinition).map(mesh -> mesh.getModelLocation(stack)).orElse(null);
+            }
+            
+            // Finally, this must be a missing/invalid model
+            if (modelResourceLocation == null) {
+                return Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getMissingModel();
+            }
 
             return itemcache.get(modelResourceLocation, () -> createModel(state, model, null, 0));
         }
