@@ -6,6 +6,7 @@ import lombok.Setter;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumFacing.Axis;
+import net.minecraft.util.EnumFacing.AxisDirection;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
@@ -51,7 +52,8 @@ public class TextureTypeEdges extends TextureTypeCTM {
                 if (difference.lengthSquared() > 1) {
                     difference = difference.normalize();
                     if (dir.getAxis() == Axis.Z) {
-                        difference = difference.rotateYaw((float) -Math.PI / 2);
+                        float axisang = (float) (dir.getAxisDirection() == AxisDirection.POSITIVE ? -Math.PI / 2 : Math.PI / 2);
+                        difference = difference.rotateYaw(axisang);
                     }
                     float ang = (float) Math.PI / 4;
                     Vec3d vA, vB;

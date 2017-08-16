@@ -1,7 +1,12 @@
 package team.chisel.ctm.client.model;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Field;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -13,6 +18,7 @@ import javax.vecmath.Vector3f;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
@@ -24,6 +30,7 @@ import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 
 import gnu.trove.map.TObjectLongMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -31,11 +38,14 @@ import lombok.ToString;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ItemMeshDefinition;
+import net.minecraft.client.renderer.ItemModelMesher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.block.model.ItemOverrideList;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.block.model.WeightedBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.entity.EntityLivingBase;
@@ -45,10 +55,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
+import net.minecraftforge.client.ItemModelMesherForge;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.common.model.TRSRTransformation;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import team.chisel.ctm.api.model.IModelCTM;
-import team.chisel.ctm.api.texture.ITextureType;
+import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.asm.CTMCoreMethods;
 import team.chisel.ctm.client.state.ChiselExtendedState;
@@ -57,7 +69,7 @@ import team.chisel.ctm.client.util.ProfileUtil;
 @RequiredArgsConstructor
 public abstract class AbstractCTMBakedModel implements IBakedModel {
 
-    private static Cache<Pair<Item, Integer>, AbstractCTMBakedModel> itemcache = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.SECONDS).<Pair<Item, Integer>, AbstractCTMBakedModel>build();
+    private static Cache<ModelResourceLocation, AbstractCTMBakedModel> itemcache = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.SECONDS).<ModelResourceLocation, AbstractCTMBakedModel>build();
     private static Cache<State, AbstractCTMBakedModel> modelcache = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).maximumSize(5000).<State, AbstractCTMBakedModel>build();
 
     public static void invalidateCaches()
@@ -66,9 +78,18 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
         modelcache.invalidateAll();
     }
     
+    private static final MethodHandle _locations;
+    static {
+        try {
+            _locations = MethodHandles.lookup().unreflectGetter(ReflectionHelper.findField(ItemModelMesherForge.class, "locations"));
+        } catch (IllegalAccessException e) {
+            throw Throwables.propagate(e);
+        }
+    }
+    
     @ParametersAreNonnullByDefault
     private class Overrides extends ItemOverrideList {
-        
+                
         public Overrides() {
             super(Lists.newArrayList());
         }
@@ -81,7 +102,15 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
                 block = ((ItemBlock) stack.getItem()).getBlock();
             }
             final IBlockState state = block == null ? null : block.getDefaultState();
-            return itemcache.get(Pair.of(stack.getItem(), stack.getItemDamage()), () -> createModel(state, model, null, 0));
+
+            ItemModelMesher mesher = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
+            ItemMeshDefinition itemMeshDefinition = mesher.shapers.get(stack.getItem());
+            ModelResourceLocation modelResourceLocation = Optional.ofNullable(itemMeshDefinition)
+                    .map(mesh -> mesh.getModelLocation(stack))
+                    .orElse(((IdentityHashMap<Item, TIntObjectHashMap<ModelResourceLocation>>) _locations.invoke(mesher))
+                            .get(stack.getItem()).get(mesher.getMetadata(stack)));
+
+            return itemcache.get(modelResourceLocation, () -> createModel(state, model, null, 0));
         }
     }
     
@@ -90,7 +119,7 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
     @ToString
     private static class State {
         private final IBlockState cleanState;
-        private final TObjectLongMap<ITextureType> serializedContext;
+        private final TObjectLongMap<ICTMTexture<?>> serializedContext;
         private final IBakedModel parent;
         
         @Override
@@ -147,6 +176,11 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
             return parent.getQuads(state, side, rand);
         }
         
+        IBakedModel parent = getParent(rand);
+        if (parent instanceof AbstractCTMBakedModel) {
+        	return parent.getQuads(state, side, rand);
+        }
+        
         ProfileUtil.start("chisel_models");
         
         AbstractCTMBakedModel baked = this;
@@ -157,9 +191,9 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
             ChiselExtendedState ext = (ChiselExtendedState) state;
             RenderContextList ctxList = ext.getContextList(ext.getClean(), model);
 
-            TObjectLongMap<ITextureType> serialized = ctxList.serialized();
+            TObjectLongMap<ICTMTexture<?>> serialized = ctxList.serialized();
             ProfileUtil.endAndStart("model_creation");
-            baked = modelcache.get(new State(ext.getClean(), serialized, getParent(rand)), () -> createModel(state, model, ctxList, rand));
+            baked = modelcache.get(new State(ext.getClean(), serialized, parent), () -> createModel(state, model, ctxList, rand));
             ProfileUtil.end();
         } else if (state != null)  {
             ProfileUtil.start("model_creation");

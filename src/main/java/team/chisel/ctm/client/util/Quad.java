@@ -252,8 +252,13 @@ public class Quad {
 
     }
 
-    @SuppressWarnings("null")
     public Quad[] subdivide(int count) {
+        if (count == 1) {
+            return new Quad[] { this };
+        } else if (count != 4) {
+            throw new UnsupportedOperationException();
+        }
+        
         List<Quad> rects = Lists.newArrayList();
 
         Pair<Quad, Quad> firstDivide = divide(false);
