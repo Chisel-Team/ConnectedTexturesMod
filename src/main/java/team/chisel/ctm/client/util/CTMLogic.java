@@ -367,7 +367,7 @@ public class CTMLogic {
         }
 
         // check that we aren't already connected outwards from this side
-        ret &= !obscuring.equals(state);
+        ret &= !stateComparator(state, obscuring, dir);
 
         return ret;
     }
