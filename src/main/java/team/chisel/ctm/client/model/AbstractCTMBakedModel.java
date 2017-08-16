@@ -60,6 +60,7 @@ import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.common.model.TRSRTransformation;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.registries.IRegistryDelegate;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.util.RenderContextList;
@@ -108,8 +109,8 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
             
             // First try simple damage overrides
             ModelResourceLocation modelResourceLocation = Optional.ofNullable(
-                    ((IdentityHashMap<Item, TIntObjectHashMap<ModelResourceLocation>>) _locations.invoke(mesher)))
-                            .map(map -> map.get(stack.getItem()))
+                    ((Map<IRegistryDelegate<Item>, TIntObjectHashMap<ModelResourceLocation>>) _locations.invoke(mesher)))
+                            .map(map -> map.get(stack.getItem().delegate))
                             .map(map -> map.get(mesher.getMetadata(stack)))
                             .orElse(null);
             
