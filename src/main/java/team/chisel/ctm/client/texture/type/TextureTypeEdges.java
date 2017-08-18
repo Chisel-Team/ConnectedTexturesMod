@@ -52,8 +52,7 @@ public class TextureTypeEdges extends TextureTypeCTM {
                 if (difference.lengthSquared() > 1) {
                     difference = difference.normalize();
                     if (dir.getAxis() == Axis.Z) {
-                        float axisang = (float) (dir.getAxisDirection() == AxisDirection.POSITIVE ? -Math.PI / 2 : Math.PI / 2);
-                        difference = difference.rotateYaw(axisang);
+                        difference = difference.rotateYaw((float) (-Math.PI / 2));
                     }
                     float ang = (float) Math.PI / 4;
                     Vec3d vA, vB;
