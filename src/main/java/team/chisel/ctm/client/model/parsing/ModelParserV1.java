@@ -1,7 +1,6 @@
 package team.chisel.ctm.client.model.parsing;
 
 import java.util.Collections;
-import java.util.Deque;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -17,38 +16,35 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import lombok.SneakyThrows;
 import net.minecraft.client.renderer.block.model.ModelBlock;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.model.ICustomModelLoader;
 import net.minecraftforge.client.model.IModel;
-import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.model.IModelParser;
 import team.chisel.ctm.client.model.ModelCTM;
 
+@SuppressWarnings("unchecked")
 public class ModelParserV1 implements IModelParser {
     
-    private static final Deque<ResourceLocation> _loadingModels = ReflectionHelper.getPrivateValue(ModelLoaderRegistry.class, null, "loadingModels");
     private static final Gson GSON = new Gson();
+    
+    private static final ICustomModelLoader VANILLA_LOADER;
+    static {
+        try {
+            @SuppressWarnings("rawtypes") 
+            Class cls = Class.forName("net.minecraftforge.client.model.ModelLoader$VanillaLoader");
+            VANILLA_LOADER = (ICustomModelLoader) ReflectionHelper.getPrivateValue(cls, null, "INSTANCE");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
     
     @Override
     @Nonnull
     @SneakyThrows
     public IModelCTM fromJson(ResourceLocation res, JsonObject json) {
         ModelBlock modelinfo = ModelBlock.deserialize(json.toString());
-        
-        // Hack around circularity detection to load vanilla model
-        ResourceLocation prev = _loadingModels.removeLast();
-        IModel vanillamodel;
-        try {
-            vanillamodel = ModelLoaderRegistry.getModel(new ResourceLocation(res.getResourceDomain(), res.getResourcePath().replace("models/", "")));
-        } catch (IllegalStateException e) {
-            IModel parent = ModelLoaderRegistry.getModel(new ResourceLocation(json.get("parent").getAsString()));
-            if (parent instanceof IModelCTM) {
-                return (IModelCTM) parent;
-            }
-            throw new IllegalStateException("CTM model " + res + " cannot have non-CTM parent " + json.get("parent"));
-        } finally {
-            _loadingModels.addLast(prev);
-        }
+        IModel vanillamodel = VANILLA_LOADER.loadModel(res);
 
         Map<String, JsonElement> parsed = GSON.fromJson(json.getAsJsonObject("ctm_overrides"), new TypeToken<Map<String, JsonElement>>(){}.getType());
         if (parsed == null) {

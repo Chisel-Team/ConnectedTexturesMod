@@ -28,9 +28,14 @@ public class CTMTransformer implements IClassTransformer {
     private static final String CHISEL_METHODS_LAYER_DESC = "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/BlockRenderLayer;)Ljava/lang/Boolean;";
     private static final String CHISEL_METHODS_DAMAGE_PRE_NAME = "preDamageModel";
     private static final String CHISEL_METHODS_DAMAGE_POST_NAME = "postDamageModel";
-    
+    private static final String CHISEL_METHODS_TRANFORM_PARENT_NAME = "transformParent";
+    private static final String CHISEL_METHODS_TRANFORM_PARENT_DESC = "(Lnet/minecraftforge/client/model/IModel;)Lnet/minecraftforge/client/model/IModel;";
+
     private static final String FORGE_HOOKS_CLIENT_CLASS = "net.minecraftforge.client.ForgeHooksClient";
     private static final String DAMAGE_MODEL_METHOD_NAME = "getDamageModel";
+    
+    private static final String VANILLA_MODEL_WRAPPER_CLASS = "net.minecraftforge.client.model.ModelLoader$VanillaModelWrapper";
+    private static final String GET_TEXTURES_METHOD_NAME = "getTextures";
 
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {
@@ -122,6 +127,37 @@ public class CTMTransformer implements IClassTransformer {
             }
             
             ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+            classNode.accept(cw);
+            System.out.println("Transforming " + transformedName + " Finished.");
+            return cw.toByteArray();
+        } else if (transformedName.equals(VANILLA_MODEL_WRAPPER_CLASS)) {
+            System.out.println("Transforming Class [" + transformedName + "], Method [" + GET_TEXTURES_METHOD_NAME + "]");
+
+            ClassNode classNode = new ClassNode();
+            ClassReader classReader = new ClassReader(basicClass);
+            classReader.accept(classNode, 0);
+
+            Iterator<MethodNode> methods = classNode.methods.iterator();
+
+            while (methods.hasNext()) {
+                MethodNode m = methods.next();
+                if (m.name.equals(GET_TEXTURES_METHOD_NAME)) {
+                    for (int i = 0; i < m.instructions.size(); i++) {
+                        AbstractInsnNode next = m.instructions.get(i);
+                        
+                        if (next.getOpcode() == ASTORE && ((VarInsnNode)next).var == 1) {
+                            InsnList toInsert = new InsnList();
+                            toInsert.add(new VarInsnNode(ALOAD, 1));
+                            toInsert.add(new MethodInsnNode(INVOKESTATIC, CHISEL_METHODS_CLASS_NAME, CHISEL_METHODS_TRANFORM_PARENT_NAME, CHISEL_METHODS_TRANFORM_PARENT_DESC, false));
+                            toInsert.add(new VarInsnNode(ASTORE, 1));
+                            m.instructions.insert(next, toInsert);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
             classNode.accept(cw);
             System.out.println("Transforming " + transformedName + " Finished.");
             return cw.toByteArray();

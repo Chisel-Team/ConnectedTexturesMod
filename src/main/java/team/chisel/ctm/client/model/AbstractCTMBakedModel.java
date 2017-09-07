@@ -193,10 +193,7 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
         }
         
         IBakedModel parent = getParent(rand);
-        if (parent instanceof AbstractCTMBakedModel) {
-        	return parent.getQuads(state, side, rand);
-        }
-        
+
         ProfileUtil.start("chisel_models");
         
         AbstractCTMBakedModel baked = this;

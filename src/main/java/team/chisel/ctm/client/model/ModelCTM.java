@@ -55,7 +55,7 @@ public class ModelCTM implements IModelCTM {
     private static final Gson GSON = new GsonBuilder().registerTypeAdapter(IMetadataSectionCTM.class, new IMetadataSectionCTM.Serializer()).create();
 
     private final ModelBlock modelinfo;
-    private final IModel parentmodel;
+    private final IModel vanillamodel;
 
     // Populated from overrides data during construction
     private final Int2ObjectMap<JsonElement> overrides;
@@ -71,13 +71,13 @@ public class ModelCTM implements IModelCTM {
 
     private Map<String, ICTMTexture<?>> textures = new HashMap<>();
     
-    public ModelCTM(ModelBlock modelinfo, IModel parent, Int2ObjectMap<JsonElement> overrides) throws IOException {
+    public ModelCTM(ModelBlock modelinfo, IModel vanillamodel, Int2ObjectMap<JsonElement> overrides) throws IOException {
         this.modelinfo = modelinfo;
-        this.parentmodel = parent;
+        this.vanillamodel = vanillamodel;
         this.overrides = overrides;
         
         this.textureDependencies = new HashSet<>();
-        this.textureDependencies.addAll(parentmodel.getTextures());
+        this.textureDependencies.addAll(vanillamodel.getTextures());
         for (Entry<Integer, JsonElement> e : this.overrides.entrySet()) {
             IMetadataSectionCTM meta = null;
             if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
@@ -108,6 +108,11 @@ public class ModelCTM implements IModelCTM {
             }
         }
     }
+    
+    @Override
+    public IModel getVanillaParent() {
+        return vanillamodel;
+    }
 
     @Override
     public Collection<ResourceLocation> getDependencies() {
@@ -122,7 +127,7 @@ public class ModelCTM implements IModelCTM {
     @Override
     @SuppressWarnings("null")
     public IBakedModel bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
-        IBakedModel parent = parentmodel.bake(state, format, rl -> {
+        IBakedModel parent = vanillamodel.bake(state, format, rl -> {
             TextureAtlasSprite sprite = bakedTextureGetter.apply(rl);
             IMetadataSectionCTM chiselmeta = null;
             try {
