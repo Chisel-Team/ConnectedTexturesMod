@@ -32,7 +32,7 @@ import team.chisel.ctm.api.texture.ISubmap;
  * textures.  The normal Texture.png is the blocks "unconnected" texture, and is used when CTM is disabled or the block
  * has nothing to connect to.  This texture has all of the outside corner quadrants  The texture-ctm.png contains the
  * rest of the quadrants.
- * <pre><blockquote>
+ * <pre>
  * ┌─────────────────┐ ┌────────────────────────────────┐
  * │ texture.png     │ │ texture-ctm.png                │
  * │ ╔══════╤══════╗ │ │  ──────┼────── ║ ─────┼───── ║ │
@@ -50,9 +50,9 @@ import team.chisel.ctm.api.texture.ISubmap;
  *                     │ │ 12   │ 13   ││ 14   │ 15   │ │
  *                     │ ═══════╧═══════╗ ─────┼───── ╔ │
  *                     └────────────────────────────────┘
- * </blockquote></pre>
+ * </pre>
  * combining { 18, 13,  9, 16 }, we can generate a texture connected to the right!
- * <pre><blockquote>
+ * <pre>
  * ╔══════╤═══════
  * ║      │      │
  * ║ 16   │ 9    │
@@ -60,10 +60,10 @@ import team.chisel.ctm.api.texture.ISubmap;
  * ║      │      │
  * ║ 18   │ 13   │
  * ╚══════╧═══════
- * </blockquote></pre>
+ * </pre>
  *
  * combining { 18, 13, 11,  2 }, we can generate a texture, in the shape of an L (connected to the right, and up
- * <pre><blockquote>
+ * <pre>
  * ║ ─────┼───── ╚
  * ║      │      │
  * ║ 2    │ 11   │
@@ -71,7 +71,7 @@ import team.chisel.ctm.api.texture.ISubmap;
  * ║      │      │
  * ║ 18   │ 13   │
  * ╚══════╧═══════
- * </blockquote></pre>
+ * </pre>
  *
  * HAVE FUN!
  * -CptRageToaster-
