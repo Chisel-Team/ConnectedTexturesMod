@@ -42,6 +42,10 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
     @Override
     protected AbstractCTMBakedModel createModel(@Nullable IBlockState state, IModelCTM model, @Nullable RenderContextList ctx, long rand) {
         IBakedModel parent = getParent(rand);
+        while (parent instanceof ModelBakedCTM) {
+            parent = ((AbstractCTMBakedModel)parent).getParent(rand);
+        }
+
         AbstractCTMBakedModel ret = new ModelBakedCTM(model, parent);
         for (BlockRenderLayer layer : LAYERS) {
             for (EnumFacing facing : FACINGS) {
