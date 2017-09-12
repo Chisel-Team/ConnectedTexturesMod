@@ -18,6 +18,7 @@ import net.minecraft.world.IBlockAccess;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
+import team.chisel.ctm.client.util.RegionCache;
 
 /**
  * List of IBlockRenderContext's
@@ -28,7 +29,8 @@ public class RenderContextList {
     private final Map<ICTMTexture<?>, ITextureContext> contextMap = Maps.newIdentityHashMap();
     private final TObjectLongMap<ICTMTexture<?>> serialized = new TObjectLongCustomHashMap<>(new IdentityHashingStrategy<>());
 
-    public RenderContextList(IBlockState state, Collection<ICTMTexture<?>> textures, IBlockAccess world, BlockPos pos) {        
+    public RenderContextList(IBlockState state, Collection<ICTMTexture<?>> textures, IBlockAccess world, BlockPos pos) {
+        world = new RegionCache(pos, 2, world);
         for (ICTMTexture<?> tex : textures) {
             ITextureType type = tex.getType();
             ITextureContext ctx = type.getBlockRenderContext(state, world, pos, tex);
