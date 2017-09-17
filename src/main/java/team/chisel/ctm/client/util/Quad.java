@@ -11,6 +11,7 @@ import org.lwjgl.util.vector.Vector;
 import org.lwjgl.util.vector.Vector2f;
 import org.lwjgl.util.vector.Vector3f;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MultimapBuilder;
@@ -244,8 +245,24 @@ public class Quad {
     	return new Vector3f(vertPos[index % 4]);
     }
     
+    public Quad withVert(int index, Vector3f vert) {
+        Preconditions.checkElementIndex(index, 4, "Vertex index out of range!");
+        Vector3f[] newverts = new Vector3f[4];
+        System.arraycopy(vertPos, 0, newverts, 0, newverts.length);
+        newverts[index] = vert;
+        return new Quad(newverts, getUvs(), builder);
+    }
+    
     public Vector2f getUv(int index) {
     	return new Vector2f(vertUv[index % 4]);
+    }
+    
+    public Quad withUv(int index, Vector2f uv) {
+        Preconditions.checkElementIndex(index, 4, "UV index out of range!");
+        Vector2f[] newuvs = new Vector2f[4];
+        System.arraycopy(getUvs().vectorize(), 0, newuvs, 0, newuvs.length);
+        newuvs[index] = uv;
+        return new Quad(vertPos, new UVs(newuvs), builder);
     }
 
     public void compute() {
@@ -339,12 +356,12 @@ public class Quad {
         }
     }
     
-    static float lerp(float a, float b, float f) {
+    public static float lerp(float a, float b, float f) {
         float ret = (a * (1 - f)) + (b * f);
         return ret;
     }
 
-    static float normalize(float min, float max, float x) {
+    public static float normalize(float min, float max, float x) {
         float ret = (x - min) / (max - min);
         return ret;
     }
@@ -489,7 +506,7 @@ public class Quad {
         private final TextureAtlasSprite sprite;
 
         @Setter
-        private int quadTint;
+        private int quadTint = -1;
 
         @Setter
         private EnumFacing quadOrientation;
