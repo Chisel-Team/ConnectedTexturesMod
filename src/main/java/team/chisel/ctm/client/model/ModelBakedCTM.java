@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -95,7 +96,9 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
 
     @Override
     public @Nonnull TextureAtlasSprite getParticleTexture() {
-        return getParent().getParticleTexture();
+        return Optional.ofNullable(getModel().getTexture(getParent().getParticleTexture().getIconName()))
+                .map(ICTMTexture::getParticle)
+                .orElse(getParent().getParticleTexture());
     }
     
     @Override
