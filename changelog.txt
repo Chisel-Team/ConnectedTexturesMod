@@ -1,3 +1,15 @@
+0.2.3:
+New
+- New render type, eldritch! This was used on Chisel's temple brick back in the day, and now it is back once more, to strike horror in the minds of all who gaze upon it!
+Changes
+- CTM models (those with ctm_version) can now be used as parents to vanilla models
+- CTM models will now respect blockstate texture overrides
+- Slight performance boost by reusing the world cache between texture types
+Fixes
+- Fix incorrect corner logic on +Z axis for edges/edges_full
+- Fix z-fighting when edges_full is used as an overlay/underlay
+- Fix issues with CTM models using inheritance (this fixes Chisel bookshelves)
+
 0.2.2:
 Changes
 - Obscuring check now uses the connect_to data
