@@ -41,7 +41,6 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.IModel;
-import net.minecraftforge.client.model.IRetexturableModel;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.TRSRTransformation;
 import team.chisel.ctm.api.model.IModelCTM;
@@ -53,7 +52,7 @@ import team.chisel.ctm.client.texture.render.TextureNormal;
 import team.chisel.ctm.client.texture.type.TextureTypeNormal;
 import team.chisel.ctm.client.util.ResourceUtil;
 
-public class ModelCTM implements IModelCTM, IRetexturableModel {
+public class ModelCTM implements IModelCTM {
     
     private static final Gson GSON = new GsonBuilder().registerTypeAdapter(IMetadataSectionCTM.class, new IMetadataSectionCTM.Serializer()).create();
 
@@ -235,9 +234,7 @@ public class ModelCTM implements IModelCTM, IRetexturableModel {
 
     @Override
     public IModel retexture(ImmutableMap<String, String> textures) {
-        if (this.getVanillaParent() instanceof IRetexturableModel) {
-            this.vanillamodel = ((IRetexturableModel)getVanillaParent()).retexture(textures);
-        }
+    	this.vanillamodel = getVanillaParent().retexture(textures);
         this.modelinfo.textures.putAll(textures);
         for (Entry<Integer, IMetadataSectionCTM> e : metaOverrides.entrySet()) {
             ResourceLocation[] additionals = e.getValue().getAdditionalTextures();
