@@ -81,15 +81,14 @@ public class TextureEdgesFull extends TextureEdges {
             }
         }
         
-        quad = quad.transformUVs(sprite, submap);
-        
         if (quadGoal == 1) {
-            return Collections.singletonList(quad.rebake());
+            return Collections.singletonList(quad.transformUVs(sprite, submap).rebake());
         }
         
+        final ISubmap sm = submap;
         return Lists.newArrayList(quad.subdivide(quadGoal)).stream()
                 .filter(Objects::nonNull)
-                .map(Quad::rebake)
+                .map(q -> q.transformUVs(sprite, sm).rebake())
                 .collect(Collectors.toList());
     }
 }

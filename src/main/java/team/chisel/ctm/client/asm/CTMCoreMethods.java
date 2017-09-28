@@ -12,6 +12,9 @@ import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraftforge.common.MinecraftForge;
 import team.chisel.ctm.api.event.TextureCollectedEvent;
+import net.minecraftforge.client.model.IModel;
+import team.chisel.ctm.CTM;
+import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 import team.chisel.ctm.client.util.ProfileUtil;
 
@@ -48,5 +51,16 @@ public class CTMCoreMethods {
 
     public static void onSpriteRegister(TextureMap map, TextureAtlasSprite sprite) {
         MinecraftForge.EVENT_BUS.post(new TextureCollectedEvent(map, sprite));
+	}
+    
+    public static IModel transformParent(IModel model) {
+        if (model instanceof IModelCTM) {
+            try {
+                return ((IModelCTM) model).getVanillaParent();
+            } catch (Throwable t) {
+                CTM.logger.error("Please update Chisel!");
+            }
+        }
+        return model;
     }
 }

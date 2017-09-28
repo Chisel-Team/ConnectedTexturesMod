@@ -19,6 +19,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.google.common.base.Function;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -30,6 +31,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import lombok.val;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BlockPartFace;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ModelBlock;
@@ -39,6 +41,7 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.IModel;
+import net.minecraftforge.client.model.IRetexturableModel;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.TRSRTransformation;
 import team.chisel.ctm.api.model.IModelCTM;
@@ -50,12 +53,12 @@ import team.chisel.ctm.client.texture.render.TextureNormal;
 import team.chisel.ctm.client.texture.type.TextureTypeNormal;
 import team.chisel.ctm.client.util.ResourceUtil;
 
-public class ModelCTM implements IModelCTM {
+public class ModelCTM implements IModelCTM, IRetexturableModel {
     
     private static final Gson GSON = new GsonBuilder().registerTypeAdapter(IMetadataSectionCTM.class, new IMetadataSectionCTM.Serializer()).create();
 
     private final ModelBlock modelinfo;
-    private final IModel parentmodel;
+    private IModel vanillamodel;
 
     // Populated from overrides data during construction
     private final Int2ObjectMap<JsonElement> overrides;
@@ -71,13 +74,13 @@ public class ModelCTM implements IModelCTM {
 
     private Map<String, ICTMTexture<?>> textures = new HashMap<>();
     
-    public ModelCTM(ModelBlock modelinfo, IModel parent, Int2ObjectMap<JsonElement> overrides) throws IOException {
+    public ModelCTM(ModelBlock modelinfo, IModel vanillamodel, Int2ObjectMap<JsonElement> overrides) throws IOException {
         this.modelinfo = modelinfo;
-        this.parentmodel = parent;
+        this.vanillamodel = vanillamodel;
         this.overrides = overrides;
         
         this.textureDependencies = new HashSet<>();
-        this.textureDependencies.addAll(parentmodel.getTextures());
+        this.textureDependencies.addAll(vanillamodel.getTextures());
         for (Entry<Integer, JsonElement> e : this.overrides.entrySet()) {
             IMetadataSectionCTM meta = null;
             if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
@@ -98,6 +101,8 @@ public class ModelCTM implements IModelCTM {
             }
         }
         
+        this.textureDependencies.removeIf(rl -> rl.getResourcePath().startsWith("#"));
+        
         // Validate all texture metadata
         for (ResourceLocation res : getTextures()) {
             IMetadataSectionCTM meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(res));
@@ -107,6 +112,11 @@ public class ModelCTM implements IModelCTM {
                 }
             }
         }
+    }
+    
+    @Override
+    public IModel getVanillaParent() {
+        return vanillamodel;
     }
 
     @Override
@@ -122,7 +132,7 @@ public class ModelCTM implements IModelCTM {
     @Override
     @SuppressWarnings("null")
     public IBakedModel bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
-        IBakedModel parent = parentmodel.bake(state, format, rl -> {
+        IBakedModel parent = vanillamodel.bake(state, format, rl -> {
             TextureAtlasSprite sprite = bakedTextureGetter.apply(rl);
             IMetadataSectionCTM chiselmeta = null;
             try {
@@ -222,5 +232,33 @@ public class ModelCTM implements IModelCTM {
     @Nullable
     public ICTMTexture<?> getOverrideTexture(int tintIndex, String sprite) {
         return textureOverrides.get(Pair.of(tintIndex, sprite));
+    }
+
+    @Override
+    public IModel retexture(ImmutableMap<String, String> textures) {
+        if (this.getVanillaParent() instanceof IRetexturableModel) {
+            this.vanillamodel = ((IRetexturableModel)getVanillaParent()).retexture(textures);
+        }
+        this.modelinfo.textures.putAll(textures);
+        for (Entry<Integer, IMetadataSectionCTM> e : metaOverrides.entrySet()) {
+            ResourceLocation[] additionals = e.getValue().getAdditionalTextures();
+            for (int i = 0; i < additionals.length; i++) {
+                ResourceLocation res = additionals[i];
+                if (res.getResourcePath().startsWith("#")) {
+                    additionals[i] = new ResourceLocation(textures.get(res.getResourcePath().substring(1)));
+                    textureDependencies.add(additionals[i]);
+                }
+            }
+        }
+        for (int i : overrides.keySet()) {
+            overrides.compute(i, (idx, ele) -> {
+                if (ele.isJsonPrimitive() && ele.getAsJsonPrimitive().isString()) {
+                    ele = new JsonPrimitive(textures.get(ele.getAsString().substring(1)));
+                    textureDependencies.add(new ResourceLocation(ele.getAsString()));
+                }
+                return ele;
+            });
+        }
+        return this;
     }
 }
