@@ -51,6 +51,7 @@ minecraft {
 
     replaceIn "CTM.java"
     replace "@VERSION@", project.version
+    replace "@DEPENDENCIES", 'before:chisel@[MC1.12-0.0.14.17,)'
 }
 
 lombok {
