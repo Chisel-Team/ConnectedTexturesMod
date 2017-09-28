@@ -179,4 +179,3 @@ curseforge {
         addArtifact(apiJar)
     }
 }
-
