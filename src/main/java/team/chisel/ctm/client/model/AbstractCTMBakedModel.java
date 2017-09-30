@@ -6,6 +6,7 @@ import java.lang.reflect.Field;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -134,9 +135,9 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
     @RequiredArgsConstructor 
     @ToString
     private static class State {
-        private final IBlockState cleanState;
+        private final @Nonnull IBlockState cleanState;
         private final TObjectLongMap<ICTMTexture<?>> serializedContext;
-        private final IBakedModel parent;
+        private final @Nonnull IBakedModel parent;
         
         @Override
         public boolean equals(Object obj) {
@@ -169,9 +170,10 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + ((cleanState == null) ? 0 : cleanState.hashCode());
+            // for some reason blockstates hash their properties, we only care about the identity hash
+            result = prime * result + System.identityHashCode(cleanState);
             result = prime * result + ((parent == null) ? 0 : parent.hashCode());
-            result = prime * result + ((serializedContext == null) ? 0 : serializedContext.hashCode());
+            result = prime * result + serializedContext.hashCode();
             return result;
         }
     }
