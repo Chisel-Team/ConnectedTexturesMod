@@ -314,7 +314,7 @@ public class CTMLogic {
      * @param world
      * @param current
      *            The position of your block.
-     * @param y
+     * @param connection
      *            The position of the block to check against.
      * @param dir
      *            The {@link EnumFacing side} of the block to check for connection status. This is <i>not</i> the direction to check in.
@@ -322,7 +322,7 @@ public class CTMLogic {
      */
     public final boolean isConnected(IBlockAccess world, BlockPos current, BlockPos connection, EnumFacing dir) {
 
-        IBlockState state = world.getBlockState(current);
+        IBlockState state = getBlockOrFacade(world, current, dir, connection);
         return isConnected(world, current, connection, dir, state);
     }
 
@@ -347,12 +347,12 @@ public class CTMLogic {
 //          return false;
 //      }
       
-        BlockPos pos2 = connection.add(dir.getDirectionVec());
+        BlockPos obscuringPos = connection.add(dir.getDirectionVec());
 
         boolean disableObscured = disableObscuredFaceCheck.orElse(Configurations.connectInsideCTM);
 
-        IBlockState con = getBlockOrFacade(world, connection, dir);
-        IBlockState obscuring = disableObscured ? null : getBlockOrFacade(world, pos2, dir);
+        IBlockState con = getBlockOrFacade(world, connection, dir, current);
+        IBlockState obscuring = disableObscured ? null : getBlockOrFacade(world, obscuringPos, dir, current);
 
         // bad API user
         if (con == null) {
@@ -384,10 +384,10 @@ public class CTMLogic {
 //        return false;
 //    }
 
-	public static IBlockState getBlockOrFacade(IBlockAccess world, BlockPos pos, @Nullable EnumFacing side) {
+	public static IBlockState getBlockOrFacade(IBlockAccess world, BlockPos pos, @Nullable EnumFacing side, BlockPos connection) {
 		IBlockState state = world.getBlockState(pos);
 		if (state.getBlock() instanceof IFacade) {
-			return ((IFacade) state.getBlock()).getFacade(world, pos, side);
+			return ((IFacade) state.getBlock()).getFacade(world, pos, side, connection);
 		}
 		return state;
 	}
