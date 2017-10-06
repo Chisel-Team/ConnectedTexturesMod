@@ -1,18 +1,17 @@
 package team.chisel.ctm.client.texture.ctx;
 
-import java.util.EnumMap;
-
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
-import javax.vecmath.Point2i;
-
 import com.google.common.base.Preconditions;
-
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumFacing.Axis;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import team.chisel.ctm.client.texture.render.TextureMap;
+import team.chisel.ctm.client.util.FaceOffset;
+
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+import javax.vecmath.Point2i;
+import java.util.EnumMap;
 
 @ParametersAreNonnullByDefault
 public abstract class TextureContextGrid extends TextureContextPosition {
@@ -101,8 +100,9 @@ public abstract class TextureContextGrid extends TextureContextPosition {
         
         long serialized = 0;
         for (@Nonnull EnumFacing side : EnumFacing.VALUES) {
+            BlockPos modifiedPosition = position.add(FaceOffset.getBlockPosOffsetFromFaceOffset(side, tex.getXOffset(), tex.getYOffset()));
 
-            Point2i coords = calculateTextureCoord(position, tex.getXSize(), tex.getYSize(), side);
+            Point2i coords = calculateTextureCoord(modifiedPosition, tex.getXSize(), tex.getYSize(), side);
             textureCoords.put(side, coords);
             
             // Calculate a unique index for a submap (x + (y * x-size)), then shift it left by the max bit storage (10 bits = 1024 unique indices)

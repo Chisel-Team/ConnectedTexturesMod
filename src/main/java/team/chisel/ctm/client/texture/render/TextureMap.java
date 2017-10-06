@@ -1,18 +1,7 @@
 package team.chisel.ctm.client.texture.render;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.vecmath.Point2i;
-
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
-
 import lombok.Getter;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.util.math.BlockPos;
@@ -24,6 +13,15 @@ import team.chisel.ctm.client.texture.ctx.TextureContextPosition;
 import team.chisel.ctm.client.texture.type.TextureTypeMap;
 import team.chisel.ctm.client.util.Quad;
 import team.chisel.ctm.client.util.Submap;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.vecmath.Point2i;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class TextureMap extends AbstractTexture<TextureTypeMap> {
 
@@ -116,6 +114,10 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
     private final int xSize;
     @Getter
     private final int ySize;
+    @Getter
+    private final int xOffset;
+    @Getter
+    private final int yOffset;
 
     private final MapType map;
 
@@ -141,7 +143,24 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
             } else {
                 xSize = ySize = 2;
             }
+
+            if (object.has("x_offset")) {
+                Preconditions.checkArgument(object.get("x_offset").isJsonPrimitive() && object.get("x_offset").getAsJsonPrimitive().isNumber(), "x_offset must be a number!");
+
+                this.xOffset = object.get("x_offset").getAsInt();
+            } else {
+                this.xOffset = 0;
+            }
+
+            if (object.has("y_offset")) {
+                Preconditions.checkArgument(object.get("y_offset").isJsonPrimitive() && object.get("y_offset").getAsJsonPrimitive().isNumber(), "y_offset must be a number!");
+
+                this.yOffset = object.get("y_offset").getAsInt();
+            } else {
+                this.yOffset = 0;
+            }
         } else {
+            xOffset = yOffset = 0;
             xSize = ySize = 2;
         }
 
