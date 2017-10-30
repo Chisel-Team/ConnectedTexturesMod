@@ -10,6 +10,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import com.jcraft.jogg.Packet;
 import lombok.Getter;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -21,6 +22,8 @@ import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.util.NonnullType;
 import team.chisel.ctm.api.util.TextureInfo;
+import team.chisel.ctm.client.shader.ShaderCompileException;
+import team.chisel.ctm.client.shader.ShaderUtil;
 import team.chisel.ctm.client.util.Quad;
 
 
@@ -44,6 +47,11 @@ public abstract class AbstractTexture<T extends ITextureType> implements ICTMTex
 
     protected boolean hasLight;
     protected int skylight, blocklight;
+
+    protected boolean hasShaders;
+    protected String vertShader;
+    protected String fragShader;
+    protected int shaderProgram;
 
     @Deprecated
     public AbstractTexture(T type, BlockRenderLayer layer, TextureAtlasSprite... sprites) {
@@ -69,6 +77,30 @@ public abstract class AbstractTexture<T extends ITextureType> implements ICTMTex
                     JsonObject lightObj = light.getAsJsonObject();
                     this.blocklight = parseLightValue(lightObj.get("block"));
                     this.skylight = parseLightValue(lightObj.get("sky"));
+                }
+            }
+            JsonElement shaders = info.getInfo().get().get("shaders");
+            if (shaders != null){
+                if (shaders.isJsonObject()){
+                    JsonObject shaderObj = shaders.getAsJsonObject();
+                    JsonElement vert = shaderObj.get("vertex");
+                    JsonElement fragment = shaderObj.get("fragment");
+                    if (vert != null || fragment != null) {
+                        if (vert != null) {
+                            this.vertShader = vert.getAsString();
+                        }
+                        if (fragment != null) {
+                            this.fragShader = fragment.getAsString();
+                        }
+                        try {
+                            this.shaderProgram = ShaderUtil.createProgram(this.fragShader, this.vertShader);
+                            this.hasShaders = true;
+                        } catch (ShaderCompileException exception) {
+                            exception.printStackTrace();
+                            this.hasShaders = false;
+                        }
+                        //todo add fallback, lets get shaders working first
+                    }
                 }
             }
         }
