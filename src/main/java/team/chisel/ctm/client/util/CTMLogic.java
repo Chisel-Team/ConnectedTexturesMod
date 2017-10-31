@@ -32,7 +32,7 @@ import team.chisel.ctm.api.texture.ISubmap;
  * textures.  The normal Texture.png is the blocks "unconnected" texture, and is used when CTM is disabled or the block
  * has nothing to connect to.  This texture has all of the outside corner quadrants  The texture-ctm.png contains the
  * rest of the quadrants.
- * <pre><blockquote>
+ * <pre>
  * ┌─────────────────┐ ┌────────────────────────────────┐
  * │ texture.png     │ │ texture-ctm.png                │
  * │ ╔══════╤══════╗ │ │  ──────┼────── ║ ─────┼───── ║ │
@@ -50,9 +50,9 @@ import team.chisel.ctm.api.texture.ISubmap;
  *                     │ │ 12   │ 13   ││ 14   │ 15   │ │
  *                     │ ═══════╧═══════╗ ─────┼───── ╔ │
  *                     └────────────────────────────────┘
- * </blockquote></pre>
+ * </pre>
  * combining { 18, 13,  9, 16 }, we can generate a texture connected to the right!
- * <pre><blockquote>
+ * <pre>
  * ╔══════╤═══════
  * ║      │      │
  * ║ 16   │ 9    │
@@ -60,10 +60,10 @@ import team.chisel.ctm.api.texture.ISubmap;
  * ║      │      │
  * ║ 18   │ 13   │
  * ╚══════╧═══════
- * </blockquote></pre>
+ * </pre>
  *
  * combining { 18, 13, 11,  2 }, we can generate a texture, in the shape of an L (connected to the right, and up
- * <pre><blockquote>
+ * <pre>
  * ║ ─────┼───── ╚
  * ║      │      │
  * ║ 2    │ 11   │
@@ -71,7 +71,7 @@ import team.chisel.ctm.api.texture.ISubmap;
  * ║      │      │
  * ║ 18   │ 13   │
  * ╚══════╧═══════
- * </blockquote></pre>
+ * </pre>
  *
  * HAVE FUN!
  * -CptRageToaster-
@@ -314,7 +314,7 @@ public class CTMLogic {
      * @param world
      * @param current
      *            The position of your block.
-     * @param y
+     * @param connection
      *            The position of the block to check against.
      * @param dir
      *            The {@link EnumFacing side} of the block to check for connection status. This is <i>not</i> the direction to check in.
@@ -322,7 +322,7 @@ public class CTMLogic {
      */
     public final boolean isConnected(IBlockAccess world, BlockPos current, BlockPos connection, EnumFacing dir) {
 
-        IBlockState state = world.getBlockState(current);
+        IBlockState state = getBlockOrFacade(world, current, dir, connection);
         return isConnected(world, current, connection, dir, state);
     }
 
@@ -347,12 +347,12 @@ public class CTMLogic {
 //          return false;
 //      }
       
-        BlockPos pos2 = connection.add(dir.getDirectionVec());
+        BlockPos obscuringPos = connection.add(dir.getDirectionVec());
 
         boolean disableObscured = disableObscuredFaceCheck.orElse(Configurations.connectInsideCTM);
 
-        IBlockState con = getBlockOrFacade(world, connection, dir);
-        IBlockState obscuring = disableObscured ? null : getBlockOrFacade(world, pos2, dir);
+        IBlockState con = getBlockOrFacade(world, connection, dir, current);
+        IBlockState obscuring = disableObscured ? null : getBlockOrFacade(world, obscuringPos, dir, current);
 
         // bad API user
         if (con == null) {
@@ -367,7 +367,7 @@ public class CTMLogic {
         }
 
         // check that we aren't already connected outwards from this side
-        ret &= !obscuring.equals(state);
+        ret &= !stateComparator(state, obscuring, dir);
 
         return ret;
     }
@@ -384,10 +384,10 @@ public class CTMLogic {
 //        return false;
 //    }
 
-	public static IBlockState getBlockOrFacade(IBlockAccess world, BlockPos pos, @Nullable EnumFacing side) {
+	public static IBlockState getBlockOrFacade(IBlockAccess world, BlockPos pos, @Nullable EnumFacing side, BlockPos connection) {
 		IBlockState state = world.getBlockState(pos);
 		if (state.getBlock() instanceof IFacade) {
-			return ((IFacade) state.getBlock()).getFacade(world, pos, side);
+			return ((IFacade) state.getBlock()).getFacade(world, pos, side, connection);
 		}
 		return state;
 	}

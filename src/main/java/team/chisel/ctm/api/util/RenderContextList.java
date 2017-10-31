@@ -3,11 +3,13 @@ package team.chisel.ctm.api.util;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.WeakHashMap;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.google.common.collect.Maps;
+import com.sun.jna.WeakIdentityHashMap;
 
 import gnu.trove.map.TObjectLongMap;
 import gnu.trove.map.custom_hash.TObjectLongCustomHashMap;
@@ -18,6 +20,7 @@ import net.minecraft.world.IBlockAccess;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
+import team.chisel.ctm.client.util.RegionCache;
 
 /**
  * List of IBlockRenderContext's
@@ -25,32 +28,35 @@ import team.chisel.ctm.api.texture.ITextureType;
 @ParametersAreNonnullByDefault
 public class RenderContextList {
     
-    private final Map<ITextureType, ITextureContext> contextMap = Maps.newIdentityHashMap();
-    private final TObjectLongMap<ITextureType> serialized = new TObjectLongCustomHashMap<>(new IdentityHashingStrategy<>());
+    private static final ThreadLocal<WeakHashMap<IBlockAccess, RegionCache>> regionMetaCache = ThreadLocal.withInitial(WeakHashMap::new);
+    
+    private final Map<ICTMTexture<?>, ITextureContext> contextMap = Maps.newIdentityHashMap();
+    private final TObjectLongMap<ICTMTexture<?>> serialized = new TObjectLongCustomHashMap<>(new IdentityHashingStrategy<>());
 
-    public RenderContextList(IBlockState state, Collection<ICTMTexture<?>> textures, IBlockAccess world, BlockPos pos) {        
+    public RenderContextList(IBlockState state, Collection<ICTMTexture<?>> textures, IBlockAccess world, BlockPos pos) {
+        world = regionMetaCache.get().computeIfAbsent(world, w -> new RegionCache(pos, 2, w));
         for (ICTMTexture<?> tex : textures) {
             ITextureType type = tex.getType();
             ITextureContext ctx = type.getBlockRenderContext(state, world, pos, tex);
             if (ctx != null) {
-                contextMap.put(type, ctx);
+                contextMap.put(tex, ctx);
             }
         }
         
-        for (Entry<ITextureType, ITextureContext> e : contextMap.entrySet()) {
+        for (Entry<ICTMTexture<?>, ITextureContext> e : contextMap.entrySet()) {
             serialized.put(e.getKey(), e.getValue().getCompressedData());
         }
     }
 
-    public @Nullable ITextureContext getRenderContext(ITextureType type) {
-        return this.contextMap.get(type);
+    public @Nullable ITextureContext getRenderContext(ICTMTexture<?> tex) {
+        return this.contextMap.get(tex);
     }
 
-    public boolean contains(ITextureType type) {
-        return getRenderContext(type) != null;
+    public boolean contains(ICTMTexture<?> tex) {
+        return getRenderContext(tex) != null;
     }
 
-    public TObjectLongMap<ITextureType> serialized() {
+    public TObjectLongMap<ICTMTexture<?>> serialized() {
         return serialized;
     }
 }

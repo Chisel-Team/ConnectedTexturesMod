@@ -26,7 +26,7 @@ apply plugin: 'maven-publish'
 import org.ajoberstar.grgit.Grgit
 
 def repo = Grgit.open(project.file('.'))
-project.ext.gitHash = ''//repo.log().find().abbreviatedId
+project.ext.gitHash = repo.log().find().abbreviatedId
 
 boolean dev = System.getenv('RELEASE') == null || System.getenv('RELEASE').equals('false');
 
@@ -51,6 +51,7 @@ minecraft {
 
     replaceIn "CTM.java"
     replace "@VERSION@", project.version
+    replace project.deps_to_replace, "before:chisel@[${min_chisel_version},)"
 }
 
 lombok {
@@ -145,6 +146,8 @@ String getChangelogText() {
                 temp = "<h2>$temp</h2>"
             } else if (it.startsWith('-')) {
                 temp = "&nbsp;&nbsp;&nbsp;$temp"
+                temp = temp.replaceAll("(\\S+\\/\\S+)#([0-9]+)\\b", "<a href=\"https://github.com/\$1/issues/\$2\">\$0</a>");
+                temp = temp.replaceAll("#([0-9]+)\\b(?!<\\/a>)", "<a href=\"https://github.com/$github_project/issues/\$1\">\$0</a>");
             } else {
                 temp = "<h4>$temp</h4>"
             }

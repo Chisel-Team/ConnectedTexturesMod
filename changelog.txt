@@ -1,7 +1,31 @@
+0.2.3:
+New
+- New render type, eldritch! This was used on Chisel's temple brick back in the day, and now it is back once more, to strike horror in the minds of all who gaze upon it!
+Changes
+- CTM models (those with ctm_version) can now be used as parents to vanilla models
+- CTM models will now respect blockstate texture overrides
+- Slight performance boost by reusing the world cache between texture types
+Fixes
+- Fix incorrect corner logic on +Z axis for edges/edges_full
+- Fix z-fighting when edges_full is used as an overlay/underlay
+- Fix issues with CTM models using inheritance (this fixes Chisel bookshelves)
+
+0.2.2:
+Changes
+- Obscuring check now uses the connect_to data
+Fixes
+- Fix small corner case with edges/edges_full
+- Fix #19 item model cache not being sensitive to NBT variants (thommy101)
+- Fix issue that arose when using multiple metadata overrides in a single model
+- Fix #21 z-fighting when edges_full is used as an overlay on a ctm texture
+- Fix #22 connections not working properly when one CTM model is used for multiple blockstates
+
 0.2.1:
 New
-- Two new render types, EDGES and EDGES_FULL, which can be used to change appearances when adjacent to other certain blocks.
-- CTM (and all CTM subtypes, including EDGES and EDGES_FULL) now support "connectTo" in their extra{} data. See the wiki for documentation on this new feature.
+- Two new render types, edges and edges_full, which can be used to change appearances when adjacent to other certain blocks.
+- CTM (and all CTM subtypes, including edges and edges_full) now support "connect_to" in their extra{} data. See the wiki for documentation on this new feature.
+Changes
+- All texture type names have been changed. Old names will still work, for now. Notable changes: R->random, V->pattern, CTMH->ctm_horizontal, CTMV->pillar. All others were just lowercased.
 Fixes
 - Fix crash when shift+F3 was used while a CTM-rendered item was visible.
  

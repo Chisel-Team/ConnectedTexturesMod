@@ -13,6 +13,8 @@ import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.IChiselFace;
 
 public interface IModelCTM extends IModel {
+    
+    IModel getVanillaParent();
 
     void load();
 

@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -42,6 +43,10 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
     @Override
     protected AbstractCTMBakedModel createModel(@Nullable IBlockState state, IModelCTM model, @Nullable RenderContextList ctx, long rand) {
         IBakedModel parent = getParent(rand);
+        while (parent instanceof ModelBakedCTM) {
+            parent = ((AbstractCTMBakedModel)parent).getParent(rand);
+        }
+
         AbstractCTMBakedModel ret = new ModelBakedCTM(model, parent);
         for (BlockRenderLayer layer : LAYERS) {
             for (EnumFacing facing : FACINGS) {
@@ -79,8 +84,8 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
                 int quadGoal = ctx == null ? 1 : texturemap.values().stream().mapToInt(tex -> tex.getType().getQuadsPerSide()).max().orElse(1);
                 for (Entry<BakedQuad, ICTMTexture<?>> e : texturemap.entrySet()) {
                     // If the layer is null, this is a wrapped vanilla texture, so passthrough the layer check to the block
-                    if (e.getValue().getLayer() == layer || (e.getValue().getLayer() == null && (state == null || layer == state.getBlock().getBlockLayer()))) {
-                        ITextureContext tcx = ctx == null ? null : ctx.getRenderContext(e.getValue().getType());
+                    if (e.getValue().getLayer() == layer || (e.getValue().getLayer() == null && (state == null || state.getBlock().canRenderInLayer(state, layer)))) {
+                        ITextureContext tcx = ctx == null ? null : ctx.getRenderContext(e.getValue());
                         quads.addAll(e.getValue().transformQuad(e.getKey(), tcx, quadGoal));
                     }
                 }
@@ -91,7 +96,9 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
 
     @Override
     public @Nonnull TextureAtlasSprite getParticleTexture() {
-        return getParent().getParticleTexture();
+        return Optional.ofNullable(getModel().getTexture(getParent().getParticleTexture().getIconName()))
+                .map(ICTMTexture::getParticle)
+                .orElse(getParent().getParticleTexture());
     }
     
     @Override

@@ -24,7 +24,6 @@ public class TextureContextCTM implements ITextureContext {
     public TextureContextCTM(@Nonnull IBlockState state, IBlockAccess world, BlockPos pos, TextureCTM tex) {
     	this.tex = tex;
     	
-        world = new RegionCache(pos, 1, world);
         for (EnumFacing face : EnumFacing.VALUES) {
             CTMLogic ctm = createCTM(state);
             ctm.createSubmapIndices(world, pos, face);

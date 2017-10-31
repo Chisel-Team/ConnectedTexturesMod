@@ -133,7 +133,6 @@ public class TextureContextCTMV implements ITextureContext {
     private long compressedData;
     
     public TextureContextCTMV(IBlockAccess world, BlockPos pos) {
-        world = new RegionCache(pos, 2, world);
         data = new ConnectionData(world, pos);
 
         IBlockState state = world.getBlockState(pos);
