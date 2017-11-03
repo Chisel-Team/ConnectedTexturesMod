@@ -42,7 +42,7 @@ targetCompatibility = '1.8'
 
 minecraft {
     version = "${minecraft_version}-${forge_version}"
-    mappings = 'snapshot_20170624'
+    mappings = 'snapshot_20171101'
     runDir = "run"
 	
 	useDepAts = true
@@ -51,7 +51,7 @@ minecraft {
 
     replaceIn "CTM.java"
     replace "@VERSION@", project.version
-    replace "@DEPENDENCIES", 'before:chisel@[MC1.12-0.0.14.17,)'
+    replace "@DEPENDENCIES", 'before:chisel@[MC1.12-0.0.14.18,)'
 }
 
 lombok {
