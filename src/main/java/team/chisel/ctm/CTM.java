@@ -20,7 +20,7 @@ import team.chisel.ctm.client.texture.type.TextureTypeRegistry;
 import team.chisel.ctm.client.util.CTMPackReloadListener;
 import team.chisel.ctm.client.util.TextureMetadataHandler;
 
-@Mod(name = MOD_NAME, modid = MOD_ID, version = VERSION, dependencies = "required-after:forge@[14.21.0.2363,);@DEPENDENCIES@", clientSideOnly = true)
+@Mod(name = MOD_NAME, modid = MOD_ID, version = VERSION, dependencies = "required-after:forge@[14.23.0.2528,);@DEPENDENCIES@", clientSideOnly = true)
 public class CTM {
     
     public static final String MOD_ID = "ctm";
