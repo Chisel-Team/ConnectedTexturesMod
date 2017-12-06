@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -40,11 +41,12 @@ import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 public enum TextureMetadataHandler {
 
     INSTANCE;
+	
+	private final Set<ResourceLocation> registeredTextures = new HashSet<>();
     
     /*
      * Handle stitching metadata additional textures
      */
-    
     @SubscribeEvent
     public void onTextureStitch(TextureCollectedEvent event) {
         if (Minecraft.getMinecraft().getTextureMapBlocks() != null) {
@@ -63,7 +65,9 @@ public enum TextureMetadataHandler {
                             event.getMap().registerSprite(proxysprite);
                             // Load proxy's additional textures
                             for (ResourceLocation r : proxymeta.getAdditionalTextures()) {
-                                event.getMap().registerSprite(r);
+                            	if (registeredTextures.add(r)) {
+                            		event.getMap().registerSprite(r);
+                            	}
                             }
                         }
                     }
