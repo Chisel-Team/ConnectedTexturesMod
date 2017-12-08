@@ -210,11 +210,13 @@ public class CTMLogic {
      */
     public void buildConnectionMap(IBlockAccess world, BlockPos pos, EnumFacing side) {
         IBlockState state = world.getBlockState(pos);
-        if (state.shouldSideBeRendered(world, pos, side)) {
+        // TODO this naive check doesn't work for models that have unculled faces.
+        // Perhaps a smarter optimization could be done eventually?
+//        if (state.shouldSideBeRendered(world, pos, side)) {
             for (Dir dir : Dir.VALUES) {
                 setConnectedState(dir, dir.isConnected(this, world, pos, side, state));
             }
-        }
+//        }
     }
 
     public void buildConnectionMap(long data, EnumFacing side) {
