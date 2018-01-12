@@ -73,7 +73,9 @@ public enum TextureMetadataHandler {
                     }
                     // Load additional textures
                     for (ResourceLocation r : metadata.getAdditionalTextures()) {
-                        event.getMap().registerSprite(r);
+                        if (registeredTextures.add(r)) {
+                            event.getMap().registerSprite(r);
+                        }
                     }
                 }
             }
