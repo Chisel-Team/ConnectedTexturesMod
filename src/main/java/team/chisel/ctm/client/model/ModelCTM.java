@@ -31,7 +31,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import lombok.val;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BlockPartFace;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ModelBlock;
@@ -42,6 +41,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.client.model.IRetexturableModel;
+import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.TRSRTransformation;
 import team.chisel.ctm.api.model.IModelCTM;
@@ -236,29 +236,39 @@ public class ModelCTM implements IModelCTM, IRetexturableModel {
 
     @Override
     public IModel retexture(ImmutableMap<String, String> textures) {
-        if (this.getVanillaParent() instanceof IRetexturableModel) {
-            this.vanillamodel = ((IRetexturableModel)getVanillaParent()).retexture(textures);
+        try {
+            return retexture(this, textures);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ModelLoaderRegistry.getMissingModel();
         }
-        this.modelinfo.textures.putAll(textures);
-        for (Entry<Integer, IMetadataSectionCTM> e : metaOverrides.entrySet()) {
+    }
+
+    private static ModelCTM retexture(ModelCTM current, ImmutableMap<String, String> textures) throws IOException {
+        IModel vanillamodel = ((IRetexturableModel) current.getVanillaParent()).retexture(textures);
+
+        ModelCTM ret = new ModelCTM(current.modelinfo, vanillamodel, current.overrides);
+
+        ret.modelinfo.textures.putAll(textures);
+        for (Entry<Integer, IMetadataSectionCTM> e : ret.metaOverrides.entrySet()) {
             ResourceLocation[] additionals = e.getValue().getAdditionalTextures();
             for (int i = 0; i < additionals.length; i++) {
                 ResourceLocation res = additionals[i];
                 if (res.getResourcePath().startsWith("#")) {
                     additionals[i] = new ResourceLocation(textures.get(res.getResourcePath().substring(1)));
-                    textureDependencies.add(additionals[i]);
+                    ret.textureDependencies.add(additionals[i]);
                 }
             }
         }
-        for (int i : overrides.keySet()) {
-            overrides.compute(i, (idx, ele) -> {
+        for (int i : ret.overrides.keySet()) {
+            ret.overrides.compute(i, (idx, ele) -> {
                 if (ele.isJsonPrimitive() && ele.getAsJsonPrimitive().isString()) {
                     ele = new JsonPrimitive(textures.get(ele.getAsString().substring(1)));
-                    textureDependencies.add(new ResourceLocation(ele.getAsString()));
+                    ret.textureDependencies.add(new ResourceLocation(ele.getAsString()));
                 }
                 return ele;
             });
         }
-        return this;
+        return ret;
     }
 }

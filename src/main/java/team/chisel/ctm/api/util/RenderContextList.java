@@ -9,7 +9,6 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.google.common.collect.Maps;
-import com.sun.jna.WeakIdentityHashMap;
 
 import gnu.trove.map.TObjectLongMap;
 import gnu.trove.map.custom_hash.TObjectLongCustomHashMap;

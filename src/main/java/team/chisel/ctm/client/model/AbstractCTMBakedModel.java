@@ -1,13 +1,7 @@
 package team.chisel.ctm.client.model;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Field;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -19,7 +13,6 @@ import javax.vecmath.Vector3f;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
@@ -31,7 +24,6 @@ import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 
 import gnu.trove.map.TObjectLongMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -39,8 +31,6 @@ import lombok.ToString;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ItemMeshDefinition;
-import net.minecraft.client.renderer.ItemModelMesher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
@@ -50,18 +40,14 @@ import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.block.model.WeightedBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
-import net.minecraftforge.client.ItemModelMesherForge;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.IPerspectiveAwareModel;
-import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.common.model.TRSRTransformation;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.util.RenderContextList;
@@ -80,16 +66,7 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
         itemcache.invalidateAll();
         modelcache.invalidateAll();
     }
-    
-    private static final MethodHandle _locations;
-    static {
-        try {
-            _locations = MethodHandles.lookup().unreflectGetter(ReflectionHelper.findField(ItemModelMesherForge.class, "locations"));
-        } catch (IllegalAccessException e) {
-            throw Throwables.propagate(e);
-        }
-    }
-    
+
     @ParametersAreNonnullByDefault
     private class Overrides extends ItemOverrideList {
                 
@@ -97,7 +74,6 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
             super(Lists.newArrayList());
         }
 
-        @SuppressWarnings("null")
         @Override
         @SneakyThrows
         public IBakedModel handleItemState(IBakedModel originalModel, ItemStack stack, World world, EntityLivingBase entity) {
@@ -106,28 +82,12 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
                 block = ((ItemBlock) stack.getItem()).getBlock();
             }
             final IBlockState state = block == null ? null : block.getDefaultState();
-
-            ItemModelMesher mesher = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
-            
-            // First try simple damage overrides
-            ModelResourceLocation modelResourceLocation = Optional.ofNullable(
-                    ((IdentityHashMap<Item, TIntObjectHashMap<ModelResourceLocation>>) _locations.invoke(mesher)))
-                            .map(map -> map.get(stack.getItem()))
-                            .map(map -> map.get(mesher.getMetadata(stack)))
-                            .orElse(null);
-            
-            // Next, try mesh definitions
-            if (modelResourceLocation == null) {
-                ItemMeshDefinition itemMeshDefinition = mesher.shapers.get(stack.getItem());
-                modelResourceLocation = Optional.ofNullable(itemMeshDefinition).map(mesh -> mesh.getModelLocation(stack)).orElse(null);
-            }
-            
-            // Finally, this must be a missing/invalid model
-            if (modelResourceLocation == null) {
+            ModelResourceLocation mrl = ModelUtil.getMesh(stack);
+            if (mrl == null) {
+                // this must be a missing/invalid model
                 return Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getMissingModel();
             }
-
-            return itemcache.get(modelResourceLocation, () -> createModel(state, model, null, 0));
+            return itemcache.get(mrl, () -> createModel(state, model, null, 0));
         }
     }
     
@@ -136,7 +96,7 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
     @ToString
     private static class State {
         private final @Nonnull IBlockState cleanState;
-        private final TObjectLongMap<ICTMTexture<?>> serializedContext;
+        private final @Nullable TObjectLongMap<ICTMTexture<?>> serializedContext;
         private final @Nonnull IBakedModel parent;
         
         @Override
@@ -172,8 +132,8 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
             int result = 1;
             // for some reason blockstates hash their properties, we only care about the identity hash
             result = prime * result + System.identityHashCode(cleanState);
-            result = prime * result + ((parent == null) ? 0 : parent.hashCode());
-            result = prime * result + serializedContext.hashCode();
+            result = prime * result + (parent == null ? 0 : parent.hashCode());
+            result = prime * result + (serializedContext == null ? 0 : serializedContext.hashCode());
             return result;
         }
     }
@@ -189,7 +149,7 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
 
     @Override
     @SneakyThrows
-    public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long rand) {        
+    public @Nonnull List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long rand) {        
         if (CTMCoreMethods.renderingDamageModel.get()) {
             return parent.getQuads(state, side, rand);
         }
@@ -236,6 +196,7 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
     /**
      * Random sensitive parent, will proxy to {@link WeightedBakedModel} if possible.
      */
+    @Nonnull
     public IBakedModel getParent(long rand) {
         if (getParent() instanceof WeightedBakedModel) {
             return ((WeightedBakedModel)parent).getRandomModel(rand);
