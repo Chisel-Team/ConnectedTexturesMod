@@ -425,11 +425,9 @@ public class Quad {
         // Sorry OF users
         boolean hasLightmap = (this.blocklight > 0 || this.skylight > 0) && !FMLClientHandler.instance().hasOptifine();
         if (hasLightmap) {
-            // TODO waiting on https://github.com/MinecraftForge/MinecraftForge/pull/3896
-//            if (format == DefaultVertexFormats.ITEM) { // ITEM is convertable to BLOCK (replace normal+padding with lmap)
-//                format = DefaultVertexFormats.BLOCK;
-//            } else 
-            if (!format.getElements().contains(DefaultVertexFormats.TEX_2S)) { // Otherwise, this format is unknown, add TEX_2S if it does not exist
+            if (format == DefaultVertexFormats.ITEM) { // ITEM is convertable to BLOCK (replace normal+padding with lmap)
+                format = DefaultVertexFormats.BLOCK;
+            } else if (!format.getElements().contains(DefaultVertexFormats.TEX_2S)) { // Otherwise, this format is unknown, add TEX_2S if it does not exist
                 format = new VertexFormat(format).addElement(DefaultVertexFormats.TEX_2S);
             }
         }
