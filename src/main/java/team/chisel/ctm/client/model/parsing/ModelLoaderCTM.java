@@ -70,8 +70,7 @@ public enum ModelLoaderCTM implements ICustomModelLoader {
             }
             ResourceLocation absolute = new ResourceLocation(modelLocation.getResourceDomain(), path);
 
-            try {
-                IResource resource = manager.getResource(absolute);
+            try (IResource resource = manager.getResource(absolute)) {
                 JsonElement ele = new JsonParser().parse(new InputStreamReader(resource.getInputStream()));
                 if (ele != null) {
                     return ele;

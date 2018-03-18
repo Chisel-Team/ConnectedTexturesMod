@@ -56,8 +56,8 @@ public class ResourceUtil {
             return metadataCache.get(res);
         }
         IMetadataSectionCTM ret;
-        try {
-            ret = getResource(res).getMetadata(IMetadataSectionCTM.SECTION_NAME);
+        try (IResource resource = getResource(res)) {
+            ret = resource.getMetadata(IMetadataSectionCTM.SECTION_NAME);
         } catch (FileNotFoundException e) {
             ret = null;  
         } catch (JsonParseException e) {
