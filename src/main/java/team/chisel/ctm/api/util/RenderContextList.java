@@ -3,6 +3,7 @@ package team.chisel.ctm.api.util;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.WeakHashMap;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -26,11 +27,13 @@ import team.chisel.ctm.client.util.RegionCache;
 @ParametersAreNonnullByDefault
 public class RenderContextList {
     
+    private static final ThreadLocal<WeakHashMap<IBlockAccess, RegionCache>> regionMetaCache = ThreadLocal.withInitial(WeakHashMap::new);
+    
     private final Map<ICTMTexture<?>, ITextureContext> contextMap = Maps.newIdentityHashMap();
     private final TObjectLongMap<ICTMTexture<?>> serialized = new TObjectLongCustomHashMap<>(new IdentityHashingStrategy<>());
 
     public RenderContextList(IBlockState state, Collection<ICTMTexture<?>> textures, IBlockAccess world, BlockPos pos) {
-        world = new RegionCache(pos, 2, world);
+        world = regionMetaCache.get().computeIfAbsent(world, w -> new RegionCache(pos, 2, w));
         for (ICTMTexture<?> tex : textures) {
             ITextureType type = tex.getType();
             ITextureContext ctx = type.getBlockRenderContext(state, world, pos, tex);

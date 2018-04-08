@@ -1,19 +1,17 @@
 package team.chisel.ctm.client.util;
 
-import java.util.Arrays;
-import java.util.EnumMap;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumFacing.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.Arrays;
+import java.util.EnumMap;
 
 import static net.minecraft.util.EnumFacing.*;
-
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Axis;
-import net.minecraft.util.EnumFacing.AxisDirection;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
 
 /**
  * Think of this class as a "Two dimensional ForgeDirection, with diagonals".
@@ -50,8 +48,8 @@ public enum Dir {
 
     /**
      * Finds if this block is connected for the given side in this Dir.
-     * 
-     * @param inst
+     *
+     * @param ctm
      *            The CTM instance to use for logic.
      * @param world
      *            The world the block is in.
@@ -67,8 +65,8 @@ public enum Dir {
 
     /**
      * Finds if this block is connected for the given side in this Dir.
-     * 
-     * @param inst
+     *
+     * @param ctm
      *            The CTM instance to use for logic.
      * @param world
      *            The world the block is in.
@@ -76,7 +74,7 @@ public enum Dir {
      *            The position of your block.
      * @param side
      *            The side of the current face.
-     * @param side
+     * @param state
      *            The state to check for connection with.
      * @return True if the block is connected in the given Dir, false otherwise.
      */
@@ -85,7 +83,7 @@ public enum Dir {
     }
     
     @SuppressWarnings("null")
-    private BlockPos getConnection(BlockPos pos, EnumFacing side) {
+    public BlockPos getConnection(BlockPos pos, EnumFacing side) {
         EnumFacing[] dirs = getNormalizedDirs(side);
         BlockPos connection = pos;
         for (EnumFacing dir : dirs) {

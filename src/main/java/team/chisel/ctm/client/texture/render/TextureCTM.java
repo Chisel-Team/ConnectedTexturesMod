@@ -59,7 +59,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + dir.hashCode();
-			result = prime * result + from.hashCode();
+			result = prime * result + System.identityHashCode(from);
 			return result;
 		}
 
