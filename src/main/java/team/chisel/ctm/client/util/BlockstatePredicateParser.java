@@ -29,7 +29,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
-import lombok.Delegate;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.Value;

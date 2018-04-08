@@ -3,7 +3,6 @@ package team.chisel.ctm.client.texture;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -55,13 +54,12 @@ public interface IMetadataSectionCTM extends IMetadataSection {
             TextureAtlasSprite proxySprite = bakedTextureGetter.apply(new ResourceLocation(getProxy()));
             try {
                 meta = ResourceUtil.getMetadata(proxySprite);
-            } catch (IOException e) {
-                CTM.logger.error("Could not parse metadata of proxy " + getProxy(), e);
-            }
-            if (meta != null) {
+                if (meta == null) {
+                    meta = new V1();
+                }
                 sprite = proxySprite;
-            } else {
-                CTM.logger.error("Metadata for proxy either missing or errored, reverting to base...");
+            } catch (IOException e) {
+                CTM.logger.error("Could not parse metadata of proxy, ignoring proxy and using base texture." + getProxy(), e);
                 meta = this;
             }
         }
