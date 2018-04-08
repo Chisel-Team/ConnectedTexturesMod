@@ -18,8 +18,8 @@ public interface IFacade {
      * @deprecated Use {@link #getFacade(IBlockAccess, BlockPos, EnumFacing, BlockPos)}
      */
     @Nonnull
+    @Deprecated
     IBlockState getFacade(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nullable EnumFacing side);
-
 
     /**
      * Gets the blockstate this facade appears as.
