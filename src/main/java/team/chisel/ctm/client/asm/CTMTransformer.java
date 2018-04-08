@@ -36,6 +36,12 @@ public class CTMTransformer implements IClassTransformer {
     
     private static final String VANILLA_MODEL_WRAPPER_CLASS = "net.minecraftforge.client.model.ModelLoader$VanillaModelWrapper";
     private static final String GET_TEXTURES_METHOD_NAME = "getTextures";
+    
+    private static final String TEXTURE_ATLAS_SPRITE_CLASS = "net.minecraft.client.renderer.texture.TextureAtlasSprite";
+    private static final String UPDATE_ANIMATION_INTERPOLATED_METHOD_NAME = "updateAnimationInterpolated";
+    private static final String INTERPOLATE_COLOR_CLASS = TEXTURE_ATLAS_SPRITE_CLASS.replace('.', '/');
+    private static final String INTERPOLATE_COLOR_NAME = "interpolateColor";
+    private static final String INTERPOLATE_COLOR_DESC = "(DII)I";
 
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {
@@ -150,6 +156,50 @@ public class CTMTransformer implements IClassTransformer {
                             toInsert.add(new VarInsnNode(ALOAD, 1));
                             toInsert.add(new MethodInsnNode(INVOKESTATIC, CHISEL_METHODS_CLASS_NAME, CHISEL_METHODS_TRANFORM_PARENT_NAME, CHISEL_METHODS_TRANFORM_PARENT_DESC, false));
                             toInsert.add(new VarInsnNode(ASTORE, 1));
+                            m.instructions.insert(next, toInsert);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+            classNode.accept(cw);
+            System.out.println("Transforming " + transformedName + " Finished.");
+            return cw.toByteArray();
+        } else if (transformedName.equals(TEXTURE_ATLAS_SPRITE_CLASS)) {
+            System.out.println("Transforming Class [" + transformedName + "], Method [" + UPDATE_ANIMATION_INTERPOLATED_METHOD_NAME + "]");
+
+            ClassNode classNode = new ClassNode();
+            ClassReader classReader = new ClassReader(basicClass);
+            classReader.accept(classNode, 0);
+
+            Iterator<MethodNode> methods = classNode.methods.iterator();
+
+            while (methods.hasNext()) {
+                MethodNode m = methods.next();
+                if (m.name.equals(UPDATE_ANIMATION_INTERPOLATED_METHOD_NAME)) {
+                    for (int i = 0; i < m.instructions.size(); i++) {
+                        AbstractInsnNode next = m.instructions.get(i);
+                        
+                        if (next.getOpcode() == LDC && ((LdcInsnNode)next).cst.equals(-16777216)) {
+                            // Remove j1 & -16777216
+                            m.instructions.remove(next.getPrevious());  // remove ILOAD 10
+                            m.instructions.remove(next.getNext());      // remove IAND
+                            next = next.getNext();                      // next is now ILOAD 12
+                            m.instructions.remove(next.getPrevious());  // remove LDC -16777216
+                            next = next.getPrevious();                  // next is now ILOAD 9
+                            
+                            InsnList toInsert = new InsnList();
+                            toInsert.add(new VarInsnNode(ALOAD, 0));    // load this
+                            toInsert.add(new VarInsnNode(DLOAD, 1));    // load d0
+                            toInsert.add(new VarInsnNode(ILOAD, 10));   // load j1
+                            toInsert.add(new IntInsnNode(BIPUSH, 24));  // load bitshifting constant
+                            toInsert.add(new InsnNode(ISHR));           // shift to alpha bits only
+                            toInsert.add(new VarInsnNode(ILOAD, 11));   // load k1
+                            toInsert.add(new IntInsnNode(BIPUSH, 24));  // load bitshifting constant
+                            toInsert.add(new InsnNode(ISHR));           // shift to alpha bits only
+                            toInsert.add(new MethodInsnNode(INVOKESPECIAL, INTERPOLATE_COLOR_CLASS, INTERPOLATE_COLOR_NAME, INTERPOLATE_COLOR_DESC, false));
                             m.instructions.insert(next, toInsert);
                             break;
                         }
