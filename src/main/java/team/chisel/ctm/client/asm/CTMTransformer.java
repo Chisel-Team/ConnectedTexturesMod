@@ -195,11 +195,13 @@ public class CTMTransformer implements IClassTransformer {
                             toInsert.add(new VarInsnNode(DLOAD, 1));    // load d0
                             toInsert.add(new VarInsnNode(ILOAD, 10));   // load j1
                             toInsert.add(new IntInsnNode(BIPUSH, 24));  // load bitshifting constant
-                            toInsert.add(new InsnNode(ISHR));           // shift to alpha bits only
+                            toInsert.add(new InsnNode(IUSHR));          // shift to alpha bits only
                             toInsert.add(new VarInsnNode(ILOAD, 11));   // load k1
                             toInsert.add(new IntInsnNode(BIPUSH, 24));  // load bitshifting constant
-                            toInsert.add(new InsnNode(ISHR));           // shift to alpha bits only
+                            toInsert.add(new InsnNode(IUSHR));          // shift to alpha bits only
                             toInsert.add(new MethodInsnNode(INVOKESPECIAL, INTERPOLATE_COLOR_CLASS, INTERPOLATE_COLOR_NAME, INTERPOLATE_COLOR_DESC, false));
+                            toInsert.add(new IntInsnNode(BIPUSH, 24));  // load bitshifting constant
+                            toInsert.add(new InsnNode(ISHL));           // shift alpha back to alpha bits
                             m.instructions.insert(next, toInsert);
                             break;
                         }
