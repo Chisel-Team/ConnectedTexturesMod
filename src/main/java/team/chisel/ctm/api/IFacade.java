@@ -13,6 +13,13 @@ import net.minecraft.world.World;
  * To be implemented on blocks that "hide" another block inside, so connected textures can still be accomplished.
  */
 public interface IFacade {
+    
+    /**
+     * @deprecated Use {@link #getFacade(IBlockAccess, BlockPos, EnumFacing, BlockPos)}
+     */
+    @Nonnull
+    IBlockState getFacade(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nullable EnumFacing side);
+
 
     /**
      * Gets the blockstate this facade appears as.
@@ -30,6 +37,8 @@ public interface IFacade {
      * @return The blockstate which your block appears as.
      */
     @Nonnull
-    IBlockState getFacade(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nullable EnumFacing side, @Nonnull BlockPos connection);
+    default IBlockState getFacade(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nullable EnumFacing side, @Nonnull BlockPos connection) {
+        return getFacade(world, pos, side);
+    }
 
 }
