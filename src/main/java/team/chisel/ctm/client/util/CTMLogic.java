@@ -19,6 +19,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -387,8 +388,11 @@ public class CTMLogic {
 //    }
 
 	public static IBlockState getBlockOrFacade(IBlockAccess world, BlockPos pos, @Nullable EnumFacing side, BlockPos connection) {
+		TileEntity tileentity = world.getTileEntity(pos);
 		IBlockState state = world.getBlockState(pos);
-		if (state.getBlock() instanceof IFacade) {
+		if (tileentity instanceof IFacade) {
+			return ((IFacade)tileentity).getFacade(world, pos, side, connection);
+		} else if (state.getBlock() instanceof IFacade) {
 			return ((IFacade) state.getBlock()).getFacade(world, pos, side, connection);
 		}
 		return state;
