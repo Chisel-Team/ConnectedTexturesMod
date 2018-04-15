@@ -4,6 +4,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumFacing.*;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nullable;
@@ -39,12 +40,75 @@ public enum Dir {
 	 */
 	public static final Dir[] VALUES = values();
 	private static final EnumFacing NORMAL = SOUTH;
+	
+    // God why
+
+    private static final int[] FACING_LOOKUP = new int[EnumFacing.values().length];
+    static {
+        FACING_LOOKUP[NORTH.ordinal()] = 1;
+        FACING_LOOKUP[EAST.ordinal()] = 2;
+        FACING_LOOKUP[SOUTH.ordinal()] = 3;
+        FACING_LOOKUP[WEST.ordinal()] = 4;
+        FACING_LOOKUP[UP.ordinal()] = 5;
+        FACING_LOOKUP[DOWN.ordinal()] = 6;
+    }
+	
+	static {
+	    // Run after static init
+	    for (Dir dir : Dir.VALUES) {
+	        dir.buildCaches();
+	    }
+	}
 
 	private EnumFacing[] dirs;
+	
+	private BlockPos[] offsets = new BlockPos[6];
 
 	private Dir(EnumFacing... dirs) {
 		this.dirs = dirs;
     }
+	
+    private void buildCaches() {
+        // Fill normalized dirs
+        for (EnumFacing normal : EnumFacing.VALUES) {
+            EnumFacing[] normalized;
+            if (normal == NORMAL) {
+                normalized = dirs;
+            } else if (normal == NORMAL.getOpposite()) {
+                // If this is the opposite direction of the default normal, we
+                // need to mirror the dirs
+                // A mirror version does not affect y+ and y- so we ignore those
+                EnumFacing[] ret = new EnumFacing[dirs.length];
+                for (int i = 0; i < ret.length; i++) {
+                    ret[i] = dirs[i].getFrontOffsetY() != 0 ? dirs[i] : dirs[i].getOpposite();
+                }
+                normalized = ret;
+            } else {
+                EnumFacing axis = null;
+                // Next, we need different a different rotation axis depending
+                // on if this is up/down or not
+                if (normal.getFrontOffsetY() == 0) {
+                    // If it is not up/down, pick either the left or right-hand
+                    // rotation
+                    axis = normal == NORMAL.rotateY() ? UP : DOWN;
+                } else {
+                    // If it is up/down, pick either the up or down rotation.
+                    axis = normal == UP ? NORMAL.rotateYCCW() : NORMAL.rotateY();
+                }
+                EnumFacing[] ret = new EnumFacing[dirs.length];
+                // Finally apply all the rotations
+                for (int i = 0; i < ret.length; i++) {
+                    ret[i] = rotate(dirs[i], axis);
+                }
+                normalized = ret;
+            }
+            BlockPos ret = BlockPos.ORIGIN;
+            for (EnumFacing dir : normalized) {
+                ret = ret.offset(dir);
+            }
+            offsets[normal.ordinal()] = ret;
+        }
+	}
 
     /**
      * Finds if this block is connected for the given side in this Dir.
@@ -60,7 +124,7 @@ public enum Dir {
      * @return True if the block is connected in the given Dir, false otherwise.
      */
     public boolean isConnected(CTMLogic ctm, IBlockAccess world, BlockPos pos, EnumFacing side) {
-        return ctm.isConnected(world, pos, getConnection(pos, side), side);
+        return ctm.isConnected(world, pos, applyConnection(pos, side), side);
     }
 
     /**
@@ -79,17 +143,14 @@ public enum Dir {
      * @return True if the block is connected in the given Dir, false otherwise.
      */
     public boolean isConnected(CTMLogic ctm, IBlockAccess world, BlockPos pos, EnumFacing side, IBlockState state) {
-        return ctm.isConnected(world, pos, getConnection(pos, side), side, state);
+        return ctm.isConnected(world, pos, applyConnection(pos, side), side, state);
     }
     
-    @SuppressWarnings("null")
-    public BlockPos getConnection(BlockPos pos, EnumFacing side) {
-        EnumFacing[] dirs = getNormalizedDirs(side);
-        BlockPos connection = pos;
-        for (EnumFacing dir : dirs) {
-            connection = connection.offset(dir);
-        }
-        return connection;
+    /**
+     * MODIFIES the passed MutableBlockPos to where the Dir connects to
+     */
+    public BlockPos applyConnection(BlockPos pos, EnumFacing side) {
+        return pos.add(getOffset(side));
     }
     
     public Dir relativize(EnumFacing normal) {
@@ -110,44 +171,10 @@ public enum Dir {
         */
         throw new UnsupportedOperationException("Yell at tterrag to finish deserialization");
     }
-
-    private final EnumMap<EnumFacing, EnumFacing[]> normalizedCache = new EnumMap<>(EnumFacing.class);
     
     @SuppressWarnings("null")
-    public EnumFacing[] getNormalizedDirs(EnumFacing normal) {
-        if (!normalizedCache.containsKey(normal)) {
-            if (normal == NORMAL) {
-                normalizedCache.put(normal, dirs);
-            } else if (normal == NORMAL.getOpposite()) {
-                // If this is the opposite direction of the default normal, we
-                // need to mirror the dirs
-                // A mirror version does not affect y+ and y- so we ignore those
-                EnumFacing[] ret = new EnumFacing[dirs.length];
-                for (int i = 0; i < ret.length; i++) {
-                    ret[i] = dirs[i].getFrontOffsetY() != 0 ? dirs[i] : dirs[i].getOpposite();
-                }
-                normalizedCache.put(normal, ret);
-            } else {
-                EnumFacing axis = null;
-                // Next, we need different a different rotation axis depending
-                // on if this is up/down or not
-                if (normal.getFrontOffsetY() == 0) {
-                    // If it is not up/down, pick either the left or right-hand
-                    // rotation
-                    axis = normal == NORMAL.rotateY() ? UP : DOWN;
-                } else {
-                    // If it is up/down, pick either the up or down rotation.
-                    axis = normal == UP ? NORMAL.rotateYCCW() : NORMAL.rotateY();
-                }
-                EnumFacing[] ret = new EnumFacing[dirs.length];
-                // Finally apply all the rotations
-                for (int i = 0; i < ret.length; i++) {
-                    ret[i] = rotate(dirs[i], axis);
-                }
-                normalizedCache.put(normal, ret);
-            }
-        }
-        return normalizedCache.get(normal);
+    public BlockPos getOffset(EnumFacing normal) {
+        return offsets[normal.ordinal()];
     }
 	
 	public @Nullable Dir getDirFor(EnumFacing[] dirs) {
@@ -161,18 +188,6 @@ public enum Dir {
 	        }
 	    }
 	    return null;
-	}
-
-	// God why
-
-	private static final int[] FACING_LOOKUP = new int[EnumFacing.values().length];
-	static {
-		FACING_LOOKUP[NORTH.ordinal()] = 1;
-		FACING_LOOKUP[EAST.ordinal()] = 2;
-		FACING_LOOKUP[SOUTH.ordinal()] = 3;
-		FACING_LOOKUP[WEST.ordinal()] = 4;
-		FACING_LOOKUP[UP.ordinal()] = 5;
-		FACING_LOOKUP[DOWN.ordinal()] = 6;
 	}
 
 	private EnumFacing rotate(EnumFacing facing, EnumFacing axisFacing) {
