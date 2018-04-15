@@ -145,14 +145,16 @@ public enum Dir {
     public boolean isConnected(CTMLogic ctm, IBlockAccess world, BlockPos pos, EnumFacing side, IBlockState state) {
         return ctm.isConnected(world, pos, applyConnection(pos, side), side, state);
     }
-    
+
     /**
-     * MODIFIES the passed MutableBlockPos to where the Dir connects to
+     * Apply this Dir to the given BlockPos for the given EnumFacing normal direction.
+     * 
+     * @return The offset BlockPos
      */
     public BlockPos applyConnection(BlockPos pos, EnumFacing side) {
         return pos.add(getOffset(side));
     }
-    
+
     public Dir relativize(EnumFacing normal) {
         /*
         if (normal == NORMAL) {
