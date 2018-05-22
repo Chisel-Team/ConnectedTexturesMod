@@ -152,4 +152,8 @@ public enum TextureMetadataHandler {
         modelchisel.bake(TRSRTransformation.identity(), DefaultVertexFormats.ITEM, rl -> Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(rl.toString()));
         return new ModelBakedCTM(modelchisel, object);
     }
+
+    public void invalidateCaches() {
+        registeredTextures.clear();
+    }
 }

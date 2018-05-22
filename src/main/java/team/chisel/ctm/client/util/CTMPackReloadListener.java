@@ -14,5 +14,6 @@ public enum CTMPackReloadListener implements IResourceManagerReloadListener {
         ResourceUtil.invalidateCaches();
         AbstractCTMBakedModel.invalidateCaches();
         ModelLoaderCTM.parsedLocations.clear();
+        TextureMetadataHandler.INSTANCE.invalidateCaches();
     }
 }
