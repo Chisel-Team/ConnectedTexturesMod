@@ -33,6 +33,7 @@ import team.chisel.ctm.client.util.CTMLogic;
 import team.chisel.ctm.client.util.CTMLogic.StateComparisonCallback;
 import team.chisel.ctm.client.util.ParseUtils;
 import team.chisel.ctm.client.util.Quad;
+import team.chisel.ctm.client.util.Submap;
 
 @ParametersAreNonnullByDefault
 @Accessors(fluent = true)
@@ -90,6 +91,9 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
     }
     
     public boolean connectTo(CTMLogic ctm, IBlockState from, IBlockState to, EnumFacing dir) {
+        if (connectionChecks == null) {
+            return StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir); 
+        }
         synchronized (connectionCache) {
         	TObjectByteMap<IBlockState> sidecache = connectionCache.computeIfAbsent(new CacheKey(from, dir), 
             											k -> new TObjectByteCustomHashMap<>(
@@ -101,7 +105,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
             									    );
         	byte cached = sidecache.get(to);
             if (cached == -1) {
-                sidecache.put(to, cached = (byte) ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0));
+                sidecache.put(to, cached = (byte) (connectionChecks.test(dir, to) ? 1 : 0));
             }
             return cached == 1;
         }
@@ -117,6 +121,26 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
         Quad[] quads = quad.subdivide(4);
         
         int[] ctm = ((TextureContextCTM)context).getCTM(bq.getFace()).getSubmapIndices();
+        
+        Quad fastQuad = null;
+        if (Arrays.equals(ctm, new int[] { 18, 19, 17, 16 })) {
+            fastQuad = quad.transformUVs(sprites[0]);
+        } else if (Arrays.equals(ctm, new int[] { 4, 5, 1, 0})) {
+            fastQuad = quad.transformUVs(sprites[1], Submap.X2[0][0]);
+        } else if (Arrays.equals(ctm, new int[] { 6, 7, 3, 2})) {
+            fastQuad = quad.transformUVs(sprites[1], Submap.X2[0][1]);
+        } else if (Arrays.equals(ctm, new int[] { 12, 13, 9, 8})) {
+            fastQuad = quad.transformUVs(sprites[1], Submap.X2[1][0]);
+        } else if (Arrays.equals(ctm, new int[] { 14, 15, 11, 10})) {
+            fastQuad = quad.transformUVs(sprites[1], Submap.X2[1][1]);
+        }
+        
+        if (fastQuad != null) {
+//            if (quadGoal == 1) {
+                return Collections.singletonList(fastQuad.rebake());
+//            }
+//            return Arrays.stream(fastQuad.subdivide(quadGoal)).filter(Objects::nonNull).map(Quad::rebake).collect(Collectors.toList());
+        }
         
         for (int i = 0; i < quads.length; i++) {
             Quad q = quads[i];
