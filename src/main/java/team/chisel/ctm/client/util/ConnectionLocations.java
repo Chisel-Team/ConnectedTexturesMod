@@ -92,22 +92,21 @@ public enum ConnectionLocations {
     }
 
     public @Nullable EnumFacing clipOrDestroy(EnumFacing direction) {
-        EnumFacing[] dirs = dir == null ? new EnumFacing[] {normal, normal} : dir.getNormalizedDirs(direction);
-        if (dirs[0] == direction) {
-            return dirs.length > 1 ? dirs[1] : null;
-        } else if (dirs.length > 1 && dirs[1] == direction) {
-            return dirs[0];
-        } else {
-            return null;
-        }
+        throw new UnsupportedOperationException();
+//        EnumFacing[] dirs = dir == null ? new EnumFacing[] {normal, normal} : dir.getNormalizedDirs(direction);
+//        if (dirs[0] == direction) {
+//            return dirs.length > 1 ? dirs[1] : null;
+//        } else if (dirs.length > 1 && dirs[1] == direction) {
+//            return dirs[0];
+//        } else {
+//            return null;
+//        }
     }
 
     @SuppressWarnings("null")
     public BlockPos transform(BlockPos pos) {
         if (dir != null) {
-            for (EnumFacing facing : dir.getNormalizedDirs(normal)) {
-                pos = pos.offset(facing);
-            }
+            pos = pos.add(dir.getOffset(normal));
         } else {
             pos = pos.offset(normal);
         }

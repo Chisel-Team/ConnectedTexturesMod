@@ -21,6 +21,7 @@ import lombok.experimental.Accessors;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 import team.chisel.ctm.Configurations;
 import team.chisel.ctm.api.IFacade;
@@ -349,7 +350,7 @@ public class CTMLogic {
 //          return false;
 //      }
       
-        BlockPos obscuringPos = connection.add(dir.getDirectionVec());
+        BlockPos obscuringPos = connection.offset(dir);
 
         boolean disableObscured = disableObscuredFaceCheck.orElse(Configurations.connectInsideCTM);
 
@@ -364,7 +365,7 @@ public class CTMLogic {
         boolean ret = stateComparator(state, con, dir);
 
         // no block obscuring this face
-        if (obscuring == null || con.shouldSideBeRendered(world, connection, dir)) {
+        if (obscuring == null) {
             return ret;
         }
 
