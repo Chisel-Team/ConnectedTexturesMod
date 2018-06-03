@@ -1,3 +1,18 @@
+0.3.0:
+New
+- Added the ability to use offsets for map texture types
+- Added support for proxy textures with no metadata
+- Added ASM patch to fix animated textures not interpolating alpha
+Changes
+- Add a second BlockPos parameter to IFacade
+- Optimization pass, should be faster in general
+- Removed the check for culled model sides
+- Better method of getting item mesh for caching
+Fixes
+- Patched some potential resource leaks
+- #54 reloading resources causes some textures to go missing
+- Fixed some issues that could occur when using meta overrides and forge blockstates
+
 0.2.3:
 New
 - New render type, eldritch! This was used on Chisel's temple brick back in the day, and now it is back once more, to strike horror in the minds of all who gaze upon it!
