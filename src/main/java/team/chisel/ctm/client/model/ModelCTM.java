@@ -1,6 +1,7 @@
 package team.chisel.ctm.client.model;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,6 +21,8 @@ import com.google.common.base.Function;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -31,6 +34,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import lombok.val;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.BlockPart;
 import net.minecraft.client.renderer.block.model.BlockPartFace;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ModelBlock;
@@ -247,7 +251,19 @@ public class ModelCTM implements IModelCTM, IRetexturableModel {
     private static ModelCTM retexture(ModelCTM current, ImmutableMap<String, String> textures) throws IOException {
         IModel vanillamodel = ((IRetexturableModel) current.getVanillaParent()).retexture(textures);
 
-        ModelCTM ret = new ModelCTM(current.modelinfo, vanillamodel, current.overrides);
+        // Deep copy logic taken from ModelLoader$VanillaModelWrapper
+        List<BlockPart> parts = new ArrayList<>();
+        for (BlockPart part : current.modelinfo.getElements()) {
+        	parts.add(new BlockPart(part.positionFrom, part.positionTo, Maps.newHashMap(part.mapFaces), part.partRotation, part.shade));
+        }
+        
+        ModelBlock newModel = new ModelBlock(current.modelinfo.getParentLocation(), parts,
+                Maps.newHashMap(current.modelinfo.textures), current.modelinfo.isAmbientOcclusion(), current.modelinfo.isGui3d(),
+                current.modelinfo.getAllTransforms(), Lists.newArrayList(current.modelinfo.getOverrides()));
+        
+        newModel.name = current.modelinfo.name;
+        newModel.parent = current.modelinfo.parent;
+        ModelCTM ret = new ModelCTM(newModel, vanillamodel, new Int2ObjectArrayMap<>(current.overrides));
 
         ret.modelinfo.textures.putAll(textures);
         for (Entry<Integer, IMetadataSectionCTM> e : ret.metaOverrides.entrySet()) {
