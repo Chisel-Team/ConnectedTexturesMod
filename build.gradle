@@ -51,7 +51,6 @@ minecraft {
 
     replaceIn "CTM.java"
     replace "@VERSION@", project.version
-    replace project.deps_to_replace, "before:chisel@[${min_chisel_version},)"
 }
 
 lombok {
@@ -67,15 +66,13 @@ task delombok(type: DelombokTask) {
 
 // Add external annotations
 eclipse.classpath.file {
-	withXml {
-    	def node = it.asNode()
-        node.get('classpathentry').each {
-        	// Allow external annotations on Minecraft/Forge and JRE
-        	if (it.attribute('path').contains('forgeSrc') || it.attribute('path').contains('JRE_CONTAINER')) {
-        		it.appendNode('attributes').appendNode('attribute', [name: 'annotationpath', value: '/ConnectedTexturesMod/externalannotations/'])
-        	}
-        }
-    }
+	whenMerged {
+    	entries.each { e ->
+      		if (e.path.contains('gradleclasspathcontainer') || e.path.contains('org.eclipse.jdt.launching.JRE_CONTAINER')) {
+        		e.entryAttributes['annotationpath'] = '/ConnectedTexturesMod/externalannotations'
+      		}
+    	}
+  	}
 }
 
 tasks.eclipse.dependsOn installLombok
