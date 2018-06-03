@@ -178,6 +178,7 @@ public class ModelCTM implements IModelCTM, IRetexturableModel {
                     	sprite = bakedTextureGetter.apply(texLoc);
                     }
                     ICTMTexture<?> tex = e.getValue().makeTexture(sprite, bakedTextureGetter);
+                    layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
                     textureOverrides.put(Pair.of(e.getKey(), texLoc.toString()), tex);
                 }
             }
