@@ -47,13 +47,15 @@ public class ModelUtil {
         ItemModelMesher mesher = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
         
         // First try simple damage overrides
-        Object locations = _locations.invokeExact(mesher);
+        Object locations = _locations.invoke(mesher);
         if (locations != null) {
         	locations = ((Map<IRegistryDelegate<Item>, ?>) locations).get(stack.getItem().delegate);
         }
         ModelResourceLocation modelResourceLocation;
         int meta = mesher.getMetadata(stack);
-        if (locations instanceof TIntObjectMap) {
+        if (locations == null) { // Fast-track trivial case
+        	modelResourceLocation = null;
+        } else if (locations instanceof TIntObjectMap) {
         	modelResourceLocation = ((TIntObjectMap<ModelResourceLocation>)locations).get(meta);
         } else if (locations instanceof Int2ObjectMap) {
         	modelResourceLocation = ((Int2ObjectMap<ModelResourceLocation>)locations).get(meta);
