@@ -98,7 +98,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
 					return map;
 				});
 
-        	byte cached = sidecache.get(to);
+        	byte cached = sidecache.getByte(to);
             if (cached == -1) {
                 sidecache.put(to, cached = (byte) ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0));
             }
