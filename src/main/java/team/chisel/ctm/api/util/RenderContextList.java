@@ -1,5 +1,8 @@
 package team.chisel.ctm.api.util;
 
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenCustomHashMap;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -8,18 +11,16 @@ import java.util.WeakHashMap;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.google.common.collect.Maps;
-
-import gnu.trove.map.TObjectLongMap;
-import gnu.trove.map.custom_hash.TObjectLongCustomHashMap;
-import gnu.trove.strategy.IdentityHashingStrategy;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
+import team.chisel.ctm.client.util.IdentityStrategy;
 import team.chisel.ctm.client.util.RegionCache;
+
+import com.google.common.collect.Maps;
 
 /**
  * List of IBlockRenderContext's
@@ -30,7 +31,7 @@ public class RenderContextList {
     private static final ThreadLocal<WeakHashMap<IBlockAccess, RegionCache>> regionMetaCache = ThreadLocal.withInitial(WeakHashMap::new);
     
     private final Map<ICTMTexture<?>, ITextureContext> contextMap = Maps.newIdentityHashMap();
-    private final TObjectLongMap<ICTMTexture<?>> serialized = new TObjectLongCustomHashMap<>(new IdentityHashingStrategy<>());
+    private final Object2LongMap<ICTMTexture<?>> serialized = new Object2LongOpenCustomHashMap<>(new IdentityStrategy<>());
 
     public RenderContextList(IBlockState state, Collection<ICTMTexture<?>> textures, IBlockAccess world, BlockPos pos) {
         world = regionMetaCache.get().computeIfAbsent(world, w -> new RegionCache(pos, 2, w));
@@ -55,7 +56,7 @@ public class RenderContextList {
         return getRenderContext(tex) != null;
     }
 
-    public TObjectLongMap<ICTMTexture<?>> serialized() {
+    public Object2LongMap<ICTMTexture<?>> serialized() {
         return serialized;
     }
 }
