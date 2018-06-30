@@ -26,7 +26,17 @@ import team.chisel.ctm.client.util.RegionCache;
  */
 @ParametersAreNonnullByDefault
 public class RenderContextList {
-    
+
+    /**
+     * This Map is weird, to avoid GC issues where IBlockAccess instances aren't cleaned,
+     * the IBlockAccess passed into RegionCache is wrapped in a WeakReference,
+     * otherwise the WeakHashMap will never remove entries as there is always a non weak reference
+     * back to the key.
+     * It is preferable to wrap RegionCache's reference to IBlockAccess in a Wreak Reference
+     * instead of the value of this map due to a mid render GC, this cache wouldn't really be
+     * a cache then as it could be cleared.
+     * The IBlockAccesses running through this are basically disposed after rebuilding the chunk.
+     */
     private static final ThreadLocal<WeakHashMap<IBlockAccess, RegionCache>> regionMetaCache = ThreadLocal.withInitial(WeakHashMap::new);
     
     private final Map<ICTMTexture<?>, ITextureContext> contextMap = Maps.newIdentityHashMap();
