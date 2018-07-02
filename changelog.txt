@@ -1,3 +1,7 @@
+0.3.1:
+Fixes
+- Fix a slow memory leak caused by render caches (covers1624)
+
 0.3.0:
 New
 - Added the ability to use offsets for map texture types
