@@ -1,5 +1,8 @@
 package team.chisel.ctm.client.texture.render;
 
+import it.unimi.dsi.fastutil.objects.Object2ByteMap;
+import it.unimi.dsi.fastutil.objects.Object2ByteOpenCustomHashMap;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,10 +16,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import gnu.trove.impl.Constants;
-import gnu.trove.map.TObjectByteMap;
-import gnu.trove.map.custom_hash.TObjectByteCustomHashMap;
-import gnu.trove.strategy.IdentityHashingStrategy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
@@ -31,6 +30,7 @@ import team.chisel.ctm.client.texture.type.TextureTypeCTM;
 import team.chisel.ctm.client.util.BlockstatePredicateParser;
 import team.chisel.ctm.client.util.CTMLogic;
 import team.chisel.ctm.client.util.CTMLogic.StateComparisonCallback;
+import team.chisel.ctm.client.util.IdentityStrategy;
 import team.chisel.ctm.client.util.ParseUtils;
 import team.chisel.ctm.client.util.Quad;
 
@@ -80,7 +80,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
 		}
 	}
 
-	private final Map<CacheKey, TObjectByteMap<IBlockState>> connectionCache = new HashMap<>();
+	private final Map<CacheKey, Object2ByteMap<IBlockState>> connectionCache = new HashMap<>();
 
     public TextureCTM(T type, TextureInfo info) {
         super(type, info);
@@ -91,14 +91,13 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
     
     public boolean connectTo(CTMLogic ctm, IBlockState from, IBlockState to, EnumFacing dir) {
         synchronized (connectionCache) {
-        	TObjectByteMap<IBlockState> sidecache = connectionCache.computeIfAbsent(new CacheKey(from, dir), 
-            											k -> new TObjectByteCustomHashMap<>(
-            												new IdentityHashingStrategy<>(), 
-            												Constants.DEFAULT_CAPACITY, 
-            												Constants.DEFAULT_LOAD_FACTOR, 
-            												(byte) -1
-            											)
-            									    );
+        	Object2ByteMap<IBlockState> sidecache = connectionCache.computeIfAbsent(new CacheKey(from, dir), 
+				k -> {
+					Object2ByteMap<IBlockState> map = new Object2ByteOpenCustomHashMap<>(new IdentityStrategy<>());
+					map.defaultReturnValue((byte) -1);
+					return map;
+				});
+
         	byte cached = sidecache.get(to);
             if (cached == -1) {
                 sidecache.put(to, cached = (byte) ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0));

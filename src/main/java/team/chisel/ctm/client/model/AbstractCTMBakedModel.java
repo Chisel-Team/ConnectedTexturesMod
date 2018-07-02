@@ -1,5 +1,7 @@
 package team.chisel.ctm.client.model;
 
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -11,19 +13,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector3f;
 
-import org.apache.commons.lang3.tuple.Pair;
-
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.MultimapBuilder;
-import com.google.common.collect.Table;
-import com.google.common.collect.Tables;
-
-import gnu.trove.map.TObjectLongMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -47,12 +36,25 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.common.model.TRSRTransformation;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.asm.CTMCoreMethods;
 import team.chisel.ctm.client.state.ChiselExtendedState;
 import team.chisel.ctm.client.util.ProfileUtil;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.Table;
+import com.google.common.collect.Tables;
 
 @RequiredArgsConstructor
 public abstract class AbstractCTMBakedModel implements IBakedModel {
@@ -95,7 +97,7 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
     @ToString
     private static class State {
         private final @Nonnull IBlockState cleanState;
-        private final @Nullable TObjectLongMap<ICTMTexture<?>> serializedContext;
+        private final @Nullable Object2LongMap<ICTMTexture<?>> serializedContext;
         private final @Nonnull IBakedModel parent;
         
         @Override
@@ -165,7 +167,7 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
             ChiselExtendedState ext = (ChiselExtendedState) state;
             RenderContextList ctxList = ext.getContextList(ext.getClean(), model);
 
-            TObjectLongMap<ICTMTexture<?>> serialized = ctxList.serialized();
+            Object2LongMap<ICTMTexture<?>> serialized = ctxList.serialized();
             ProfileUtil.endAndStart("model_creation");
             baked = modelcache.get(new State(ext.getClean(), serialized, parent), () -> createModel(state, model, ctxList, rand));
             ProfileUtil.end();

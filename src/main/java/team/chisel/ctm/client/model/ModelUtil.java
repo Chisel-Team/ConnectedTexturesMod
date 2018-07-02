@@ -1,16 +1,15 @@
 package team.chisel.ctm.client.model;
 
+import gnu.trove.map.TIntObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import com.google.common.base.Throwables;
-
-import gnu.trove.map.hash.TIntObjectHashMap;
 import lombok.SneakyThrows;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemMeshDefinition;
@@ -21,6 +20,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.ItemModelMesherForge;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.registries.IRegistryDelegate;
+import team.chisel.ctm.CTM;
 
 public class ModelUtil {
     
@@ -29,7 +29,7 @@ public class ModelUtil {
         try {
             _locations = MethodHandles.lookup().unreflectGetter(ReflectionHelper.findField(ItemModelMesherForge.class, "locations"));
         } catch (IllegalAccessException e) {
-            throw Throwables.propagate(e);
+        	throw new RuntimeException(e);
         }
     }
 
@@ -40,17 +40,27 @@ public class ModelUtil {
      *            The ItemStack.
      * @return The MRL definition, or null if none exists.
      */
-    @SneakyThrows
+    @SuppressWarnings("unchecked")
+	@SneakyThrows
     public static @Nullable ModelResourceLocation getMesh(ItemStack stack) {
 
         ItemModelMesher mesher = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
         
         // First try simple damage overrides
-        ModelResourceLocation modelResourceLocation = Optional.ofNullable(
-                ((Map<IRegistryDelegate<Item>, TIntObjectHashMap<ModelResourceLocation>>) _locations.invoke(mesher)))
-                        .map(map -> map.get(stack.getItem().delegate))
-                        .map(map -> map.get(mesher.getMetadata(stack)))
-                        .orElse(null);
+        Object locations = _locations.invokeExact(mesher);
+        if (locations != null) {
+        	locations = ((Map<IRegistryDelegate<Item>, ?>) locations).get(stack.getItem().delegate);
+        }
+        ModelResourceLocation modelResourceLocation;
+        int meta = mesher.getMetadata(stack);
+        if (locations instanceof TIntObjectMap) {
+        	modelResourceLocation = ((TIntObjectMap<ModelResourceLocation>)locations).get(meta);
+        } else if (locations instanceof Int2ObjectMap) {
+        	modelResourceLocation = ((Int2ObjectMap<ModelResourceLocation>)locations).get(meta);
+        } else {
+        	CTM.logger.error("Could not determine type of mesher locations.");
+        	modelResourceLocation = null;
+        }
         
         // Next, try mesh definitions
         if (modelResourceLocation == null) {
