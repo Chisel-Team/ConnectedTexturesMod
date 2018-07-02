@@ -29,7 +29,7 @@ public class ModelUtil {
         try {
             _locations = MethodHandles.lookup().unreflectGetter(ReflectionHelper.findField(ItemModelMesherForge.class, "locations"));
         } catch (IllegalAccessException e) {
-        	throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -41,25 +41,27 @@ public class ModelUtil {
      * @return The MRL definition, or null if none exists.
      */
     @SuppressWarnings("unchecked")
-	@SneakyThrows
+    @SneakyThrows
     public static @Nullable ModelResourceLocation getMesh(ItemStack stack) {
 
         ItemModelMesher mesher = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
         
         // First try simple damage overrides
-        Object locations = _locations.invokeExact(mesher);
+        Object locations = _locations.invoke(mesher);
         if (locations != null) {
-        	locations = ((Map<IRegistryDelegate<Item>, ?>) locations).get(stack.getItem().delegate);
+            locations = ((Map<IRegistryDelegate<Item>, ?>) locations).get(stack.getItem().delegate);
         }
         ModelResourceLocation modelResourceLocation;
         int meta = mesher.getMetadata(stack);
-        if (locations instanceof TIntObjectMap) {
-        	modelResourceLocation = ((TIntObjectMap<ModelResourceLocation>)locations).get(meta);
+        if (locations == null) {
+            modelResourceLocation = null; // Fast-track trivial case
+        } else if (locations instanceof TIntObjectMap) {
+            modelResourceLocation = ((TIntObjectMap<ModelResourceLocation>)locations).get(meta);
         } else if (locations instanceof Int2ObjectMap) {
-        	modelResourceLocation = ((Int2ObjectMap<ModelResourceLocation>)locations).get(meta);
+            modelResourceLocation = ((Int2ObjectMap<ModelResourceLocation>)locations).get(meta);
         } else {
-        	CTM.logger.error("Could not determine type of mesher locations.");
-        	modelResourceLocation = null;
+            CTM.logger.error("Could not determine type of mesher locations.");
+            modelResourceLocation = null;
         }
         
         // Next, try mesh definitions
