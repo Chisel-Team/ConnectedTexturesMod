@@ -1,12 +1,14 @@
 package team.chisel.ctm.client.util;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
+import java.lang.ref.WeakReference;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import jline.internal.Preconditions;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -34,34 +36,50 @@ public class RegionCache implements IBlockAccess {
     @SuppressWarnings("unused")
     private final int radius;
     
-    private final IBlockAccess passthrough;
-    private final Function<BlockPos, IBlockState> lookupFunc;
-    private final Map<BlockPos, IBlockState> stateCache = new HashMap<>();
+    private WeakReference<IBlockAccess> passthrough;
+    private final Long2ObjectMap<IBlockState> stateCache = new Long2ObjectOpenHashMap<>();
 
-    public RegionCache(BlockPos center, int radius, IBlockAccess passthrough) {
+    public RegionCache(BlockPos center, int radius, @Nullable IBlockAccess passthrough) {
         this.center = center;
         this.radius = radius;
-        this.passthrough = passthrough;
-        this.lookupFunc = passthrough::getBlockState;
+        this.passthrough = new WeakReference<>(passthrough);
+    }
+    
+    private IBlockAccess getPassthrough() {
+        IBlockAccess ret = passthrough.get();
+        Preconditions.checkNotNull(ret);
+        return ret;
+    }
+    
+    public @Nonnull RegionCache updateWorld(IBlockAccess passthrough) {
+        if (getPassthrough() != passthrough) {
+            stateCache.clear();
+        }
+        this.passthrough = new WeakReference<>(passthrough);
+        return this;
     }
 
     @Override
     @Nullable
     public TileEntity getTileEntity(BlockPos pos) {
-        return passthrough.getTileEntity(pos);
+        return getPassthrough().getTileEntity(pos);
     }
 
     @Override
     public int getCombinedLight(BlockPos pos, int lightValue) {
         // In cases with direct passthroughs, these are never used by our code.
         // But in case something out there does use them, this will work
-        return passthrough.getCombinedLight(pos, lightValue);
+        return getPassthrough().getCombinedLight(pos, lightValue);
     }
 
-    @SuppressWarnings("null")
     @Override
     public IBlockState getBlockState(BlockPos pos) {
-        return stateCache.computeIfAbsent(pos, lookupFunc);
+        long address = pos.toLong();
+        IBlockState ret = stateCache.get(address);
+        if (ret == null) {
+            stateCache.put(address, ret = getPassthrough().getBlockState(pos));
+        }
+        return ret;
     }
 
     @Override
@@ -72,21 +90,21 @@ public class RegionCache implements IBlockAccess {
 
     @Override
     public Biome getBiome(BlockPos pos) {
-        return passthrough.getBiome(pos);
+        return getPassthrough().getBiome(pos);
     }
 
     @Override
     public int getStrongPower(BlockPos pos, EnumFacing direction) {
-        return passthrough.getStrongPower(pos, direction);
+        return getPassthrough().getStrongPower(pos, direction);
     }
 
     @Override
     public WorldType getWorldType() {
-        return passthrough.getWorldType();
+        return getPassthrough().getWorldType();
     }
 
     @Override
     public boolean isSideSolid(BlockPos pos, EnumFacing side, boolean _default) {
-        return passthrough.isSideSolid(pos, side, _default);
+        return getPassthrough().isSideSolid(pos, side, _default);
     }
 }
