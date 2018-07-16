@@ -52,7 +52,8 @@ public class RegionCache implements IBlockAccess {
     }
     
     public @Nonnull RegionCache updateWorld(IBlockAccess passthrough) {
-        if (getPassthrough() != passthrough) {
+        // We do NOT use getPassthrough() here so as to skip the null-validation - it's obviously valid to be null here
+        if (this.passthrough.get() != passthrough) {
             stateCache.clear();
         }
         this.passthrough = new WeakReference<>(passthrough);
