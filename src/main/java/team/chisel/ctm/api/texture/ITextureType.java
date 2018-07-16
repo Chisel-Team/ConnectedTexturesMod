@@ -5,7 +5,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import team.chisel.ctm.api.util.TextureInfo;
 
 /**
- * Interface for chisel block render types MUST HAVE A NO ARGS CONSTRUCTOR
+ * Root interface representing a type of CTM texture. To register, use {@link TextureType}.
  */
 @ParametersAreNonnullByDefault
 public interface ITextureType extends IContextProvider {
