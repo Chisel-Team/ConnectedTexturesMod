@@ -1,3 +1,11 @@
+0.3.2:
+Changes
+- Further optimized render caches
+- Changed all occurrences of "chisel" to "ctm"
+- Added a few new profiler sections, and cleaned up the names all around
+Fixes
+- #70 occasional crash from rendering due to race condition
+
 0.3.1:
 Fixes
 - Fix a slow memory leak caused by render caches (covers1624)
