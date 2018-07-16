@@ -23,7 +23,7 @@ import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.util.ProfileUtil;
 
 @ParametersAreNonnullByDefault
-public class ChiselExtendedState extends BlockStateBase implements IExtendedBlockState {
+public class CTMExtendedState extends BlockStateBase implements IExtendedBlockState {
 
     interface Exclusions {
         public <T extends Comparable<T>> T getValue(IProperty<T> property);
@@ -47,8 +47,9 @@ public class ChiselExtendedState extends BlockStateBase implements IExtendedBloc
     
     private @Nullable RenderContextList ctxCache;
     
-    public ChiselExtendedState(IBlockState state, IBlockAccess world, BlockPos pos) {
-        ProfileUtil.start("chisel_extended_state");
+    @SuppressWarnings("null")
+    public CTMExtendedState(IBlockState state, IBlockAccess world, BlockPos pos) {
+        ProfileUtil.start("ctm_extended_state");
         this.wrapped = state;
         this.world = world;
         this.pos = pos;
@@ -64,13 +65,13 @@ public class ChiselExtendedState extends BlockStateBase implements IExtendedBloc
         ProfileUtil.end();
     }
 
-    public ChiselExtendedState(IBlockState state, ChiselExtendedState parent) {
+    public CTMExtendedState(IBlockState state, CTMExtendedState parent) {
         this(state, parent.world, parent.pos);
     }
     
     public RenderContextList getContextList(IBlockState state, IModelCTM model) {
         if (ctxCache == null) {
-            ctxCache = new RenderContextList(state, model.getChiselTextures(), world, pos);
+            ctxCache = new RenderContextList(state, model.getCTMTextures(), world, pos);
         }
         return ctxCache;
     }
@@ -87,7 +88,7 @@ public class ChiselExtendedState extends BlockStateBase implements IExtendedBloc
 
     @Override
     public <V> IExtendedBlockState withProperty(@Nullable IUnlistedProperty<V> property, @Nullable V value) {
-        return extended ? new ChiselExtendedState(extState.withProperty(property, value), this) : this;
+        return extended ? new CTMExtendedState(extState.withProperty(property, value), this) : this;
     }
 
     @Override
@@ -109,11 +110,11 @@ public class ChiselExtendedState extends BlockStateBase implements IExtendedBloc
 
     @Override
     public <T extends Comparable<T>, V extends T> IBlockState withProperty(IProperty<T> property, V value) {
-        return new ChiselExtendedState(wrapped.withProperty(property, value), this);
+        return new CTMExtendedState(wrapped.withProperty(property, value), this);
     }
 
     @Override
     public <T extends Comparable<T>> IBlockState cycleProperty(IProperty<T> property) {
-        return new ChiselExtendedState(wrapped.cycleProperty(property), this);
+        return new CTMExtendedState(wrapped.cycleProperty(property), this);
     }
 }

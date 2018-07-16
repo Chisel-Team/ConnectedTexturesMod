@@ -17,7 +17,7 @@ public class CTMTransformer implements IClassTransformer {
     private static final String CAN_RENDER_IN_LAYER_METHOD_NAME = "canRenderInLayer";
     private static final String CAN_RENDER_IN_LAYER_METHOD_DESC = "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/BlockRenderLayer;)Z";
 
-    private static final String WRAPPER_CLASS_NAME = "team/chisel/ctm/client/state/ChiselExtendedState";
+    private static final String WRAPPER_CLASS_NAME = "team/chisel/ctm/client/state/CTMExtendedState";
     private static final String WRAPPER_CLASS_CONSTRUCTOR_NAME = "<init>";
     private static final String WRAPPER_CLASS_CONSTRUCTOR_DESC = "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;)V";
     

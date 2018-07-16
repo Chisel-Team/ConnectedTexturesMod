@@ -6,10 +6,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import team.chisel.ctm.client.texture.type.TextureTypeCTMV;
+
 /**
- * Annotation to register an IBlockRenderType
- *
- * CLASSES THAT HAVE THIS ANNOTATION MUST HAVE A NO ARGUMENT CONSTRUCTOR
+ * Annotation to register an {@link ITextureType}.
+ * <p>
+ * If applied to a class, the class must have a no-arg constructor.
+ * <p>
+ * Can also be applied to fields.
+ * <p>
+ * <strong>Note: This annotation is {@link Repeatable}, so a single texture type can be assigned multiple aliases.</strong>
+ * For an example of this, see {@link TextureTypeCTMV}.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.TYPE, ElementType.FIELD })
@@ -17,11 +24,11 @@ import java.lang.annotation.Target;
 public @interface TextureType {
 
     /**
-     * The String used for serialization/deserialization For example connected textures would be CTM.
-     * 
+     * The name used in JSON files to select this texture type. For example, connected textures would be "ctm"
+     * <p>
      * This value can be left out to use the name of the class/field being annotated.
      * 
-     * @return The name of the block render type.
+     * @return The name of the texture type.
      */
     String value() default "";
 }

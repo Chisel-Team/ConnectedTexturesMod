@@ -20,10 +20,9 @@ import team.chisel.ctm.client.util.ProfileUtil;
 
 public class CTMCoreMethods {
     
-    @SuppressWarnings("deprecation")
     @SneakyThrows
     public static Boolean canRenderInLayer(@Nonnull IBlockState state, @Nonnull BlockRenderLayer layer) {
-        ProfileUtil.start("chisel_render_in_layer");
+        ProfileUtil.start("ctm_render_in_layer");
         IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(state);
         if (model instanceof WeightedBakedModel) {
             model = ((WeightedBakedModel)model).baseModel;

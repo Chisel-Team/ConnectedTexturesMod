@@ -19,6 +19,7 @@ import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.client.util.IdentityStrategy;
+import team.chisel.ctm.client.util.ProfileUtil;
 import team.chisel.ctm.client.util.RegionCache;
 
 /**
@@ -34,8 +35,10 @@ public class RenderContextList {
     private final Object2LongMap<ICTMTexture<?>> serialized = new Object2LongOpenCustomHashMap<>(new IdentityStrategy<>());
 
     public RenderContextList(IBlockState state, Collection<ICTMTexture<?>> textures, final IBlockAccess world, BlockPos pos) {
+        ProfileUtil.start("ctm_region_cache_update");
     	IBlockAccess cachedWorld = regionMetaCache.get().updateWorld(world);
-
+    	
+    	ProfileUtil.endAndStart("ctm_context_gather");
         for (ICTMTexture<?> tex : textures) {
             ITextureType type = tex.getType();
             ITextureContext ctx = type.getBlockRenderContext(state, cachedWorld, pos, tex);
@@ -44,9 +47,11 @@ public class RenderContextList {
             }
         }
         
+        ProfileUtil.endAndStart("ctm_context_serialize");
         for (Entry<ICTMTexture<?>, ITextureContext> e : contextMap.entrySet()) {
             serialized.put(e.getKey(), e.getValue().getCompressedData());
         }
+        ProfileUtil.end();
     }
 
     public @Nullable ITextureContext getRenderContext(ICTMTexture<?> tex) {

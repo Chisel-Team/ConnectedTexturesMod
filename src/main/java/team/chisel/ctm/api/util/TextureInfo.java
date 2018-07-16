@@ -8,9 +8,10 @@ import com.google.gson.JsonObject;
 
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.BlockRenderLayer;
+import team.chisel.ctm.api.texture.ICTMTexture;
 
 /**
- * Bean to hold information that the IBlockRenderType should use to make an IChiselTexture
+ * Bean to hold information that the IBlockRenderType should use to make an {@link ICTMTexture}
  */
 @ParametersAreNonnullByDefault
 public class TextureInfo {

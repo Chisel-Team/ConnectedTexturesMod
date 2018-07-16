@@ -43,7 +43,7 @@ import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.asm.CTMCoreMethods;
-import team.chisel.ctm.client.state.ChiselExtendedState;
+import team.chisel.ctm.client.state.CTMExtendedState;
 import team.chisel.ctm.client.util.ProfileUtil;
 
 import com.google.common.cache.Cache;
@@ -157,14 +157,14 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
         
         IBakedModel parent = getParent(rand);
 
-        ProfileUtil.start("chisel_models");
+        ProfileUtil.start("ctm_models");
         
         AbstractCTMBakedModel baked = this;
         BlockRenderLayer layer = MinecraftForgeClient.getRenderLayer();
 
-        if (Minecraft.getMinecraft().world != null && state instanceof ChiselExtendedState) {
+        if (Minecraft.getMinecraft().world != null && state instanceof CTMExtendedState) {
             ProfileUtil.start("state_creation");
-            ChiselExtendedState ext = (ChiselExtendedState) state;
+            CTMExtendedState ext = (CTMExtendedState) state;
             RenderContextList ctxList = ext.getContextList(ext.getClean(), model);
 
             Object2LongMap<ICTMTexture<?>> serialized = ctxList.serialized();

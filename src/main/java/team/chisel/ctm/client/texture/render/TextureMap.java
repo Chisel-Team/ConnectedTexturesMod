@@ -82,9 +82,6 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
                 if (quadGoal != 4) {
                     return Collections.singletonList(q.transformUVs(tex.sprites[0], submap).rebake());
                 } else {
-                    // Chisel.debug("V texture complying with quad goal of 4");
-                    // Chisel.debug(new float[] { minU, minV, minU + intervalU, minV + intervalV });
-
                     Quad[] quads = q.subdivide(4);
 
                     for (int i = 0; i < quads.length; i++) {
