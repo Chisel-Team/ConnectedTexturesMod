@@ -195,7 +195,13 @@ public class ModelCTM implements IModelCTM, IRetexturableModel {
     public void load() {}
 
     @Override
+    @Deprecated
     public Collection<ICTMTexture<?>> getChiselTextures() {
+        return getCTMTextures();
+    }
+    
+    @Override
+    public Collection<ICTMTexture<?>> getCTMTextures() {
         return ImmutableList.<ICTMTexture<?>>builder().addAll(textures.values()).addAll(textureOverrides.values()).build();
     }
     

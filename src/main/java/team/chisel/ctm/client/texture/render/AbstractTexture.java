@@ -25,7 +25,7 @@ import team.chisel.ctm.client.util.Quad;
 
 
 /**
- * Abstract implementation of IChiselTexture
+ * Abstract implementation of {@link ICTMTexture}
  */
 @ParametersAreNonnullByDefault
 @SuppressWarnings("deprecation")

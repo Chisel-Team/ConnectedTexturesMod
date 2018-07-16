@@ -52,7 +52,7 @@ import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.asm.CTMCoreMethods;
-import team.chisel.ctm.client.state.ChiselExtendedState;
+import team.chisel.ctm.client.state.CTMExtendedState;
 import team.chisel.ctm.client.util.ProfileUtil;
 
 @RequiredArgsConstructor
@@ -161,9 +161,9 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
         AbstractCTMBakedModel baked = this;
         BlockRenderLayer layer = MinecraftForgeClient.getRenderLayer();
 
-        if (Minecraft.getMinecraft().world != null && state instanceof ChiselExtendedState) {
+        if (Minecraft.getMinecraft().world != null && state instanceof CTMExtendedState) {
             ProfileUtil.start("state_creation");
-            ChiselExtendedState ext = (ChiselExtendedState) state;
+            CTMExtendedState ext = (CTMExtendedState) state;
             RenderContextList ctxList = ext.getContextList(ext.getClean(), model);
 
             TObjectLongMap<ICTMTexture<?>> serialized = ctxList.serialized();

@@ -53,7 +53,7 @@ public enum TextureMetadataHandler {
     public void onTextureStitch(TextureStitchEvent.Pre event) {
         if (Minecraft.getMinecraft().getTextureMapBlocks() != null) {
             Map<String, TextureAtlasSprite> mapRegisteredSprites = ReflectionHelper.getPrivateValue(TextureMap.class, Minecraft.getMinecraft().getTextureMapBlocks(), "field_110574_e", "mapRegisteredSprites");
-            ProgressBar prog = ProgressManager.push("Loading Chisel metadata", mapRegisteredSprites.size());
+            ProgressBar prog = ProgressManager.push("Loading CTM metadata", mapRegisteredSprites.size());
             for (String res : ImmutableMap.copyOf(mapRegisteredSprites).keySet()) {
                 try {
                     ResourceLocation rel = new ResourceLocation(res);

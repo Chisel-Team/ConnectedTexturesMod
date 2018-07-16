@@ -13,7 +13,7 @@ import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.type.TextureTypeNormal;
 
 /**
- * Chisel texture for a normal texture
+ * CTM texture for a normal texture
  */
 public class TextureNormal extends AbstractTexture<TextureTypeNormal> {
 

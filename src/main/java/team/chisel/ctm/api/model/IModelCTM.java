@@ -18,7 +18,12 @@ public interface IModelCTM extends IModel {
 
     void load();
 
+    @Deprecated
     Collection<ICTMTexture<?>> getChiselTextures();
+    
+    default Collection<ICTMTexture<?>> getCTMTextures() {
+        return getChiselTextures();
+    }
     
     ICTMTexture<?> getTexture(String iconName);
 

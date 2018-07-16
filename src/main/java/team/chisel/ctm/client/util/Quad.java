@@ -492,7 +492,6 @@ public class Quad {
     
     public static Quad from(BakedQuad baked) {
         Builder b = new Builder(baked.getFormat(), baked.getSprite());
-        //Chisel.debug("Format: " + baked.getFormat().toString());
         baked.pipe(b);
         return b.build();
     }

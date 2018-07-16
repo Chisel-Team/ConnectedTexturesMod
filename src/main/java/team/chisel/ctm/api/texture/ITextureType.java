@@ -11,10 +11,10 @@ import team.chisel.ctm.api.util.TextureInfo;
 public interface ITextureType extends IContextProvider {
 
     /**
-     * Make a Chisel Texture from a list of sprites.
+     * Make a CTM Texture from a list of sprites.
      * <p>
      * Tip: You can explicitly type the return of this method without any warnings or errors. For instance <blockquote>
-     * <code>public IChiselTexture{@literal <}MyRenderType{@literal >} makeTexture(...) {...}</code> </blockquote> Is a valid override of this method.
+     * <code>public ICTMTexture{@literal <}MyRenderType{@literal >} makeTexture(...) {...}</code> </blockquote> Is a valid override of this method.
      * 
      * @param info A {@link TextureInfo} object which contains all the information that about this texture
      */
