@@ -156,7 +156,7 @@ public abstract class AbstractCTMBakedModel implements IPerspectiveAwareModel {
         
         IBakedModel parent = getParent(rand);
 
-        ProfileUtil.start("chisel_models");
+        ProfileUtil.start("ctm_models");
         
         AbstractCTMBakedModel baked = this;
         BlockRenderLayer layer = MinecraftForgeClient.getRenderLayer();

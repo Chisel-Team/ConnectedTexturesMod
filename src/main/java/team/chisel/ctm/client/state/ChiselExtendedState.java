@@ -50,7 +50,7 @@ public class ChiselExtendedState extends BlockStateBase implements IExtendedBloc
     
     @SuppressWarnings("null")
     public ChiselExtendedState(IBlockState state, IBlockAccess world, BlockPos pos) {
-        ProfileUtil.start("chisel_extended_state");
+        ProfileUtil.start("ctm_extended_state");
         this.wrapped = state;
         this.world = world;
         this.pos = pos;
