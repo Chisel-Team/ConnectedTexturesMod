@@ -1,18 +1,25 @@
 package team.chisel.ctm.client.util;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
-import net.minecraft.world.IBlockAccess;
+import static net.minecraft.util.EnumFacing.DOWN;
+import static net.minecraft.util.EnumFacing.EAST;
+import static net.minecraft.util.EnumFacing.NORTH;
+import static net.minecraft.util.EnumFacing.SOUTH;
+import static net.minecraft.util.EnumFacing.UP;
+import static net.minecraft.util.EnumFacing.WEST;
 
+import java.util.Arrays;
+
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import java.util.Arrays;
-import java.util.EnumMap;
 
-import static net.minecraft.util.EnumFacing.*;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumFacing.Axis;
+import net.minecraft.util.EnumFacing.AxisDirection;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
+import team.chisel.ctm.api.util.NonnullType;
 
 /**
  * Think of this class as a "Two dimensional ForgeDirection, with diagonals".
@@ -41,18 +48,6 @@ public enum Dir {
 	public static final Dir[] VALUES = values();
 	private static final EnumFacing NORMAL = SOUTH;
 	
-    // God why
-
-    private static final int[] FACING_LOOKUP = new int[EnumFacing.values().length];
-    static {
-        FACING_LOOKUP[NORTH.ordinal()] = 1;
-        FACING_LOOKUP[EAST.ordinal()] = 2;
-        FACING_LOOKUP[SOUTH.ordinal()] = 3;
-        FACING_LOOKUP[WEST.ordinal()] = 4;
-        FACING_LOOKUP[UP.ordinal()] = 5;
-        FACING_LOOKUP[DOWN.ordinal()] = 6;
-    }
-	
 	static {
 	    // Run after static init
 	    for (Dir dir : Dir.VALUES) {
@@ -60,9 +55,9 @@ public enum Dir {
 	    }
 	}
 
-	private EnumFacing[] dirs;
+	private @NonnullType EnumFacing[] dirs;
 	
-	private BlockPos[] offsets = new BlockPos[6];
+	private @NonnullType BlockPos[] offsets = new BlockPos[6];
 
 	private Dir(EnumFacing... dirs) {
 		this.dirs = dirs;
@@ -71,7 +66,7 @@ public enum Dir {
     private void buildCaches() {
         // Fill normalized dirs
         for (EnumFacing normal : EnumFacing.VALUES) {
-            EnumFacing[] normalized;
+            @NonnullType EnumFacing[] normalized;
             if (normal == NORMAL) {
                 normalized = dirs;
             } else if (normal == NORMAL.getOpposite()) {
@@ -84,7 +79,7 @@ public enum Dir {
                 }
                 normalized = ret;
             } else {
-                EnumFacing axis = null;
+                EnumFacing axis;
                 // Next, we need different a different rotation axis depending
                 // on if this is up/down or not
                 if (normal.getFrontOffsetY() == 0) {
@@ -151,6 +146,8 @@ public enum Dir {
      * 
      * @return The offset BlockPos
      */
+    @SuppressWarnings("null")
+    @Nonnull
     public BlockPos applyConnection(BlockPos pos, EnumFacing side) {
         return pos.add(getOffset(side));
     }
@@ -174,7 +171,7 @@ public enum Dir {
         throw new UnsupportedOperationException("Yell at tterrag to finish deserialization");
     }
     
-    @SuppressWarnings("null")
+    @Nonnull
     public BlockPos getOffset(EnumFacing normal) {
         return offsets[normal.ordinal()];
     }
@@ -203,36 +200,34 @@ public enum Dir {
         if (facing.getAxis() != axis) {
             switch (axis) {
             case X:
-                // I did some manual testing and this is what worked...I don't get it either
-                switch (FACING_LOOKUP[facing.ordinal()]) {
-                case 1:
+                // Inverted results from EnumFacing#rotateX
+                switch (facing) {
+                case NORTH:
+                    return UP;
+                case DOWN:
                     return NORTH;
-                case 2:
-                case 4:
+                case SOUTH:
+                    return DOWN;
+                case UP:
+                    return SOUTH;
                 default:
                     return facing; // Invalid but ignored
-                case 3:
-                    return SOUTH;
-                case 5:
-                    return SOUTH;
-                case 6:
-                    return NORTH;
                 }
             case Y:
                 return facing.rotateYCCW();
             case Z:
-                switch (FACING_LOOKUP[facing.ordinal()]) {
-                case 2:
+                // Inverted results from EnumFacing#rotateZ
+                switch (facing) {
+                case EAST:
                     return EAST;
-                case 3:
+                case WEST:
+                    return WEST;
+                case UP:
+                    return DOWN;
+                case DOWN:
+                    return UP;
                 default:
                     return facing; // invalid but ignored
-                case 4:
-                    return WEST;
-                case 5:
-                    return DOWN;
-                case 6:
-                    return UP;
                 }
             }
         }
