@@ -1,6 +1,9 @@
 package team.chisel.ctm.client.model;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,6 +50,7 @@ import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.TRSRTransformation;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.IChiselFace;
@@ -122,9 +126,30 @@ public class ModelCTM implements IModelCTM {
         return vanillamodel;
     }
     
+    // TODO remove this reflection
+    private static final MethodHandle _asVanillaModel; static {
+        MethodHandle mh;
+        try {
+            mh = MethodHandles.lookup().unreflect(IModel.class.getMethod("asVanillaModel"));
+        } catch (IllegalAccessException | NoSuchMethodException | SecurityException e) {
+            mh = null;
+        }
+        _asVanillaModel = mh;
+    }
+    
     // @Override Soft override
+    @SuppressWarnings("unchecked")
     public Optional<ModelBlock> asVanillaModel() {
-        return getVanillaParent().asVanillaModel();
+        return Optional.ofNullable(_asVanillaModel)
+                .<Optional<ModelBlock>>map(mh -> {
+                    try {
+                        return (Optional<ModelBlock>) mh.invokeExact(getVanillaParent());
+                    } catch (Throwable e1) {
+                        return Optional.empty();
+                    }
+                })
+                .filter(Optional::isPresent)
+                .orElse(Optional.ofNullable(modelinfo));
     }
 
     @Override
