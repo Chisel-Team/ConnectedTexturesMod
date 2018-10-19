@@ -121,6 +121,11 @@ public class ModelCTM implements IModelCTM {
     public IModel getVanillaParent() {
         return vanillamodel;
     }
+    
+    // @Override Soft override
+    public Optional<ModelBlock> asVanillaModel() {
+        return getVanillaParent().asVanillaModel();
+    }
 
     @Override
     public Collection<ResourceLocation> getDependencies() {

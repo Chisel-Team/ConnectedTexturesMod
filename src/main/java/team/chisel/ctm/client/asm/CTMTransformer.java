@@ -136,7 +136,7 @@ public class CTMTransformer implements IClassTransformer {
 
             while (methods.hasNext()) {
                 MethodNode m = methods.next();
-                if (m.name.equals(REGISTER_SPRITE_NAME) || m.name.equals(REGISTER_SPRITE_OBF_NAME)) {
+                if ((m.name.equals(REGISTER_SPRITE_NAME) || m.name.equals(REGISTER_SPRITE_OBF_NAME))) {
                     for (int i = 0; i < m.instructions.size(); i++) {
                         AbstractInsnNode next = m.instructions.get(i);
 
@@ -164,7 +164,8 @@ public class CTMTransformer implements IClassTransformer {
 
         	while (methods.hasNext()) {
         		MethodNode m = methods.next();
-        		if (m.name.equals(GET_TEXTURES_METHOD_NAME)) {
+        		if (m.name.equals(GET_TEXTURES_METHOD_NAME) && m.localVariables.stream().filter(lv -> lv.index == 1).anyMatch(lv -> lv.desc.contains("IModel"))) {
+        		    System.out.println("Correct local variable found - this must be forge <2772");
         			for (int i = 0; i < m.instructions.size(); i++) {
         				AbstractInsnNode next = m.instructions.get(i);
 
