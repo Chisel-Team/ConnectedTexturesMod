@@ -3,7 +3,11 @@ package team.chisel.ctm.client.util;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -28,6 +32,7 @@ import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.client.model.ModelLoader;
+import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.model.TRSRTransformation;
 import net.minecraftforge.fml.common.ProgressManager;
 import net.minecraftforge.fml.common.ProgressManager.ProgressBar;
@@ -44,6 +49,8 @@ import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 public enum TextureMetadataHandler {
 
     INSTANCE;
+	
+	private final Map<ResourceLocation, Boolean> wrappedModels = new HashMap<>();
     
     /*
      * Handle stitching metadata additional textures
@@ -116,34 +123,66 @@ public enum TextureMetadataHandler {
     public void onModelBake(ModelBakeEvent event) {
         Map<ModelResourceLocation, IModel> stateModels = ReflectionHelper.getPrivateValue(ModelLoader.class, event.getModelLoader(), "stateModels");
         for (ModelResourceLocation mrl : event.getModelRegistry().getKeys()) {
-            IModel model = stateModels.get(mrl);
-            if (model != null && !(model instanceof IModelCTM) && !ModelLoaderCTM.parsedLocations.contains(mrl)) {
-                Set<ResourceLocation> textures = Sets.newHashSet(model.getTextures());
-                // FORGE WHY
-                if (vanillaModelWrapperClass.isAssignableFrom(model.getClass())) {
-                    ModelBlock parent = ((ModelBlock) modelWrapperModel.get(model)).parent;
-                    while (parent != null) {
-                        textures.addAll(parent.textures.values().stream().filter(s -> !s.startsWith("#")).map(ResourceLocation::new).collect(Collectors.toSet()));
-                        parent = parent.parent;
+            IModel rootModel = stateModels.get(mrl);
+            if (rootModel != null && !(rootModel instanceof IModelCTM) && !ModelLoaderCTM.parsedLocations.contains(mrl)) {
+                Deque<ResourceLocation> dependencies = new ArrayDeque<>();
+                Set<ResourceLocation> seenModels = new HashSet<>();
+                dependencies.push(mrl);
+                seenModels.add(mrl);
+                boolean shouldWrap = wrappedModels.getOrDefault(mrl, false);
+                // Breadth-first loop through dependencies, exiting as soon as a CTM texture is found, and skipping duplicates/cycles
+                while (!shouldWrap && !dependencies.isEmpty()) {
+                    ResourceLocation dep = dependencies.pop();
+                    IModel model;
+                    try {
+                         model = dep == mrl ? rootModel : ModelLoaderRegistry.getModel(dep);
+                    } catch (Exception e) {
+                        continue;
+                    }
+
+                    Set<ResourceLocation> textures = Sets.newHashSet(model.getTextures());
+                    // FORGE WHY
+                    if (vanillaModelWrapperClass.isAssignableFrom(model.getClass())) {
+                        ModelBlock parent = ((ModelBlock) modelWrapperModel.get(model)).parent;
+                        while (parent != null) {
+                            textures.addAll(parent.textures.values().stream().filter(s -> !s.startsWith("#")).map(ResourceLocation::new).collect(Collectors.toSet()));
+                            parent = parent.parent;
+                        }
+                    }
+                    
+                    Set<ResourceLocation> newDependencies = Sets.newHashSet(model.getDependencies());
+
+                    // FORGE WHYYYYY
+                    if (multipartModelClass.isAssignableFrom(model.getClass())) {
+                        Map<?, IModel> partModels = (Map<?, IModel>) multipartPartModels.get(model);
+                        textures = partModels.values().stream().map(m -> m.getTextures()).flatMap(Collection::stream).collect(Collectors.toSet());
+                        newDependencies.addAll(partModels.values().stream().flatMap(m -> m.getDependencies().stream()).collect(Collectors.toList()));
+                    }
+                    
+                    for (ResourceLocation tex : textures) {
+                        IMetadataSectionCTM meta = null;
+                        try {
+                            meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex));
+                        } catch (IOException e) {} // Fallthrough
+                        if (meta != null) {
+                            shouldWrap = true;
+                            break;
+                        }
+                    }
+                    
+                    for (ResourceLocation rl : newDependencies) {
+                        if (seenModels.add(rl)) {
+                            dependencies.push(rl);
+                        }
                     }
                 }
-                // FORGE WHYYYYY
-                if (multipartModelClass.isAssignableFrom(model.getClass())) {
-                    Map<?, IModel> partModels = (Map<?, IModel>) multipartPartModels.get(model);
-                    textures = partModels.values().stream().map(m -> m.getTextures()).flatMap(Collection::stream).collect(Collectors.toSet());
-                }
-                for (ResourceLocation tex : textures) {
-                    IMetadataSectionCTM meta = null;
+                wrappedModels.put(mrl, shouldWrap);
+                if (shouldWrap) {
                     try {
-                        meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex));
-                    } catch (IOException e) {} // Fallthrough
-                    if (meta != null) {
-                        try {
-                            event.getModelRegistry().putObject(mrl, wrap(model, event.getModelRegistry().getObject(mrl)));
-                        } catch (IOException e) {
-                            CTM.logger.error("Could not wrap model " + mrl + ". Aborting...", e);
-                        }
-                        break;
+                        event.getModelRegistry().putObject(mrl, wrap(rootModel, event.getModelRegistry().getObject(mrl)));
+                        dependencies.clear();
+                    } catch (IOException e) {
+                        CTM.logger.error("Could not wrap model " + mrl + ". Aborting...", e);
                     }
                 }
             }
@@ -154,5 +193,9 @@ public enum TextureMetadataHandler {
         ModelCTM modelchisel = new ModelCTM(null, model, Int2ObjectMaps.emptyMap());
         modelchisel.bake(TRSRTransformation.identity(), DefaultVertexFormats.ITEM, rl -> Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(rl.toString()));
         return new ModelBakedCTM(modelchisel, object);
+    }
+
+    public void invalidateCaches() {
+        wrappedModels.clear();
     }
 }
