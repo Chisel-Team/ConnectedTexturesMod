@@ -93,12 +93,10 @@ public abstract class AbstractTexture<T extends ITextureType> implements ICTMTex
 
     protected Quad makeQuad(BakedQuad bq, @Nullable ITextureContext context) {
         Quad q = Quad.from(bq);
-        if (context != null) {
-            if (hasLight) {
-                q = q.setLight(blocklight, skylight);
-            } else {
-                q = q.setFullbright(fullbright);
-            }
+        if (hasLight) {
+            q = q.setLight(blocklight, skylight);
+        } else {
+            q = q.setFullbright(fullbright);
         }
         return q;
     }
