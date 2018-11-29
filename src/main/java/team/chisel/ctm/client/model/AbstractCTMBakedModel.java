@@ -1,7 +1,5 @@
 package team.chisel.ctm.client.model;
 
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -13,6 +11,19 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector3f;
 
+import org.apache.commons.lang3.tuple.Pair;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.Table;
+import com.google.common.collect.Tables;
+
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -36,25 +47,12 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.common.model.TRSRTransformation;
-
-import org.apache.commons.lang3.tuple.Pair;
-
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.asm.CTMCoreMethods;
 import team.chisel.ctm.client.state.CTMExtendedState;
 import team.chisel.ctm.client.util.ProfileUtil;
-
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.MultimapBuilder;
-import com.google.common.collect.Table;
-import com.google.common.collect.Tables;
 
 @RequiredArgsConstructor
 public abstract class AbstractCTMBakedModel implements IBakedModel {
@@ -227,7 +225,7 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
 
     @Override
     public @Nonnull TextureAtlasSprite getParticleTexture() {
-        return this.model.getDefaultFace().getParticle();
+        return this.parent.getParticleTexture();
     }
 
     @Override

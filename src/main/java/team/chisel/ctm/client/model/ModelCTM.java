@@ -3,7 +3,6 @@ package team.chisel.ctm.client.model;
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,16 +43,13 @@ import net.minecraft.client.renderer.block.model.ModelBlock;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.TRSRTransformation;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
-import team.chisel.ctm.api.texture.IChiselFace;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 import team.chisel.ctm.client.texture.render.TextureNormal;
@@ -223,12 +219,6 @@ public class ModelCTM implements IModelCTM {
     public void load() {}
 
     @Override
-    @Deprecated
-    public Collection<ICTMTexture<?>> getChiselTextures() {
-        return getCTMTextures();
-    }
-    
-    @Override
     public Collection<ICTMTexture<?>> getCTMTextures() {
         return ImmutableList.<ICTMTexture<?>>builder().addAll(textures.values()).addAll(textureOverrides.values()).build();
     }
@@ -239,28 +229,11 @@ public class ModelCTM implements IModelCTM {
     }
 
     @Override
-    @Deprecated
-    public IChiselFace getFace(EnumFacing facing) {
-        return null;
-    }
-
-    @Override
-    @Deprecated
-    public IChiselFace getDefaultFace() {
-        return null;
-    }
-    
-    @Override
     public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
         // sign bit is used to signify that a layer-less (vanilla) texture is present
         return (layers < 0 && state.getBlock().getBlockLayer() == layer) || ((layers >> layer.ordinal()) & 1) == 1;
     }
 
-    @Override
-    public boolean ignoreStates() {
-        return false;
-    }
-    
     @Override
     @Nullable
     public TextureAtlasSprite getOverrideSprite(int tintIndex) {
