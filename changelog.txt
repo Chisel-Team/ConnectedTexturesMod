@@ -1,3 +1,9 @@
+0.3.3:
+New
+- Models with light data will now render properly in item form. NOTE: This requires Forge 2781 or higher!
+Fixes
+- Model texture discovery is now more thorough, more types of models should now be supported through texture metadata only
+
 0.3.2:
 Changes
 - Further optimized render caches
