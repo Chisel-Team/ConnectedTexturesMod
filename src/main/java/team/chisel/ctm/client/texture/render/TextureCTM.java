@@ -44,7 +44,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
 	private final Optional<Boolean> connectInside;
 	
 	@Getter
-	private final boolean ignoreStates;
+	private final boolean ignoreStates, actualStates;
 	
 	@Nullable
 	private final BiPredicate<EnumFacing, IBlockState> connectionChecks;
@@ -86,6 +86,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
         super(type, info);
         this.connectInside = info.getInfo().flatMap(obj -> ParseUtils.getBoolean(obj, "connect_inside"));
         this.ignoreStates = info.getInfo().map(obj -> JsonUtils.getBoolean(obj, "ignore_states", false)).orElse(false);
+        this.actualStates = info.getInfo().map(obj -> JsonUtils.getBoolean(obj, "use_actual_state", false)).orElse(false);
         this.connectionChecks = info.getInfo().map(obj -> predicateParser.parse(obj.get("connect_to"))).orElse(null);
     }
     

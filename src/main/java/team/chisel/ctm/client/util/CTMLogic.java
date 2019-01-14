@@ -139,7 +139,7 @@ public class CTMLogic {
 	
 	@Getter
 	@Setter
-	protected boolean ignoreStates;
+	protected boolean ignoreStates, actualStates;
 	
 	@Getter
 	@Setter
@@ -210,7 +210,7 @@ public class CTMLogic {
      * Builds the connection map and stores it in this CTM instance. The {@link #connected(Dir)}, {@link #connectedAnd(Dir...)}, and {@link #connectedOr(Dir...)} methods can be used to access it.
      */
     public void buildConnectionMap(IBlockAccess world, BlockPos pos, EnumFacing side) {
-        IBlockState state = world.getBlockState(pos);
+        IBlockState state = getConnectionState(world, pos, side, pos);
         // TODO this naive check doesn't work for models that have unculled faces.
         // Perhaps a smarter optimization could be done eventually?
 //        if (state.shouldSideBeRendered(world, pos, side)) {
@@ -325,7 +325,7 @@ public class CTMLogic {
      */
     public final boolean isConnected(IBlockAccess world, BlockPos current, BlockPos connection, EnumFacing dir) {
 
-        IBlockState state = getBlockOrFacade(world, current, dir, connection);
+        IBlockState state = getConnectionState(world, current, dir, connection);
         return isConnected(world, current, connection, dir, state);
     }
 
@@ -354,8 +354,8 @@ public class CTMLogic {
 
         boolean disableObscured = disableObscuredFaceCheck.orElse(Configurations.connectInsideCTM);
 
-        IBlockState con = getBlockOrFacade(world, connection, dir, current);
-        IBlockState obscuring = disableObscured ? null : getBlockOrFacade(world, obscuringPos, dir, current);
+        IBlockState con = getConnectionState(world, connection, dir, current);
+        IBlockState obscuring = disableObscured ? null : getConnectionState(world, obscuringPos, dir, current);
 
         // bad API user
         if (con == null) {
@@ -387,8 +387,19 @@ public class CTMLogic {
 //        return false;
 //    }
 
-	public static IBlockState getBlockOrFacade(IBlockAccess world, BlockPos pos, @Nullable EnumFacing side, BlockPos connection) {
+    /**
+     * @deprecated Use the instance method {@link CTMLogic#getConnectionState(IBlockAccess, BlockPos, EnumFacing, BlockPos)}
+     */
+    @Deprecated
+    public static IBlockState getBlockOrFacade(IBlockAccess world, BlockPos pos, @Nullable EnumFacing side, BlockPos connection) {
+        return CTMLogic.getInstance().getConnectionState(world, pos, side, connection);
+    }
+
+	public IBlockState getConnectionState(IBlockAccess world, BlockPos pos, @Nullable EnumFacing side, BlockPos connection) {
 		IBlockState state = world.getBlockState(pos);
+		if (actualStates()) {
+		    state = state.getActualState(world, pos);
+		}
 		if (state.getBlock() instanceof IFacade) {
 			return ((IFacade) state.getBlock()).getFacade(world, pos, side, connection);
 		}

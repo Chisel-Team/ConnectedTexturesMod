@@ -1,5 +1,7 @@
 package team.chisel.ctm.client.texture.type;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -27,6 +29,7 @@ public class TextureTypeEdges extends TextureTypeCTM {
     }
     
     @RequiredArgsConstructor
+    @ParametersAreNonnullByDefault
     public static class CTMLogicEdges extends CTMLogic {
         
         @Setter
@@ -38,14 +41,14 @@ public class TextureTypeEdges extends TextureTypeCTM {
             if (isObscured()) {
                 return false;
             }
-            IBlockState obscuring = world.getBlockState(current.offset(dir));
+            IBlockState obscuring = getConnectionState(world, current.offset(dir), dir, current);
             if (stateComparator(state, obscuring, dir)) {
                 setObscured(true);
                 return false;
             }
 
-            IBlockState con = world.getBlockState(connection);
-            IBlockState obscuringcon = world.getBlockState(connection.offset(dir));
+            IBlockState con = getConnectionState(world, connection, dir, current);
+            IBlockState obscuringcon = getConnectionState(world, connection.offset(dir), dir, current);
             
             if (stateComparator(state, con, dir) || stateComparator(state, obscuringcon, dir)) {
                 Vec3d difference = new Vec3d(connection.subtract(current));
@@ -65,7 +68,8 @@ public class TextureTypeEdges extends TextureTypeCTM {
                     }
                     BlockPos posA = new BlockPos(vA).add(current);
                     BlockPos posB = new BlockPos(vB).add(current);
-                    return (world.getBlockState(posA) == state && !stateComparator(state, world.getBlockState(posA.offset(dir)), dir)) || (world.getBlockState(posB) == state && !stateComparator(state, world.getBlockState(posA.offset(dir)), dir));
+                    return (getConnectionState(world, posA, dir, current) == state && !stateComparator(state, getConnectionState(world, posA.offset(dir), dir, current), dir))
+                        || (getConnectionState(world, posB, dir, current) == state && !stateComparator(state, getConnectionState(world, posB.offset(dir), dir, current), dir));
                 } else {
                     return true;
                 }
