@@ -17,9 +17,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.google.common.collect.ObjectArrays;
 
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
+import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
@@ -61,9 +61,9 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
                 // Gather all quads and map them to their textures
                 // All quads should have an associated ICTMTexture, so ignore any that do not
                 for (BakedQuad q : parentQuads) {
-                    ICTMTexture<?> tex = this.getModel().getOverrideTexture(q.getTintIndex(), q.getSprite().getIconName());
+                    ICTMTexture<?> tex = this.getModel().getOverrideTexture(q.getTintIndex(), q.getSprite().getName());
                     if (tex == null) {
-                        tex = this.getModel().getTexture(q.getSprite().getIconName());
+                        tex = this.getModel().getTexture(q.getSprite().getName());
                     }
 
                     if (tex != null) {
@@ -94,7 +94,7 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
 
     @Override
     public @Nonnull TextureAtlasSprite getParticleTexture() {
-        return Optional.ofNullable(getModel().getTexture(getParent().getParticleTexture().getIconName()))
+        return Optional.ofNullable(getModel().getTexture(getParent().getParticleTexture().getName()))
                 .map(ICTMTexture::getParticle)
                 .orElse(getParent().getParticleTexture());
     }

@@ -1,19 +1,27 @@
 package team.chisel.ctm.client.util;
 
-import net.minecraft.client.resources.IResourceManager;
-import net.minecraft.client.resources.IResourceManagerReloadListener;
+import java.util.function.Predicate;
+
+import net.minecraft.resources.IResourceManager;
+import net.minecraftforge.resource.IResourceType;
+import net.minecraftforge.resource.ISelectiveResourceReloadListener;
+import net.minecraftforge.resource.VanillaResourceType;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 import team.chisel.ctm.client.model.parsing.ModelLoaderCTM;
 
-public enum CTMPackReloadListener implements IResourceManagerReloadListener {
+public enum CTMPackReloadListener implements ISelectiveResourceReloadListener {
     
     INSTANCE;
 
     @Override
-    public void onResourceManagerReload(IResourceManager resourceManager) {
-        ResourceUtil.invalidateCaches();
-        AbstractCTMBakedModel.invalidateCaches();
-        ModelLoaderCTM.parsedLocations.clear();
-        TextureMetadataHandler.INSTANCE.invalidateCaches();
+    public void onResourceManagerReload(IResourceManager resourceManager, Predicate<IResourceType> predicate) {
+    	if (predicate.test(VanillaResourceType.TEXTURES)) {
+    		ResourceUtil.invalidateCaches();
+	        TextureMetadataHandler.INSTANCE.invalidateCaches();
+    	}
+    	if (predicate.test(VanillaResourceType.MODELS)) {
+	        AbstractCTMBakedModel.invalidateCaches();
+	        ModelLoaderCTM.parsedLocations.clear();
+    	}
     }
 }

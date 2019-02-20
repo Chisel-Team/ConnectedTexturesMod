@@ -18,7 +18,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumFacing.Axis;
 import net.minecraft.util.EnumFacing.AxisDirection;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 import team.chisel.ctm.api.util.NonnullType;
 
 /**
@@ -65,7 +65,7 @@ public enum Dir {
 	
     private void buildCaches() {
         // Fill normalized dirs
-        for (EnumFacing normal : EnumFacing.VALUES) {
+        for (EnumFacing normal : EnumFacing.values()) {
             @NonnullType EnumFacing[] normalized;
             if (normal == NORMAL) {
                 normalized = dirs;
@@ -75,14 +75,14 @@ public enum Dir {
                 // A mirror version does not affect y+ and y- so we ignore those
                 EnumFacing[] ret = new EnumFacing[dirs.length];
                 for (int i = 0; i < ret.length; i++) {
-                    ret[i] = dirs[i].getFrontOffsetY() != 0 ? dirs[i] : dirs[i].getOpposite();
+                    ret[i] = dirs[i].getYOffset() != 0 ? dirs[i] : dirs[i].getOpposite();
                 }
                 normalized = ret;
             } else {
                 EnumFacing axis;
                 // Next, we need different a different rotation axis depending
                 // on if this is up/down or not
-                if (normal.getFrontOffsetY() == 0) {
+                if (normal.getYOffset() == 0) {
                     // If it is not up/down, pick either the left or right-hand
                     // rotation
                     axis = normal == NORMAL.rotateY() ? UP : DOWN;
@@ -118,7 +118,7 @@ public enum Dir {
      *            The side of the current face.
      * @return True if the block is connected in the given Dir, false otherwise.
      */
-    public boolean isConnected(CTMLogic ctm, IBlockAccess world, BlockPos pos, EnumFacing side) {
+    public boolean isConnected(CTMLogic ctm, IBlockReader world, BlockPos pos, EnumFacing side) {
         return ctm.isConnected(world, pos, applyConnection(pos, side), side);
     }
 
@@ -137,7 +137,7 @@ public enum Dir {
      *            The state to check for connection with.
      * @return True if the block is connected in the given Dir, false otherwise.
      */
-    public boolean isConnected(CTMLogic ctm, IBlockAccess world, BlockPos pos, EnumFacing side, IBlockState state) {
+    public boolean isConnected(CTMLogic ctm, IBlockReader world, BlockPos pos, EnumFacing side, IBlockState state) {
         return ctm.isConnected(world, pos, applyConnection(pos, side), side, state);
     }
 

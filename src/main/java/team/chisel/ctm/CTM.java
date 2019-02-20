@@ -1,26 +1,24 @@
 package team.chisel.ctm;
 
 import static team.chisel.ctm.CTM.MOD_ID;
-import static team.chisel.ctm.CTM.MOD_NAME;
-import static team.chisel.ctm.CTM.VERSION;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.SimpleReloadableResourceManager;
+import net.minecraft.resources.SimpleReloadableResourceManager;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import team.chisel.ctm.client.model.parsing.ModelLoaderCTM;
-import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 import team.chisel.ctm.client.texture.type.TextureTypeRegistry;
 import team.chisel.ctm.client.util.CTMPackReloadListener;
 import team.chisel.ctm.client.util.TextureMetadataHandler;
 
-@Mod(name = MOD_NAME, modid = MOD_ID, version = VERSION, dependencies = "before:chisel;after:forge@[14.23,)", clientSideOnly = true)
+@Mod(MOD_ID)
 public class CTM {
     
     public static final String MOD_ID = "ctm";
@@ -30,17 +28,21 @@ public class CTM {
 
     public static final Logger logger = LogManager.getLogger("CTM");
     
-    @Mod.Instance(MOD_ID)
     public static CTM instance;
     
-    @EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
+    public CTM() {
+    	instance = this;
+    	
+    	FMLJavaModLoadingContext.get().getModEventBus().addListener(this::preInit);
+    }
+    
+    @SubscribeEvent
+    public void preInit(FMLClientSetupEvent event) {
         TextureTypeRegistry.preInit(event);
 
         ModelLoaderRegistry.registerLoader(ModelLoaderCTM.INSTANCE);
-        Minecraft.getMinecraft().metadataSerializer_.registerMetadataSectionType(new IMetadataSectionCTM.Serializer(), IMetadataSectionCTM.class);
         
         MinecraftForge.EVENT_BUS.register(TextureMetadataHandler.INSTANCE);
-        ((SimpleReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(CTMPackReloadListener.INSTANCE);
+        ((SimpleReloadableResourceManager)Minecraft.getInstance().getResourceManager()).addReloadListener(CTMPackReloadListener.INSTANCE);
     }
 }

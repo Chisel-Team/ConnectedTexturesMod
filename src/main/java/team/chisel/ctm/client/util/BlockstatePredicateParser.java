@@ -34,13 +34,13 @@ import lombok.ToString;
 import lombok.Value;
 import lombok.val;
 import net.minecraft.block.Block;
-import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
+import net.minecraft.state.IProperty;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.registries.ForgeRegistries;
 
 public class BlockstatePredicateParser {
     
@@ -90,7 +90,7 @@ public class BlockstatePredicateParser {
         
         @Override
         public boolean test(IBlockState t) {
-            return t.getBlock() == block && type.compareFunc.test(t.getValue(prop).compareTo(value));
+            return t.getBlock() == block && type.compareFunc.test(t.get(prop).compareTo(value));
         }
     }
     
@@ -102,7 +102,7 @@ public class BlockstatePredicateParser {
         
         @Override
         public boolean test(IBlockState t) {
-            return t.getBlock() == block && validValues.contains(t.getValue(prop));
+            return t.getBlock() == block && validValues.contains(t.get(prop));
         }
     }
     
@@ -218,7 +218,7 @@ public class BlockstatePredicateParser {
             
             String key = entryset.iterator().next().getKey();
             
-            Optional<IProperty<?>> prop = block.getBlockState().getProperties().stream().filter(p -> p.getName().equals(key)).findFirst();
+            Optional<IProperty<?>> prop = block.getStateContainer().getProperties().stream().filter(p -> p.getName().equals(key)).findFirst();
             if (!prop.isPresent()) {
                 throw new JsonParseException(key + " is not a valid property for blockstate " + block.getDefaultState());
             }
@@ -264,7 +264,7 @@ public class BlockstatePredicateParser {
                 }
                 PredicateMap ret = new PredicateMap();
                 ret.predicates.putAll(context.deserialize(obj, MAP_TYPE));
-                for (EnumFacing dir : EnumFacing.VALUES) {
+                for (EnumFacing dir : EnumFacing.values()) {
                     ret.predicates.putIfAbsent(dir, Optional.ofNullable(predicateDeserializer.defaultPredicate.get()).orElse(predicateDeserializer.EMPTY));
                 }
                 predicateDeserializer.defaultPredicate.set(null);
@@ -272,7 +272,7 @@ public class BlockstatePredicateParser {
             } else if (json.isJsonArray()) {
                 Predicate<IBlockState> predicate = context.deserialize(json, PREDICATE_TYPE);
                 PredicateMap ret = new PredicateMap();
-                for (EnumFacing dir : EnumFacing.VALUES) {
+                for (EnumFacing dir : EnumFacing.values()) {
                     ret.predicates.put(dir, predicate);
                 }
                 return ret;

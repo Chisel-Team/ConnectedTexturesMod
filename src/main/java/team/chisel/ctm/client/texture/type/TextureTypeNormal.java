@@ -4,7 +4,7 @@ import javax.annotation.Nonnull;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
@@ -29,7 +29,7 @@ public enum TextureTypeNormal implements ITextureType {
     }
 
     @Override
-    public ITextureContext getBlockRenderContext(IBlockState state, IBlockAccess world, BlockPos pos, ICTMTexture<?> tex){
+    public ITextureContext getBlockRenderContext(IBlockState state, IBlockReader world, BlockPos pos, ICTMTexture<?> tex){
         return EMPTY_CONTEXT;
     }
 

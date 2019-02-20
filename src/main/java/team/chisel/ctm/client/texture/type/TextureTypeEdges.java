@@ -11,7 +11,7 @@ import net.minecraft.util.EnumFacing.Axis;
 import net.minecraft.util.EnumFacing.AxisDirection;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.TextureType;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -37,7 +37,7 @@ public class TextureTypeEdges extends TextureTypeCTM {
         private boolean obscured;
         
         @Override
-        public boolean isConnected(IBlockAccess world, BlockPos current, BlockPos connection, EnumFacing dir, IBlockState state) {
+        public boolean isConnected(IBlockReader world, BlockPos current, BlockPos connection, EnumFacing dir, IBlockState state) {
             if (isObscured()) {
                 return false;
             }
@@ -94,7 +94,7 @@ public class TextureTypeEdges extends TextureTypeCTM {
     }
     
     @Override
-    public TextureContextCTM getBlockRenderContext(IBlockState state, IBlockAccess world, BlockPos pos, ICTMTexture<?> tex) {
+    public TextureContextCTM getBlockRenderContext(IBlockState state, IBlockReader world, BlockPos pos, ICTMTexture<?> tex) {
         return new TextureContextCTM(state, world, pos, (TextureEdges) tex) {
             
             @Override

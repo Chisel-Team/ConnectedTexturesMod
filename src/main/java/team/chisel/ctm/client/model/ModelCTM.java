@@ -36,10 +36,10 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import lombok.val;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.renderer.block.model.BlockPart;
-import net.minecraft.client.renderer.block.model.BlockPartFace;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.block.model.ModelBlock;
+import net.minecraft.client.renderer.model.BlockPart;
+import net.minecraft.client.renderer.model.BlockPartFace;
+import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.model.ModelBlock;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.BlockRenderLayer;
@@ -104,7 +104,7 @@ public class ModelCTM implements IModelCTM {
             }
         }
         
-        this.textureDependencies.removeIf(rl -> rl.getResourcePath().startsWith("#"));
+        this.textureDependencies.removeIf(rl -> rl.getPath().startsWith("#"));
         
         // Validate all texture metadata
         for (ResourceLocation res : getTextures()) {
@@ -167,7 +167,7 @@ public class ModelCTM implements IModelCTM {
                 chiselmeta = ResourceUtil.getMetadata(sprite);
             } catch (IOException e) {}
             final IMetadataSectionCTM meta = chiselmeta;
-            textures.computeIfAbsent(sprite.getIconName(), s -> {
+            textures.computeIfAbsent(sprite.getName(), s -> {
                 ICTMTexture<?> tex;
                 if (meta == null) {
                     tex = new TextureNormal(TextureTypeNormal.INSTANCE, new TextureInfo(new TextureAtlasSprite[] { sprite }, Optional.empty(), null));
@@ -278,8 +278,8 @@ public class ModelCTM implements IModelCTM {
             ResourceLocation[] additionals = e.getValue().getAdditionalTextures();
             for (int i = 0; i < additionals.length; i++) {
                 ResourceLocation res = additionals[i];
-                if (res.getResourcePath().startsWith("#")) {
-                    additionals[i] = new ResourceLocation(textures.get(res.getResourcePath().substring(1)));
+                if (res.getPath().startsWith("#")) {
+                    additionals[i] = new ResourceLocation(textures.get(res.getPath().substring(1)));
                     ret.textureDependencies.add(additionals[i]);
                 }
             }

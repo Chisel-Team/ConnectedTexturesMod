@@ -11,11 +11,11 @@ import com.google.common.collect.ImmutableMap;
 
 import lombok.Getter;
 import lombok.experimental.Delegate;
-import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.BlockStateBase;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.state.IProperty;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.common.property.IUnlistedProperty;
 import team.chisel.ctm.api.model.IModelCTM;
@@ -41,14 +41,14 @@ public class CTMExtendedState extends BlockStateBase implements IExtendedBlockSt
     private final @Nullable IExtendedBlockState extState;
     
     @Getter
-    private final IBlockAccess world;
+    private final IBlockReader world;
     @Getter
     private final BlockPos pos;
     
     private @Nullable RenderContextList ctxCache;
     
     @SuppressWarnings("null")
-    public CTMExtendedState(IBlockState state, IBlockAccess world, BlockPos pos) {
+    public CTMExtendedState(IBlockState state, IBlockReader world, BlockPos pos) {
         ProfileUtil.start("ctm_extended_state");
         this.wrapped = state;
         this.world = world;

@@ -14,11 +14,11 @@ import com.google.gson.reflect.TypeToken;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import lombok.SneakyThrows;
-import net.minecraft.client.renderer.block.model.ModelBlock;
+import net.minecraft.client.renderer.model.ModelBlock;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.ICustomModelLoader;
 import net.minecraftforge.client.model.IModel;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.model.IModelParser;
 import team.chisel.ctm.client.model.ModelCTM;
@@ -33,7 +33,7 @@ public class ModelParserV1 implements IModelParser {
         try {
             @SuppressWarnings("rawtypes") 
             Class cls = Class.forName("net.minecraftforge.client.model.ModelLoader$VanillaLoader");
-            VANILLA_LOADER = (ICustomModelLoader) ReflectionHelper.getPrivateValue(cls, null, "INSTANCE");
+            VANILLA_LOADER = (ICustomModelLoader) ObfuscationReflectionHelper.getPrivateValue(cls, null, "INSTANCE");
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }

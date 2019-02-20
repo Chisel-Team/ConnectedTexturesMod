@@ -14,7 +14,7 @@ import com.google.common.collect.Maps;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
@@ -34,9 +34,9 @@ public class RenderContextList {
     private final Map<ICTMTexture<?>, ITextureContext> contextMap = Maps.newIdentityHashMap();
     private final Object2LongMap<ICTMTexture<?>> serialized = new Object2LongOpenCustomHashMap<>(new IdentityStrategy<>());
 
-    public RenderContextList(IBlockState state, Collection<ICTMTexture<?>> textures, final IBlockAccess world, BlockPos pos) {
+    public RenderContextList(IBlockState state, Collection<ICTMTexture<?>> textures, final IBlockReader world, BlockPos pos) {
         ProfileUtil.start("ctm_region_cache_update");
-    	IBlockAccess cachedWorld = regionMetaCache.get().updateWorld(world);
+    	IBlockReader cachedWorld = regionMetaCache.get().updateWorld(world);
     	
     	ProfileUtil.endAndStart("ctm_context_gather");
         for (ICTMTexture<?> tex : textures) {

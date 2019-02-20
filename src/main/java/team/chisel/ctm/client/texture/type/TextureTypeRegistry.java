@@ -14,7 +14,7 @@ import com.google.common.collect.Multimap;
 
 import net.minecraft.util.StringUtils;
 import net.minecraftforge.fml.common.discovery.ASMDataTable.ASMData;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.texture.TextureType;
 import team.chisel.ctm.api.texture.TextureTypeList;
@@ -27,7 +27,7 @@ public class TextureTypeRegistry {
     private static Map<String, ITextureType> map = Maps.newHashMap();
 
     @SuppressWarnings("unchecked")
-    public static void preInit(FMLPreInitializationEvent event) {
+    public static void preInit(FMLClientSetupEvent event) {
         Multimap<ASMData, String> annots = HashMultimap.create();
         for (ASMData list : event.getAsmData().getAll(TextureTypeList.class.getName())) {
             for (String value : ((List<Map<String, String>>) list.getAnnotationInfo().get("value")).stream().map(m -> m.get("value")).collect(Collectors.toList())) {

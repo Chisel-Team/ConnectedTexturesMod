@@ -9,7 +9,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 
 /**
  * Represents all the different spot for connection locations for a ctm block

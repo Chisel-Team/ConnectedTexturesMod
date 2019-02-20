@@ -1,4 +1,4 @@
-package team.chisel.ctm;
+/*package team.chisel.ctm;
 
 import net.minecraftforge.common.config.Config;
 
@@ -12,3 +12,4 @@ public class Configurations {
     public static boolean connectInsideCTM = false;
 
 }
+*/

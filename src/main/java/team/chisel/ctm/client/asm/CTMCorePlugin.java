@@ -1,4 +1,4 @@
-package team.chisel.ctm.client.asm;
+/*package team.chisel.ctm.client.asm;
 
 import java.util.Map;
 
@@ -33,3 +33,4 @@ public class CTMCorePlugin implements IFMLLoadingPlugin {
     }
 
 }
+*/

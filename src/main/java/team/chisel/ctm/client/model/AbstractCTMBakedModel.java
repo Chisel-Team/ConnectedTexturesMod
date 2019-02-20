@@ -31,13 +31,13 @@ import lombok.ToString;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.block.model.ItemOverrideList;
-import net.minecraft.client.renderer.block.model.ModelResourceLocation;
-import net.minecraft.client.renderer.block.model.WeightedBakedModel;
+import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
+import net.minecraft.client.renderer.model.ItemOverrideList;
+import net.minecraft.client.renderer.model.ModelResourceLocation;
+import net.minecraft.client.renderer.model.WeightedBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.ItemBlock;
@@ -70,7 +70,7 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
     private class Overrides extends ItemOverrideList {
                 
         public Overrides() {
-            super(Lists.newArrayList());
+            super();
         }
 
         @Override
@@ -84,7 +84,7 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
             ModelResourceLocation mrl = ModelUtil.getMesh(stack);
             if (mrl == null) {
                 // this must be a missing/invalid model
-                return Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getMissingModel();
+                return Minecraft.getInstance().getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getMissingModel();
             }
             return itemcache.get(mrl, () -> createModel(state, model, null, 0));
         }
@@ -160,7 +160,7 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
         AbstractCTMBakedModel baked = this;
         BlockRenderLayer layer = MinecraftForgeClient.getRenderLayer();
 
-        if (Minecraft.getMinecraft().world != null && state instanceof CTMExtendedState) {
+        if (Minecraft.getInstance().world != null && state instanceof CTMExtendedState) {
             ProfileUtil.start("state_creation");
             CTMExtendedState ext = (CTMExtendedState) state;
             RenderContextList ctxList = ext.getContextList(ext.getClean(), model);

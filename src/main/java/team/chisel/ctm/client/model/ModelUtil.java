@@ -1,8 +1,5 @@
 package team.chisel.ctm.client.model;
 
-import gnu.trove.map.TIntObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.util.Map;
@@ -10,15 +7,17 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
+import gnu.trove.map.TIntObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import lombok.SneakyThrows;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemMeshDefinition;
 import net.minecraft.client.renderer.ItemModelMesher;
-import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.client.renderer.model.ModelResourceLocation;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.ItemModelMesherForge;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.registries.IRegistryDelegate;
 import team.chisel.ctm.CTM;
 
@@ -27,7 +26,7 @@ public class ModelUtil {
     private static final MethodHandle _locations;
     static {
         try {
-            _locations = MethodHandles.lookup().unreflectGetter(ReflectionHelper.findField(ItemModelMesherForge.class, "locations"));
+            _locations = MethodHandles.lookup().unreflectGetter(ObfuscationReflectionHelper.findField(ItemModelMesherForge.class, "locations"));
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
@@ -44,7 +43,7 @@ public class ModelUtil {
     @SneakyThrows
     public static @Nullable ModelResourceLocation getMesh(ItemStack stack) {
 
-        ItemModelMesher mesher = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
+        ItemModelMesher mesher = Minecraft.getInstance().getItemRenderer().getItemModelMesher();
         
         // First try simple damage overrides
         Object locations = _locations.invoke(mesher);

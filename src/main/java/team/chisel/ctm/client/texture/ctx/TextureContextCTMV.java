@@ -16,7 +16,7 @@ import lombok.ToString;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.client.util.ConnectionLocations;
 import team.chisel.ctm.client.util.RegionCache;
@@ -60,7 +60,7 @@ public class TextureContextCTMV implements ITextureContext {
             return false;
         }
         
-        public static Connections forPos(IBlockAccess world, BlockPos pos) {
+        public static Connections forPos(IBlockReader world, BlockPos pos) {
             IBlockState state = world.getBlockState(pos);
             return forPos(world, state, pos);
         }
@@ -86,7 +86,7 @@ public class TextureContextCTMV implements ITextureContext {
             return new Connections(connections);
         }
 
-        public static Connections forPos(IBlockAccess world, IBlockState baseState, BlockPos pos) {
+        public static Connections forPos(IBlockReader world, IBlockState baseState, BlockPos pos) {
             EnumSet<EnumFacing> connections = EnumSet.noneOf(EnumFacing.class);
             IBlockState state = world.getBlockState(pos);
             if (state == baseState) {
@@ -107,7 +107,7 @@ public class TextureContextCTMV implements ITextureContext {
         private Connections connections;
         private Map<EnumFacing, Connections> connectionConnections = new EnumMap<>(EnumFacing.class);
 
-        public ConnectionData(IBlockAccess world, BlockPos pos) {
+        public ConnectionData(IBlockReader world, BlockPos pos) {
             connections = Connections.forPos(world, pos);
             IBlockState state = world.getBlockState(pos);
             for (EnumFacing f : EnumFacing.VALUES) {
@@ -132,7 +132,7 @@ public class TextureContextCTMV implements ITextureContext {
 
     private long compressedData;
     
-    public TextureContextCTMV(IBlockAccess world, BlockPos pos) {
+    public TextureContextCTMV(IBlockReader world, BlockPos pos) {
         data = new ConnectionData(world, pos);
 
         IBlockState state = world.getBlockState(pos);

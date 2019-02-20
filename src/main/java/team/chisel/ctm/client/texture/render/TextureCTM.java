@@ -1,8 +1,5 @@
 package team.chisel.ctm.client.texture.render;
 
-import it.unimi.dsi.fastutil.objects.Object2ByteMap;
-import it.unimi.dsi.fastutil.objects.Object2ByteOpenCustomHashMap;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,11 +13,13 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import it.unimi.dsi.fastutil.objects.Object2ByteMap;
+import it.unimi.dsi.fastutil.objects.Object2ByteOpenCustomHashMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.JsonUtils;
 import team.chisel.ctm.api.texture.ITextureContext;

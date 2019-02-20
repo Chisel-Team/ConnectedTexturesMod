@@ -5,11 +5,10 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+import javax.vecmath.Vector2f;
+import javax.vecmath.Vector3f;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.lwjgl.util.vector.Vector;
-import org.lwjgl.util.vector.Vector2f;
-import org.lwjgl.util.vector.Vector3f;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ListMultimap;
@@ -22,9 +21,9 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.Value;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.texture.MissingTextureSprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
@@ -32,7 +31,6 @@ import net.minecraft.client.renderer.vertex.VertexFormatElement.EnumUsage;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.client.model.pipeline.IVertexConsumer;
 import net.minecraftforge.client.model.pipeline.UnpackedBakedQuad;
-import net.minecraftforge.fml.client.FMLClientHandler;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.util.NonnullType;
 
@@ -55,7 +53,7 @@ public class Quad {
         Vector2f uvs;
     }
 
-    private static final TextureAtlasSprite BASE = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(TextureMap.LOCATION_MISSING_TEXTURE.toString());
+    private static final TextureAtlasSprite BASE = Minecraft.getInstance().getTextureMap().getSprite(MissingTextureSprite.getLocation());
     
     @ToString
     public class UVs {
@@ -423,7 +421,7 @@ public class Quad {
     public BakedQuad rebake() {
         @Nonnull VertexFormat format = this.builder.vertexFormat;
         // Sorry OF users
-        boolean hasLightmap = (this.blocklight > 0 || this.skylight > 0) && !FMLClientHandler.instance().hasOptifine();
+        boolean hasLightmap = (this.blocklight > 0 || this.skylight > 0);
         if (hasLightmap) {
             if (format == DefaultVertexFormats.ITEM) { // ITEM is convertable to BLOCK (replace normal+padding with lmap)
                 format = DefaultVertexFormats.BLOCK;
@@ -529,8 +527,8 @@ public class Quad {
         }
 
         @SuppressWarnings("unchecked")
-        private <T extends Vector> T[] fromData(List<float[]> data, int size) {
-            Vector[] ret = size == 2 ? new Vector2f[data.size()] : new Vector3f[data.size()];
+        private <T> T[] fromData(List<float[]> data, int size) {
+            Object[] ret = size == 2 ? new Vector2f[data.size()] : new Vector3f[data.size()];
             for (int i = 0; i < data.size(); i++) {
                 ret[i] = size == 2 ? new Vector2f(data.get(i)[0], data.get(i)[1]) : new Vector3f(data.get(i)[0], data.get(i)[1], data.get(i)[2]);
             }

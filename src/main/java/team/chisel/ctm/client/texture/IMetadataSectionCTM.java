@@ -20,8 +20,7 @@ import com.google.gson.JsonParseException;
 import lombok.Getter;
 import lombok.ToString;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.data.IMetadataSection;
-import net.minecraft.client.resources.data.IMetadataSectionSerializer;
+import net.minecraft.resources.data.IMetadataSectionSerializer;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ResourceLocation;
 import team.chisel.ctm.CTM;
@@ -32,7 +31,7 @@ import team.chisel.ctm.client.texture.type.TextureTypeRegistry;
 import team.chisel.ctm.client.util.ResourceUtil;
 
 @ParametersAreNonnullByDefault
-public interface IMetadataSectionCTM extends IMetadataSection {
+public interface IMetadataSectionCTM {
     
     public static final String SECTION_NAME = "ctm";
     
@@ -64,7 +63,7 @@ public interface IMetadataSectionCTM extends IMetadataSection {
             }
         }
         return meta.getType().makeTexture(new TextureInfo(
-                Arrays.stream(ObjectArrays.concat(new ResourceLocation(sprite.getIconName()), meta.getAdditionalTextures())).map(bakedTextureGetter::apply).toArray(TextureAtlasSprite[]::new), 
+                Arrays.stream(ObjectArrays.concat(sprite.getName(), meta.getAdditionalTextures())).map(bakedTextureGetter::apply).toArray(TextureAtlasSprite[]::new), 
                 Optional.of(meta.getExtraData()), 
                 meta.getLayer()
         ));
@@ -146,7 +145,7 @@ public interface IMetadataSectionCTM extends IMetadataSection {
     public static class Serializer implements IMetadataSectionSerializer<IMetadataSectionCTM> {
 
         @Override
-        public @Nullable IMetadataSectionCTM deserialize(@Nullable JsonElement json, @Nullable Type typeOfT, @Nullable JsonDeserializationContext context) throws JsonParseException {
+        public @Nullable IMetadataSectionCTM deserialize(@Nullable JsonObject json) throws JsonParseException {
             if (json != null && json.isJsonObject()) {
                 JsonObject obj = json.getAsJsonObject();
                 if (obj.has("ctm_version")) {

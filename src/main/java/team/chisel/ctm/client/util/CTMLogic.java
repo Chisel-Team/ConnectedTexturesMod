@@ -21,8 +21,7 @@ import lombok.experimental.Accessors;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 import team.chisel.ctm.Configurations;
 import team.chisel.ctm.api.IFacade;
 import team.chisel.ctm.api.texture.ISubmap;
@@ -139,7 +138,7 @@ public class CTMLogic {
 	
 	@Getter
 	@Setter
-	protected boolean ignoreStates, actualStates;
+	protected boolean ignoreStates;
 	
 	@Getter
 	@Setter
@@ -154,7 +153,7 @@ public class CTMLogic {
 	 * 
 	 *         Indeces are in counter-clockwise order starting at bottom left.
 	 */
-    public int[] createSubmapIndices(@Nullable IBlockAccess world, BlockPos pos, EnumFacing side) {
+    public int[] createSubmapIndices(@Nullable IBlockReader world, BlockPos pos, EnumFacing side) {
 		if (world == null) {
             return submapCache;
         }
@@ -209,7 +208,7 @@ public class CTMLogic {
     /**
      * Builds the connection map and stores it in this CTM instance. The {@link #connected(Dir)}, {@link #connectedAnd(Dir...)}, and {@link #connectedOr(Dir...)} methods can be used to access it.
      */
-    public void buildConnectionMap(IBlockAccess world, BlockPos pos, EnumFacing side) {
+    public void buildConnectionMap(IBlockReader world, BlockPos pos, EnumFacing side) {
         IBlockState state = getConnectionState(world, pos, side, pos);
         // TODO this naive check doesn't work for models that have unculled faces.
         // Perhaps a smarter optimization could be done eventually?
@@ -323,7 +322,7 @@ public class CTMLogic {
      *            The {@link EnumFacing side} of the block to check for connection status. This is <i>not</i> the direction to check in.
      * @return True if the given block can connect to the given location on the given side.
      */
-    public final boolean isConnected(IBlockAccess world, BlockPos current, BlockPos connection, EnumFacing dir) {
+    public final boolean isConnected(IBlockReader world, BlockPos current, BlockPos connection, EnumFacing dir) {
 
         IBlockState state = getConnectionState(world, current, dir, connection);
         return isConnected(world, current, connection, dir, state);
@@ -344,7 +343,7 @@ public class CTMLogic {
      * @return True if the given block can connect to the given location on the given side.
      */
     @SuppressWarnings({ "unused", "null" })
-    public boolean isConnected(IBlockAccess world, BlockPos current, BlockPos connection, EnumFacing dir, IBlockState state) {
+    public boolean isConnected(IBlockReader world, BlockPos current, BlockPos connection, EnumFacing dir, IBlockState state) {
 
 //      if (CTMLib.chiselLoaded() && connectionBlocked(world, x, y, z, dir.ordinal())) {
 //          return false;
@@ -379,7 +378,7 @@ public class CTMLogic {
         return stateComparator.connects(this, from, to, dir);
     }
 
-//    private boolean connectionBlocked(IBlockAccess world, int x, int y, int z, int side) {
+//    private boolean connectionBlocked(IBlockReader world, int x, int y, int z, int side) {
 //        Block block = world.getBlock(x, y, z);
 //        if (block instanceof IConnectable) {
 //            return !((IConnectable) block).canConnectCTM(world, x, y, z, side);
@@ -388,18 +387,15 @@ public class CTMLogic {
 //    }
 
     /**
-     * @deprecated Use the instance method {@link CTMLogic#getConnectionState(IBlockAccess, BlockPos, EnumFacing, BlockPos)}
+     * @deprecated Use the instance method {@link CTMLogic#getConnectionState(IBlockReader, BlockPos, EnumFacing, BlockPos)}
      */
     @Deprecated
-    public static IBlockState getBlockOrFacade(IBlockAccess world, BlockPos pos, @Nullable EnumFacing side, BlockPos connection) {
+    public static IBlockState getBlockOrFacade(IBlockReader world, BlockPos pos, @Nullable EnumFacing side, BlockPos connection) {
         return CTMLogic.getInstance().getConnectionState(world, pos, side, connection);
     }
 
-	public IBlockState getConnectionState(IBlockAccess world, BlockPos pos, @Nullable EnumFacing side, BlockPos connection) {
+	public IBlockState getConnectionState(IBlockReader world, BlockPos pos, @Nullable EnumFacing side, BlockPos connection) {
 		IBlockState state = world.getBlockState(pos);
-		if (actualStates()) {
-		    state = state.getActualState(world, pos);
-		}
 		if (state.getBlock() instanceof IFacade) {
 			return ((IFacade) state.getBlock()).getFacade(world, pos, side, connection);
 		}

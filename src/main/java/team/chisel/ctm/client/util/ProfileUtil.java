@@ -12,7 +12,7 @@ public class ProfileUtil {
     
     private static ThreadLocal<Profiler> profiler = ThreadLocal.withInitial(() -> {
         if (Thread.currentThread().getId() == 1) {
-            return Minecraft.getMinecraft().mcProfiler;
+            return Minecraft.getInstance().profiler;
         } else {
             return dummyProfiler;
         }

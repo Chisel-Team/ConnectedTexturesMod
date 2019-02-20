@@ -1,4 +1,4 @@
-package team.chisel.ctm.client.asm;
+/*package team.chisel.ctm.client.asm;
 
 import javax.annotation.Nonnull;
 
@@ -23,7 +23,7 @@ public class CTMCoreMethods {
     @SneakyThrows
     public static Boolean canRenderInLayer(@Nonnull IBlockState state, @Nonnull BlockRenderLayer layer) {
         ProfileUtil.start("ctm_render_in_layer");
-        IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(state);
+        IBakedModel model = Minecraft.getInstance().getBlockRendererDispatcher().getModelForState(state);
         if (model instanceof WeightedBakedModel) {
             model = ((WeightedBakedModel)model).baseModel;
         }
@@ -63,3 +63,4 @@ public class CTMCoreMethods {
         return model;
     }
 }
+*/

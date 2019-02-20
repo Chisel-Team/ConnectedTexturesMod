@@ -5,7 +5,7 @@ import javax.annotation.Nonnull;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
@@ -27,7 +27,7 @@ public class TextureTypeMap implements ITextureType {
     }
     
     @Override
-    public ITextureContext getBlockRenderContext(IBlockState state, IBlockAccess world, @Nonnull BlockPos pos, ICTMTexture<?> tex) {
+    public ITextureContext getBlockRenderContext(IBlockState state, IBlockReader world, @Nonnull BlockPos pos, ICTMTexture<?> tex) {
         return type.getContext(pos, (TextureMap) tex);
     }
     

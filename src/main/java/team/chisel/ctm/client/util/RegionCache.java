@@ -14,7 +14,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.WorldType;
 import net.minecraft.world.biome.Biome;
 
@@ -22,7 +22,7 @@ import net.minecraft.world.biome.Biome;
  * Used by render state creation to avoid unnecessary block lookups through the world.
  */
 @ParametersAreNonnullByDefault
-public class RegionCache implements IBlockAccess {
+public class RegionCache implements IBlockReader {
 
     /*
      * XXX
@@ -37,22 +37,22 @@ public class RegionCache implements IBlockAccess {
     @SuppressWarnings("unused")
     private final int radius;
     
-    private WeakReference<IBlockAccess> passthrough;
+    private WeakReference<IBlockReader> passthrough;
     private final Long2ObjectMap<IBlockState> stateCache = new Long2ObjectOpenHashMap<>();
 
-    public RegionCache(BlockPos center, int radius, @Nullable IBlockAccess passthrough) {
+    public RegionCache(BlockPos center, int radius, @Nullable IBlockReader passthrough) {
         this.center = center;
         this.radius = radius;
         this.passthrough = new WeakReference<>(passthrough);
     }
     
-    private IBlockAccess getPassthrough() {
-        IBlockAccess ret = passthrough.get();
+    private IBlockReader getPassthrough() {
+        IBlockReader ret = passthrough.get();
         Preconditions.checkNotNull(ret);
         return ret;
     }
     
-    public @Nonnull RegionCache updateWorld(IBlockAccess passthrough) {
+    public @Nonnull RegionCache updateWorld(IBlockReader passthrough) {
         // We do NOT use getPassthrough() here so as to skip the null-validation - it's obviously valid to be null here
         if (this.passthrough.get() != passthrough) {
             stateCache.clear();

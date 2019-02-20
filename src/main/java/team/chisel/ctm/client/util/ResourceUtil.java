@@ -7,48 +7,44 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import com.google.common.base.Throwables;
 import com.google.gson.JsonParseException;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.IResource;
+import net.minecraft.resources.IResource;
 import net.minecraft.util.ResourceLocation;
 import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 
 public class ResourceUtil {
     
-    public static ResourceLocation toResourceLocation(TextureAtlasSprite sprite) {
-        return new ResourceLocation(sprite.getIconName());
-    }
-    
     public static IResource getResource(TextureAtlasSprite sprite) throws IOException {
-        return getResource(spriteToAbsolute(toResourceLocation(sprite)));
+        return getResource(spriteToAbsolute(sprite.getName()));
     }
     
     public static ResourceLocation spriteToAbsolute(ResourceLocation sprite) {
-        if (!sprite.getResourcePath().startsWith("textures/")) {
-            sprite = new ResourceLocation(sprite.getResourceDomain(), "textures/" + sprite.getResourcePath());
+        if (!sprite.getPath().startsWith("textures/")) {
+            sprite = new ResourceLocation(sprite.getNamespace(), "textures/" + sprite.getPath());
         }
-        if (!sprite.getResourcePath().endsWith(".png")) {
-            sprite = new ResourceLocation(sprite.getResourceDomain(), sprite.getResourcePath() + ".png");
+        if (!sprite.getPath().endsWith(".png")) {
+            sprite = new ResourceLocation(sprite.getNamespace(), sprite.getPath() + ".png");
         }
         return sprite;
     }
     
     public static IResource getResource(ResourceLocation res) throws IOException {
-        return Minecraft.getMinecraft().getResourceManager().getResource(res);
+        return Minecraft.getInstance().getResourceManager().getResource(res);
     }
     
     public static IResource getResourceUnsafe(ResourceLocation res) {
         try {
             return getResource(res);
         } catch (IOException e) {
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
         }
     }
     
     private static final Map<ResourceLocation, IMetadataSectionCTM> metadataCache = new HashMap<>();
+    private static final IMetadataSectionCTM.Serializer SERIALIZER = new IMetadataSectionCTM.Serializer();
 
     public static @Nullable IMetadataSectionCTM getMetadata(ResourceLocation res) throws IOException {
         // Note, semantically different from computeIfAbsent, as we DO care about keys mapped to null values
@@ -57,7 +53,7 @@ public class ResourceUtil {
         }
         IMetadataSectionCTM ret;
         try (IResource resource = getResource(res)) {
-            ret = resource.getMetadata(IMetadataSectionCTM.SECTION_NAME);
+            ret = resource.getMetadata(SERIALIZER);
         } catch (FileNotFoundException e) {
             ret = null;  
         } catch (JsonParseException e) {
@@ -68,14 +64,14 @@ public class ResourceUtil {
     }
     
     public static @Nullable IMetadataSectionCTM getMetadata(TextureAtlasSprite sprite) throws IOException {
-        return getMetadata(spriteToAbsolute(toResourceLocation(sprite)));
+        return getMetadata(spriteToAbsolute(sprite.getName()));
     }
     
     public static @Nullable IMetadataSectionCTM getMetadataUnsafe(TextureAtlasSprite sprite) {
         try {
             return getMetadata(sprite);
         } catch (IOException e) {
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
         }
     }
     

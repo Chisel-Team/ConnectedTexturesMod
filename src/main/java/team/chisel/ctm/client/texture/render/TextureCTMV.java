@@ -1,13 +1,18 @@
 package team.chisel.ctm.client.texture.render;
 
+import static net.minecraft.util.EnumFacing.DOWN;
+import static net.minecraft.util.EnumFacing.EAST;
+import static net.minecraft.util.EnumFacing.NORTH;
+import static net.minecraft.util.EnumFacing.SOUTH;
+import static net.minecraft.util.EnumFacing.UP;
+import static net.minecraft.util.EnumFacing.WEST;
+
 import java.util.EnumSet;
 import java.util.List;
 
 import com.google.common.collect.Lists;
 
-import static net.minecraft.util.EnumFacing.*;
-
-import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumFacing.Axis;
 import team.chisel.ctm.api.texture.ISubmap;

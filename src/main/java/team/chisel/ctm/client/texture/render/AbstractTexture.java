@@ -11,7 +11,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import lombok.Getter;
-import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ResourceLocation;
@@ -88,7 +88,7 @@ public abstract class AbstractTexture<T extends ITextureType> implements ICTMTex
     
     @Override
     public Collection<ResourceLocation> getTextures() {
-        return Arrays.stream(sprites).map(s -> new ResourceLocation(s.getIconName())).collect(Collectors.toList());
+        return Arrays.stream(sprites).map(TextureAtlasSprite::getName).collect(Collectors.toList());
     }
 
     protected Quad makeQuad(BakedQuad bq, @Nullable ITextureContext context) {

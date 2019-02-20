@@ -44,7 +44,7 @@ public enum ModelLoaderCTM implements ICustomModelLoader {
     @Override
     public boolean accepts(ResourceLocation modelLocation) {        
         if (modelLocation instanceof ModelResourceLocation) {
-            modelLocation = new ResourceLocation(modelLocation.getResourceDomain(), modelLocation.getResourcePath());
+            modelLocation = new ResourceLocation(modelLocation.getNamespace(), modelLocation.getPath());
         }
 
         JsonElement json = getJSON(modelLocation);
@@ -64,11 +64,11 @@ public enum ModelLoaderCTM implements ICustomModelLoader {
     @SuppressWarnings("null")
     public @Nonnull JsonElement getJSON(ResourceLocation modelLocation) {
         return jsonCache.computeIfAbsent(modelLocation, res -> {
-            String path = modelLocation.getResourcePath() + ".json";
+            String path = modelLocation.getPath() + ".json";
             if (!path.startsWith("models/")) {
                 path = "models/" + path;
             }
-            ResourceLocation absolute = new ResourceLocation(modelLocation.getResourceDomain(), path);
+            ResourceLocation absolute = new ResourceLocation(modelLocation.getNamespace(), path);
 
             try (IResource resource = manager.getResource(absolute)) {
                 JsonElement ele = new JsonParser().parse(new InputStreamReader(resource.getInputStream()));
@@ -85,7 +85,7 @@ public enum ModelLoaderCTM implements ICustomModelLoader {
 
     private IModelCTM loadFromFile(ResourceLocation res, boolean forLoad) {
         if (forLoad) {
-            parsedLocations.add(new ResourceLocation(res.getResourceDomain(), res.getResourcePath().replace("models/", "")));
+            parsedLocations.add(new ResourceLocation(res.getNamespace(), res.getPath().replace("models/", "")));
         }
 
         JsonObject json = getJSON(res).getAsJsonObject();

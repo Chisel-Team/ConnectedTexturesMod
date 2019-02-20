@@ -7,7 +7,7 @@ import javax.annotation.Nonnull;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.client.texture.render.TextureCTM;
 import team.chisel.ctm.client.util.CTMLogic;
@@ -21,7 +21,7 @@ public class TextureContextCTM implements ITextureContext {
 
     private long data;
 
-    public TextureContextCTM(@Nonnull IBlockState state, IBlockAccess world, BlockPos pos, TextureCTM tex) {
+    public TextureContextCTM(@Nonnull IBlockState state, IBlockReader world, BlockPos pos, TextureCTM tex) {
     	this.tex = tex;
     	
         for (EnumFacing face : EnumFacing.VALUES) {

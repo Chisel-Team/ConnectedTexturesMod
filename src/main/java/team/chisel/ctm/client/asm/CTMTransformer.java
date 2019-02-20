@@ -1,4 +1,4 @@
-package team.chisel.ctm.client.asm;
+/*package team.chisel.ctm.client.asm;
 
 import net.minecraft.launchwrapper.IClassTransformer;
 import org.objectweb.asm.ClassReader;
@@ -19,7 +19,7 @@ public class CTMTransformer implements IClassTransformer {
 
     private static final String WRAPPER_CLASS_NAME = "team/chisel/ctm/client/state/CTMExtendedState";
     private static final String WRAPPER_CLASS_CONSTRUCTOR_NAME = "<init>";
-    private static final String WRAPPER_CLASS_CONSTRUCTOR_DESC = "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;)V";
+    private static final String WRAPPER_CLASS_CONSTRUCTOR_DESC = "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)V";
     
     private static final String CHISEL_METHODS_CLASS_NAME = "team/chisel/ctm/client/asm/CTMCoreMethods";
     
@@ -243,3 +243,4 @@ public class CTMTransformer implements IClassTransformer {
         return cw.toByteArray();
     }
 }
+*/

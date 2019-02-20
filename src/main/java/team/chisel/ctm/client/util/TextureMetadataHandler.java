@@ -21,20 +21,21 @@ import it.unimi.dsi.fastutil.objects.Object2BooleanLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import lombok.SneakyThrows;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.block.model.ModelBlock;
-import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.model.ModelBlock;
+import net.minecraft.client.renderer.model.ModelResourceLocation;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.model.TRSRTransformation;
-import net.minecraftforge.fml.common.eventhandler.EventPriority;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import team.chisel.ctm.CTM;
 import team.chisel.ctm.api.event.TextureCollectedEvent;
 import team.chisel.ctm.api.model.IModelCTM;
@@ -55,24 +56,25 @@ public enum TextureMetadataHandler {
      */
     @SubscribeEvent
     public void onTextureStitch(TextureCollectedEvent event) {
-        if (Minecraft.getMinecraft().getTextureMapBlocks() != null) {
+        if (Minecraft.getInstance().getTextureMap() != null) {
             TextureAtlasSprite sprite = event.getSprite();
             try {
-                ResourceLocation rel = new ResourceLocation(sprite.getIconName());
-                rel = new ResourceLocation(rel.getResourceDomain(), "textures/" + rel.getResourcePath() + ".png");
+                ResourceLocation rel = sprite.getName();
+                rel = new ResourceLocation(rel.getNamespace(), "textures/" + rel.getPath() + ".png");
                 IMetadataSectionCTM metadata = ResourceUtil.getMetadata(rel);
                 if (metadata != null) {
+                	IResourceManager rm = Minecraft.getInstance().getResourceManager();
                     // Load proxy data
                     if (metadata.getProxy() != null) {
                         ResourceLocation proxysprite = new ResourceLocation(metadata.getProxy());
                         IMetadataSectionCTM proxymeta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(proxysprite));
                         // Load proxy's base sprite
-                        event.getMap().registerSprite(proxysprite);
+                        event.getMap().registerSprite(rm, proxysprite);
                         if (proxymeta != null) {
                             // Load proxy's additional textures
                             for (ResourceLocation r : proxymeta.getAdditionalTextures()) {
                             	if (registeredTextures.add(r)) {
-                            		event.getMap().registerSprite(r);
+                            		event.getMap().registerSprite(rm, r);
                             	}
                             }
                         }
@@ -80,7 +82,7 @@ public enum TextureMetadataHandler {
                     // Load additional textures
                     for (ResourceLocation r : metadata.getAdditionalTextures()) {
                         if (registeredTextures.add(r)) {
-                            event.getMap().registerSprite(r);
+                            event.getMap().registerSprite(rm, r);
                         }
                     }
                 }
@@ -117,8 +119,8 @@ public enum TextureMetadataHandler {
     @SubscribeEvent(priority = EventPriority.LOWEST) // low priority to capture all event-registered models
     @SneakyThrows
     public void onModelBake(ModelBakeEvent event) {
-        Map<ModelResourceLocation, IModel> stateModels = ReflectionHelper.getPrivateValue(ModelLoader.class, event.getModelLoader(), "stateModels");
-        for (ModelResourceLocation mrl : event.getModelRegistry().getKeys()) {
+        Map<ModelResourceLocation, IModel> stateModels = ObfuscationReflectionHelper.getPrivateValue(ModelLoader.class, event.getModelLoader(), "stateModels");
+        for (ModelResourceLocation mrl : event.getModelRegistry().keySet()) {
             IModel rootModel = stateModels.get(mrl);
             if (rootModel != null && !(rootModel instanceof IModelCTM) && !ModelLoaderCTM.parsedLocations.contains(mrl)) {
                 Deque<ResourceLocation> dependencies = new ArrayDeque<>();
@@ -187,7 +189,7 @@ public enum TextureMetadataHandler {
 
     private @Nonnull IBakedModel wrap(IModel model, IBakedModel object) throws IOException {
         ModelCTM modelchisel = new ModelCTM(null, model, Int2ObjectMaps.emptyMap());
-        modelchisel.bake(TRSRTransformation.identity(), DefaultVertexFormats.ITEM, rl -> Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(rl.toString()));
+        modelchisel.bake(TRSRTransformation.identity(), DefaultVertexFormats.ITEM, rl -> Minecraft.getInstance().getTextureMap().getAtlasSprite(rl.toString()));
         return new ModelBakedCTM(modelchisel, object);
     }
 
