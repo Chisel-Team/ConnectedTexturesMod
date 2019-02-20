@@ -11,7 +11,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+'
         classpath 'org.ajoberstar:gradle-git:0.10.1'
     }
 }
@@ -19,8 +19,8 @@ plugins {
     id 'net.franz-becker.gradle-lombok' version '1.5'
 	id 'com.matthewprenger.cursegradle' version '1.0.9'
 }
-
-apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'eclipse'
+apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'maven-publish'
 
 import org.ajoberstar.grgit.Grgit
@@ -40,17 +40,82 @@ archivesBaseName = dev ? "CTM_DEV" : "CTM"
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
+
 minecraft {
-    version = "${minecraft_version}-${forge_version}"
-    mappings = 'snapshot_20170624'
-    runDir = "run"
-	
-	useDepAts = true
+    mappings channel: 'snapshot', version: '20190219-1.13.1'
+    
+    //accessTransformer = file('my_at.cfg')
 
-    clientJvmArgs += '-Dfml.coreMods.load=team.chisel.ctm.client.asm.CTMCorePlugin'
+    // default run configurations.
+    // these can be tweaked, removed, or duplicated as needed.
+	runs {
+        client {
+            workingDirectory project.file('run')
 
-    replaceIn "CTM.java"
-    replace "@VERSION@", project.version
+            // Recommended logging data for a userdev environment
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            // Recommended logging level for the console
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory project.file('run')
+
+            // Recommended logging data for a userdev environment
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+            // Recommended logging level for the console
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+processResources {
+    // this will ensure that this task is redone when the versions change.
+    inputs.property 'version', project.version
+    inputs.property 'mcversion', minecraft_version
+
+    // replace stuff in mcmod.info, nothing else
+    from(sourceSets.main.resources.srcDirs) {
+        include 'META_INF/mods.toml'
+                
+        // replace version and mcversion
+        expand 'version':project.version, 'mcversion': minecraft_version
+    }
+
+    // copy everything else except the mods.toml
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'META_INF/mods.toml'
+    }
+}
+
+jar {
+    manifest {
+        attributes(["Specification-Title": "ctm",
+                    "Specification-Vendor": "chisel-team",
+                    "Specification-Version": "25.0", // We are version 1 of the modlauncher specification
+                    "Implementation-Title": project.name,
+                    "Implementation-Version": "${version}",
+                    "Implementation-Vendor" :"chisel-team",
+                    "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")],)
+    }
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:' + minecraft_version + '-' + forge_version
 }
 
 lombok {
@@ -62,44 +127,6 @@ import net.franz_becker.gradle.lombok.task.DelombokTask
 
 task delombok(type: DelombokTask) {
     args("src/main/java", "-d", "build/sources/delomboked/java")
-}
-
-// Add external annotations
-eclipse.classpath.file {
-	whenMerged {
-    	entries.each { e ->
-      		if (e.path.contains('gradleclasspathcontainer') || e.path.contains('org.eclipse.jdt.launching.JRE_CONTAINER')) {
-        		e.entryAttributes['annotationpath'] = '/ConnectedTexturesMod/externalannotations'
-      		}
-    	}
-  	}
-}
-
-tasks.eclipse.dependsOn installLombok
-
-processResources {
-    // this will ensure that this task is redone when the versions change.
-    inputs.property "version", project.version
-    inputs.property "mcversion", project.minecraft.version
-
-    // replace stuff in mcmod.info, nothing else
-    from(sourceSets.main.resources.srcDirs) {
-        include 'mcmod.info'
-
-        // replace version and mcversion
-		expand 'version': project.version, 'mcversion': project.minecraft.version
-    }
-
-    // copy everything else, thats not the mcmod.info
-    from(sourceSets.main.resources.srcDirs) {
-		exclude 'mcmod.info'
-    }
-}
-
-jar.manifest {
-    attributes 'FMLAT': 'ctm_at.cfg'
-    attributes 'FMLCorePlugin': 'team.chisel.ctm.client.asm.CTMCorePlugin'
-	attributes 'FMLCorePluginContainsFMLMod': 'true'
 }
 
 // Create API jar with sources and compiled files
@@ -115,7 +142,7 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             artifact jar
-            artifact sourceJar
+            //artifact sourceJar
             artifact apiJar
         }
     }
