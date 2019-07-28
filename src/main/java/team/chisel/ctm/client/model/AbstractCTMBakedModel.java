@@ -1,8 +1,10 @@
 package team.chisel.ctm.client.model;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
@@ -15,6 +17,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
@@ -163,7 +166,7 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
         if (Minecraft.getMinecraft().world != null && state instanceof CTMExtendedState) {
             ProfileUtil.start("state_creation");
             CTMExtendedState ext = (CTMExtendedState) state;
-            RenderContextList ctxList = ext.getContextList(ext.getClean(), model);
+            RenderContextList ctxList = ext.getContextList(ext.getClean(), baked);
 
             Object2LongMap<ICTMTexture<?>> serialized = ctxList.serialized();
             ProfileUtil.endAndStart("model_creation");
@@ -262,4 +265,44 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
     
     protected abstract AbstractCTMBakedModel createModel(IBlockState state, @Nonnull IModelCTM model, RenderContextList ctx, long rand);
 
+    private <T> T applyToParent(long rand, Function<AbstractCTMBakedModel, T> func) {
+        IBakedModel parent = getParent(rand);
+        if (parent instanceof AbstractCTMBakedModel) {
+            return func.apply((AbstractCTMBakedModel) parent);
+        }
+        return null;
+    }
+
+    protected ICTMTexture<?> getOverrideTexture(long rand, int tintIndex, String iconName) {
+        ICTMTexture<?> ret = getModel().getOverrideTexture(tintIndex, iconName);
+        if (ret == null) {
+            ret = applyToParent(rand, parent -> parent.getOverrideTexture(rand, tintIndex, iconName));
+        }
+        return ret;
+    }
+
+    protected ICTMTexture<?> getTexture(long rand, String iconName) {
+        ICTMTexture<?> ret = getModel().getTexture(iconName);
+        if (ret == null) {
+            ret = applyToParent(rand, parent -> parent.getTexture(rand, iconName));
+        }
+        return ret;
+    }
+    
+    protected TextureAtlasSprite getOverrideSprite(long rand, int tintIndex) {
+        TextureAtlasSprite ret = getModel().getOverrideSprite(tintIndex);
+        if (ret == null) {
+            ret = applyToParent(rand, parent -> parent.getOverrideSprite(rand, tintIndex));
+        }
+        return ret;
+    }
+
+    public Collection<ICTMTexture<?>> getCTMTextures() {
+        ImmutableList.Builder<ICTMTexture<?>> builder = ImmutableList.builder();
+        builder.addAll(getModel().getCTMTextures());
+        if (getParent() instanceof AbstractCTMBakedModel) {
+            builder.addAll(((AbstractCTMBakedModel)getParent()).getCTMTextures());
+        }
+        return builder.build();
+    }
 }

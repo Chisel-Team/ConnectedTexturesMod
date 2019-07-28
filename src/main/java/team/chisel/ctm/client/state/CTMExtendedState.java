@@ -20,6 +20,7 @@ import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.common.property.IUnlistedProperty;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.util.RenderContextList;
+import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 import team.chisel.ctm.client.util.ProfileUtil;
 
 @ParametersAreNonnullByDefault
@@ -69,7 +70,7 @@ public class CTMExtendedState extends BlockStateBase implements IExtendedBlockSt
         this(state, parent.world, parent.pos);
     }
     
-    public RenderContextList getContextList(IBlockState state, IModelCTM model) {
+    public RenderContextList getContextList(IBlockState state, AbstractCTMBakedModel model) {
         if (ctxCache == null) {
             ctxCache = new RenderContextList(state, model.getCTMTextures(), world, pos);
         }
