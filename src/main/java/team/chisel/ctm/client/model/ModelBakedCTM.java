@@ -61,13 +61,13 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
                 // Gather all quads and map them to their textures
                 // All quads should have an associated ICTMTexture, so ignore any that do not
                 for (BakedQuad q : parentQuads) {
-                    ICTMTexture<?> tex = this.getModel().getOverrideTexture(q.getTintIndex(), q.func_187508_a().getName());
+                    ICTMTexture<?> tex = this.getOverrideTexture(rand, q.getTintIndex(), q.func_187508_a().getName());
                     if (tex == null) {
-                        tex = this.getModel().getTexture(q.func_187508_a().getName());
+                        tex = this.getTexture(rand, q.func_187508_a().getName());
                     }
 
                     if (tex != null) {
-                        TextureAtlasSprite spriteReplacement = getModel().getOverrideSprite(q.getTintIndex());
+                        TextureAtlasSprite spriteReplacement = this.getOverrideSprite(rand, q.getTintIndex());
                         if (spriteReplacement != null) {
                             q = new BakedQuadRetextured(q, spriteReplacement);
                         }
@@ -91,7 +91,7 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
         }
         return ret;
     }
-
+    
     @Override
     public @Nonnull TextureAtlasSprite getParticleTexture() {
         return Optional.ofNullable(getModel().getTexture(getParent().getParticleTexture().getName()))

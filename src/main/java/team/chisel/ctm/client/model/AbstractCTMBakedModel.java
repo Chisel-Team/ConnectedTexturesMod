@@ -1,10 +1,12 @@
 package team.chisel.ctm.client.model;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
@@ -13,6 +15,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -41,6 +44,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.WeightedRandom;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ILightReader;
@@ -163,7 +167,7 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
         try {
 	        if (Minecraft.getInstance().world != null && extraData.hasProperty(CTM_CONTEXT)) {
 	            ProfileUtil.start("state_creation");
-	            RenderContextList ctxList = extraData.getData(CTM_CONTEXT).getContextList(state, model);
+	            RenderContextList ctxList = extraData.getData(CTM_CONTEXT).getContextList(state, baked);
 	
 	            Object2LongMap<ICTMTexture<?>> serialized = ctxList.serialized();
 	            ProfileUtil.endAndStart("model_creation");
@@ -261,4 +265,44 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
 		return getParent().func_230044_c_();
 	}
 
+    private <T> T applyToParent(Random rand, Function<AbstractCTMBakedModel, T> func) {
+        IBakedModel parent = getParent(rand);
+        if (parent instanceof AbstractCTMBakedModel) {
+            return func.apply((AbstractCTMBakedModel) parent);
+        }
+        return null;
+    }
+
+    protected ICTMTexture<?> getOverrideTexture(Random rand, int tintIndex, ResourceLocation texture) {
+        ICTMTexture<?> ret = getModel().getOverrideTexture(tintIndex, texture);
+        if (ret == null) {
+            ret = applyToParent(rand, parent -> parent.getOverrideTexture(rand, tintIndex, texture));
+        }
+        return ret;
+    }
+
+    protected ICTMTexture<?> getTexture(Random rand, ResourceLocation texture) {
+        ICTMTexture<?> ret = getModel().getTexture(texture);
+        if (ret == null) {
+            ret = applyToParent(rand, parent -> parent.getTexture(rand, texture));
+        }
+        return ret;
+    }
+    
+    protected TextureAtlasSprite getOverrideSprite(Random rand, int tintIndex) {
+        TextureAtlasSprite ret = getModel().getOverrideSprite(tintIndex);
+        if (ret == null) {
+            ret = applyToParent(rand, parent -> parent.getOverrideSprite(rand, tintIndex));
+        }
+        return ret;
+    }
+
+    public Collection<ICTMTexture<?>> getCTMTextures() {
+        ImmutableList.Builder<ICTMTexture<?>> builder = ImmutableList.builder();
+        builder.addAll(getModel().getCTMTextures());
+        if (getParent() instanceof AbstractCTMBakedModel) {
+            builder.addAll(((AbstractCTMBakedModel)getParent()).getCTMTextures());
+        }
+        return builder.build();
+    }
 }

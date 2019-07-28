@@ -7,8 +7,8 @@ import lombok.Getter;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
-import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.util.RenderContextList;
+import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 
 @ParametersAreNonnullByDefault
 public class CTMContext  {
@@ -29,7 +29,7 @@ public class CTMContext  {
         this(parent.world, parent.pos);
     }
     
-    public RenderContextList getContextList(BlockState state, IModelCTM model) {
+    public RenderContextList getContextList(BlockState state, AbstractCTMBakedModel model) {
         if (ctxCache == null) {
             ctxCache = new RenderContextList(state, model.getCTMTextures(), world, pos);
         }
