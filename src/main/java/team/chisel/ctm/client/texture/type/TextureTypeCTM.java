@@ -3,6 +3,7 @@ package team.chisel.ctm.client.texture.type;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
+import team.chisel.ctm.Configurations;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
@@ -26,7 +27,7 @@ public class TextureTypeCTM implements ITextureType {
 
     @Override
     public int getQuadsPerSide() {
-        return 4;
+        return Configurations.disableCTM ? 1 : 4;
     }
 
     @Override

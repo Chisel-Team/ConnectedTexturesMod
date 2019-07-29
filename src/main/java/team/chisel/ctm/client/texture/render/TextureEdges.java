@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import net.minecraft.client.renderer.model.BakedQuad;
+import team.chisel.ctm.Configurations;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTM;
@@ -23,7 +24,7 @@ public class TextureEdges extends TextureCTM<TextureTypeEdges> {
     @Override
     public List<BakedQuad> transformQuad(BakedQuad bq, ITextureContext context, int quadGoal) {
         Quad quad = makeQuad(bq, context);
-        if (context == null) {
+        if (context == null || Configurations.disableCTM) {
             return Collections.singletonList(quad.transformUVs(sprites[0]).rebake());
         }
         
