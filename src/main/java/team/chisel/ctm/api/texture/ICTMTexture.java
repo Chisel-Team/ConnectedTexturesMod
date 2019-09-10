@@ -48,11 +48,12 @@ public interface ICTMTexture<T extends ITextureType> {
 
     /**
      * The layer this texture requires. The layers will be prioritized for a face in the order:
-     * <p>
-     * {@link BlockRenderLayer#TRANSLUCENT}<br/>
-     * {@link BlockRenderLayer#CUTOUT}<br/>
-     * {@link BlockRenderLayer#SOLID}<br/>
-     * 
+     * <ul>
+     * <li>{@link BlockRenderLayer#TRANSLUCENT}</li>
+     * <li>{@link BlockRenderLayer#CUTOUT}</li>
+     * <li>{@link BlockRenderLayer#SOLID}</li>
+     * </ul>
+	 *
      * @return The layer of this texture.
      */
     @Nullable

@@ -30,7 +30,7 @@ public interface IFacade {
      *            The Blocks position
      * @param side
      *            The side being rendered, NOT the side being connected from.
-     *            <p/>
+     *            <p>
      *            This value can be null if no side is specified. Please handle this appropriately.
      * @param connection
      *            The position of the block being connected to.

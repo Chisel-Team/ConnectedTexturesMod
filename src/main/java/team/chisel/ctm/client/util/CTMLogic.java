@@ -335,7 +335,7 @@ public class CTMLogic {
      * @param world
      * @param current
      *            The position of your block.
-     * @param y
+     * @param connection
      *            The position of the block to check against.
      * @param dir
      *            The {@link EnumFacing side} of the block to check for connection status. This is <i>not</i> the direction to check in.
