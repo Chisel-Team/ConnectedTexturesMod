@@ -47,8 +47,10 @@ import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.client.MinecraftForgeClient;
+import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.common.model.TRSRTransformation;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
@@ -84,6 +86,16 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
                 block = ((ItemBlock) stack.getItem()).getBlock();
             }
             final IBlockState state = block == null ? null : block.getDefaultState();
+            if (!stack.isEmpty() && stack.getItem().hasCustomProperties()) { // Handle parent model's overrides
+                @SuppressWarnings("deprecation") // Duplicate super logic, but called on the parent model overrides
+                ResourceLocation location = parent.getOverrides().applyOverride(stack, world, entity);
+                if (location != null) {
+                    // Use the override's location as cache key
+                    ModelResourceLocation overrideLoc = ModelLoader.getInventoryVariant(location.toString());
+                    IBakedModel newParent = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getModelManager().getModel(overrideLoc);
+                    return itemcache.get(overrideLoc, () -> withNewParent(newParent).createModel(state, model, null, 0));
+                }
+            }
             ModelResourceLocation mrl = ModelUtil.getMesh(stack);
             if (mrl == null) {
                 // this must be a missing/invalid model
@@ -264,6 +276,10 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
     protected static final BlockRenderLayer[] LAYERS = BlockRenderLayer.values();
     
     protected abstract AbstractCTMBakedModel createModel(IBlockState state, @Nonnull IModelCTM model, RenderContextList ctx, long rand);
+    
+    protected /* abstract */ AbstractCTMBakedModel withNewParent(@Nonnull IBakedModel parent) {
+        return new ModelBakedCTM(getModel(), parent);
+    }
 
     private <T> T applyToParent(long rand, Function<AbstractCTMBakedModel, T> func) {
         IBakedModel parent = getParent(rand);
