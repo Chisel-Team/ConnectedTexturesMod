@@ -40,7 +40,6 @@ archivesBaseName = dev ? "CTM_DEV" : "CTM"
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
-
 minecraft {
     mappings channel: 'snapshot', version: '20200409-1.15.1'
     
@@ -80,6 +79,9 @@ minecraft {
         }
     }
 }
+
+compileJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'
 
 processResources {
     // this will ensure that this task is redone when the versions change.
