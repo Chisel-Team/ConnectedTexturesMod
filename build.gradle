@@ -75,6 +75,9 @@ eclipse.classpath.file {
   	}
 }
 
+compileJava.options.encoding = 'UTF-8'
+javadoc.options.encoding = 'UTF-8'
+
 tasks.eclipse.dependsOn installLombok
 
 processResources {
