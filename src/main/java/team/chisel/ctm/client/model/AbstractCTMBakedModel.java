@@ -54,6 +54,7 @@ import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.common.model.TRSRTransformation;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
+import team.chisel.ctm.api.texture.IChiselFace;
 import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.asm.CTMCoreMethods;
 import team.chisel.ctm.client.state.CTMExtendedState;
@@ -238,9 +239,11 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
         return false;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public @Nonnull TextureAtlasSprite getParticleTexture() {
-        return this.parent.getParticleTexture();
+        IChiselFace face = this.model.getDefaultFace();
+        return face != null ? face.getParticle() : this.parent.getParticleTexture();
     }
 
     @Override

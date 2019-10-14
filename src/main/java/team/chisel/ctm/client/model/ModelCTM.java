@@ -231,9 +231,9 @@ public class ModelCTM implements IModelCTM {
 
     @Override
     public void load() {}
-
+    
     @Override
-    public Collection<ICTMTexture<?>> getCTMTextures() {
+    public Collection<ICTMTexture<?>> getChiselTextures() {
         return ImmutableList.<ICTMTexture<?>>builder().addAll(textures.values()).addAll(textureOverrides.values()).build();
     }
     
