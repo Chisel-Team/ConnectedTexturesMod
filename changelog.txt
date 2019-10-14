@@ -1,3 +1,14 @@
+1.0.0:
+New
+- Added 'use_actual_state' flag to allow connected textures to compare contextual states (such as glass panes)
+Changes
+- Remove deprecated APIs
+Fixes
+- Fix models with CTM overrides not inheriting from texture data
+- Fix disableCTM config not doing anything
+- Fix CTM models not working properly with forge blockstate features (retexture, uvlock, etc.)
+- #89 Fix CTM models not considering item overrides
+
 0.3.3:
 New
 - Models with light data will now render properly in item form. NOTE: This requires Forge 2781 or higher!
