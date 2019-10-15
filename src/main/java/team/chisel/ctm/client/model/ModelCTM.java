@@ -271,16 +271,22 @@ public class ModelCTM implements IModelCTM {
                 for (int i = 0; i < additionals.length; i++) {
                     ResourceLocation res = additionals[i];
                     if (res.getResourcePath().startsWith("#")) {
-                        additionals[i] = new ResourceLocation(textures.get(res.getResourcePath().substring(1)));
-                        ret.textureDependencies.add(additionals[i]);
+                        String newTexture = textures.get(res.getResourcePath().substring(1));
+                        if (newTexture != null) {
+                            additionals[i] = new ResourceLocation(newTexture);
+                            ret.textureDependencies.add(additionals[i]);
+                        }
                     }
                 }
             }
             for (int i : ret.overrides.keySet()) {
                 ret.overrides.compute(i, (idx, ele) -> {
                     if (ele.isJsonPrimitive() && ele.getAsJsonPrimitive().isString()) {
-                        ele = new JsonPrimitive(textures.get(ele.getAsString().substring(1)));
-                        ret.textureDependencies.add(new ResourceLocation(ele.getAsString()));
+                        String newTexture = textures.get(ele.getAsString().substring(1));
+                        if (newTexture != null) {
+                            ele = new JsonPrimitive(newTexture);
+                            ret.textureDependencies.add(new ResourceLocation(ele.getAsString()));
+                        }
                     }
                     return ele;
                 });
