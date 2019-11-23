@@ -38,6 +38,7 @@ public class CTM {
         TextureTypeRegistry.preInit(event);
 
         ModelLoaderRegistry.registerLoader(ModelLoaderCTM.INSTANCE);
+        MinecraftForge.EVENT_BUS.register(ModelLoaderCTM.INSTANCE);
         Minecraft.getMinecraft().metadataSerializer_.registerMetadataSectionType(new IMetadataSectionCTM.Serializer(), IMetadataSectionCTM.class);
         
         MinecraftForge.EVENT_BUS.register(TextureMetadataHandler.INSTANCE);

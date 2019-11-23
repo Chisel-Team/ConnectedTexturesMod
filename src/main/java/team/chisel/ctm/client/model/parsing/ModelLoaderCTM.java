@@ -1,6 +1,7 @@
 package team.chisel.ctm.client.model.parsing;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.Map;
@@ -8,7 +9,12 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
@@ -19,8 +25,11 @@ import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.model.ICustomModelLoader;
 import net.minecraftforge.client.model.IModel;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.model.IModelParser;
 
@@ -31,13 +40,42 @@ public enum ModelLoaderCTM implements ICustomModelLoader {
     private static final Map<Integer, IModelParser> parserVersions = ImmutableMap.of(1, new ModelParserV1());
     
     private IResourceManager manager;
-    private Map<ResourceLocation, JsonElement> jsonCache = Maps.newHashMap();
     private Map<ResourceLocation, IModelCTM> loadedModels = Maps.newHashMap();
-        
+
+    private LoadingCache<ResourceLocation, JsonElement> jsonCache = CacheBuilder.newBuilder().maximumSize(128).build(
+            new CacheLoader<ResourceLocation, JsonElement>() {
+                @Override
+                @SuppressWarnings("null")
+                public JsonElement load(ResourceLocation modelLocation) throws Exception {
+                    String path = modelLocation.getResourcePath() + ".json";
+                    if (!path.startsWith("models/")) {
+                        path = "models/" + path;
+                    }
+                    ResourceLocation absolute = new ResourceLocation(modelLocation.getResourceDomain(), path);
+
+                    try (IResource resource = manager.getResource(absolute);
+                         InputStream resourceInputStream = resource.getInputStream();
+                         InputStreamReader resourceInputStreamReader = new InputStreamReader(resourceInputStream)) {
+                        JsonElement ele = new JsonParser().parse(resourceInputStreamReader);
+                        if (ele != null) {
+                            return ele;
+                        }
+                    } catch (Exception e) {}
+
+                    return JsonNull.INSTANCE;
+                }
+            }
+    );
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void afterModelBaking(ModelBakeEvent event) {
+        jsonCache.invalidateAll();
+    }
+
     @Override
     public void onResourceManagerReload(@Nonnull IResourceManager resourceManager) {
         this.manager = resourceManager;
-        jsonCache.clear();
+        jsonCache.invalidateAll();
         loadedModels.clear();
     }
     
@@ -47,7 +85,7 @@ public enum ModelLoaderCTM implements ICustomModelLoader {
             modelLocation = new ResourceLocation(modelLocation.getResourceDomain(), modelLocation.getResourcePath());
         }
 
-        JsonElement json = getJSON(modelLocation);
+        JsonElement json = jsonCache.getUnchecked(modelLocation);
         return json.isJsonObject() && json.getAsJsonObject().has("ctm_version");
     }
 
@@ -60,27 +98,7 @@ public enum ModelLoaderCTM implements ICustomModelLoader {
         }
         return model;
     }
-    
-    @SuppressWarnings("null")
-    public @Nonnull JsonElement getJSON(ResourceLocation modelLocation) {
-        return jsonCache.computeIfAbsent(modelLocation, res -> {
-            String path = modelLocation.getResourcePath() + ".json";
-            if (!path.startsWith("models/")) {
-                path = "models/" + path;
-            }
-            ResourceLocation absolute = new ResourceLocation(modelLocation.getResourceDomain(), path);
 
-            try (IResource resource = manager.getResource(absolute)) {
-                JsonElement ele = new JsonParser().parse(new InputStreamReader(resource.getInputStream()));
-                if (ele != null) {
-                    return ele;
-                }
-            } catch (Exception e) {}
-
-            return JsonNull.INSTANCE;
-        });
-    }
-    
     public static final Set<ResourceLocation> parsedLocations = new HashSet<>();
 
     private IModelCTM loadFromFile(ResourceLocation res, boolean forLoad) {
@@ -88,7 +106,7 @@ public enum ModelLoaderCTM implements ICustomModelLoader {
             parsedLocations.add(new ResourceLocation(res.getResourceDomain(), res.getResourcePath().replace("models/", "")));
         }
 
-        JsonObject json = getJSON(res).getAsJsonObject();
+        JsonObject json = jsonCache.getUnchecked(res).getAsJsonObject();
 
         IModelParser parser = parserVersions.get(json.get("ctm_version").getAsInt());
         if (parser == null) {
