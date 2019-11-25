@@ -67,7 +67,6 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
                     }
 
                     if (tex != null) {
-                        System.out.println(tex.getTextures() + ": " + tex.getLayer());
                         TextureAtlasSprite spriteReplacement = this.getOverrideSprite(rand, q.getTintIndex());
                         if (spriteReplacement != null) {
                             q = new BakedQuadRetextured(q, spriteReplacement);
