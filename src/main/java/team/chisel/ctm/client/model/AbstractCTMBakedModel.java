@@ -1,6 +1,7 @@
 package team.chisel.ctm.client.model;
 
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -161,6 +162,9 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
 
     protected final ListMultimap<BlockRenderLayer, BakedQuad> genQuads = MultimapBuilder.enumKeys(BlockRenderLayer.class).arrayListValues().build();
     protected final Table<BlockRenderLayer, EnumFacing, List<BakedQuad>> faceQuads = Tables.newCustomTable(Maps.newEnumMap(BlockRenderLayer.class), () -> Maps.newEnumMap(EnumFacing.class));
+    
+    private final EnumMap<EnumFacing, ImmutableList<BakedQuad>> noLayerCache = new EnumMap<>(EnumFacing.class);
+    private ImmutableList<BakedQuad> noSideNoLayerCache;
 
     @Override
     @SneakyThrows
@@ -196,11 +200,22 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
         if (side != null && layer != null) {
             ret = baked.faceQuads.get(layer, side);
         } else if (side != null) {
-            ret = baked.faceQuads.column(side).values().stream().flatMap(List::stream).collect(Collectors.toList());
+            final AbstractCTMBakedModel _baked = baked;
+            ret = noLayerCache.computeIfAbsent(side, f -> ImmutableList.copyOf(_baked.faceQuads.column(f).values()
+                    .stream()
+                    .flatMap(List::stream)
+                    .distinct()
+                    .collect(Collectors.toList())));
         } else if (layer != null) {
             ret = baked.genQuads.get(layer);
         } else {
-            ret = Lists.newArrayList(baked.genQuads.values());
+            ret = noSideNoLayerCache;
+            if (ret == null) {
+                ret = noSideNoLayerCache = ImmutableList.copyOf(baked.genQuads.values()
+                        .stream()
+                        .distinct()
+                        .collect(Collectors.toList()));
+            }
         }
         ProfileUtil.end();
 
