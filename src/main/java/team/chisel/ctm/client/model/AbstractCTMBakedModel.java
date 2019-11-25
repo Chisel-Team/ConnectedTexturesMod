@@ -2,6 +2,7 @@ package team.chisel.ctm.client.model;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -153,6 +154,9 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
     protected final ListMultimap<RenderType, BakedQuad> genQuads = MultimapBuilder.hashKeys().arrayListValues().build();
     protected final Table<RenderType, Direction, List<BakedQuad>> faceQuads = Tables.newCustomTable(new HashMap<>(), () -> Maps.newEnumMap(Direction.class));
     
+    private final EnumMap<Direction, ImmutableList<BakedQuad>> noLayerCache = new EnumMap<>(Direction.class);
+    private ImmutableList<BakedQuad> noSideNoLayerCache;
+    
     protected static final ModelProperty<CTMContext> CTM_CONTEXT = new ModelProperty<>();
 
     @Override
@@ -187,11 +191,22 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
         if (side != null && layer != null) {
             ret = baked.faceQuads.get(layer, side);
         } else if (side != null) {
-            ret = baked.faceQuads.column(side).values().stream().flatMap(List::stream).collect(Collectors.toList());
+            final AbstractCTMBakedModel _baked = baked;
+            ret = noLayerCache.computeIfAbsent(side, f -> ImmutableList.copyOf(_baked.faceQuads.column(f).values()
+                    .stream()
+                    .flatMap(List::stream)
+                    .distinct()
+                    .collect(Collectors.toList())));
         } else if (layer != null) {
             ret = baked.genQuads.get(layer);
         } else {
-            ret = Lists.newArrayList(baked.genQuads.values());
+            ret = noSideNoLayerCache;
+            if (ret == null) {
+                ret = noSideNoLayerCache = ImmutableList.copyOf(baked.genQuads.values()
+                        .stream()
+                        .distinct()
+                        .collect(Collectors.toList()));
+            }
         }
         ProfileUtil.end();
 
