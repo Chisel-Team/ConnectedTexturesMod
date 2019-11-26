@@ -1,3 +1,12 @@
+1.0.1:
+Changes
+- If no layer is specified, the default will now be null (same as textures with no metadata) rather than SOLID
+- Now requires forge 2807 at a minimum (for item lighting fixes)
+Fixes
+- Eliminated unnecessary memory overhead from model loading (asiekierka)
+- Fix ctm models having duplicate quads when rendered as an item and containing null-layer quads
+- Cache quad subsets for no-layer cases a bit, should speed up item model rendering marginally
+
 1.0.0:
 New
 - Added 'use_actual_state' flag to allow connected textures to compare contextual states (such as glass panes)
