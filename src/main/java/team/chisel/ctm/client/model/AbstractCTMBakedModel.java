@@ -201,7 +201,7 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
             ret = baked.faceQuads.get(layer, side);
         } else if (side != null) {
             final AbstractCTMBakedModel _baked = baked;
-            ret = noLayerCache.computeIfAbsent(side, f -> ImmutableList.copyOf(_baked.faceQuads.column(f).values()
+            ret = baked.noLayerCache.computeIfAbsent(side, f -> ImmutableList.copyOf(_baked.faceQuads.column(f).values()
                     .stream()
                     .flatMap(List::stream)
                     .distinct()
@@ -209,9 +209,9 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
         } else if (layer != null) {
             ret = baked.genQuads.get(layer);
         } else {
-            ret = noSideNoLayerCache;
+            ret = baked.noSideNoLayerCache;
             if (ret == null) {
-                ret = noSideNoLayerCache = ImmutableList.copyOf(baked.genQuads.values()
+                ret = baked.noSideNoLayerCache = ImmutableList.copyOf(baked.genQuads.values()
                         .stream()
                         .distinct()
                         .collect(Collectors.toList()));
