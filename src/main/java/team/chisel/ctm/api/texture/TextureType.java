@@ -24,11 +24,11 @@ import team.chisel.ctm.client.texture.type.TextureTypeCTMV;
 public @interface TextureType {
 
     /**
-     * The name used in JSON files to select this texture type. For example, connected textures would be "ctm"
+     * The alias of the annotated texture type, used to reference it from model or texture metadata
      * <p>
-     * This value can be left out to use the name of the class/field being annotated.
+     * If the value is left blank (default) the alias will be inferred from the annotated field or class name
      * 
-     * @return The name of the texture type.
+     * @return The alias for this texture type
      */
     String value() default "";
 }

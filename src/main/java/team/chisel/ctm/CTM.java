@@ -16,7 +16,7 @@ import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import team.chisel.ctm.client.model.parsing.ModelLoaderCTM;
 import team.chisel.ctm.client.texture.IMetadataSectionCTM;
-import team.chisel.ctm.client.texture.type.TextureTypeRegistry;
+import team.chisel.ctm.client.texture.type.TextureTypes;
 import team.chisel.ctm.client.util.CTMPackReloadListener;
 import team.chisel.ctm.client.util.TextureMetadataHandler;
 
@@ -35,7 +35,7 @@ public class CTM {
     
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        TextureTypeRegistry.preInit(event);
+        TextureTypes.registerAll(event.getAsmData());
 
         ModelLoaderRegistry.registerLoader(ModelLoaderCTM.INSTANCE);
         MinecraftForge.EVENT_BUS.register(ModelLoaderCTM.INSTANCE);

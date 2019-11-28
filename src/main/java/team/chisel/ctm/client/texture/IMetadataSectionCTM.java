@@ -28,7 +28,7 @@ import team.chisel.ctm.CTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.util.TextureInfo;
-import team.chisel.ctm.client.texture.type.TextureTypeRegistry;
+import team.chisel.ctm.client.texture.type.TextureTypes;
 import team.chisel.ctm.client.util.ResourceUtil;
 
 @ParametersAreNonnullByDefault
@@ -74,7 +74,8 @@ public interface IMetadataSectionCTM extends IMetadataSection {
     @Getter
     public static class V1 implements IMetadataSectionCTM {
         
-        private ITextureType type = TextureTypeRegistry.getType("NORMAL");
+        private ITextureType type = TextureTypes.getType("NORMAL").orElseThrow(() ->
+                new IllegalStateException("Missing normal texture type"));
         private BlockRenderLayer layer = null;
         private String proxy;
         private ResourceLocation[] additionalTextures = new ResourceLocation[0];
@@ -102,12 +103,8 @@ public interface IMetadataSectionCTM extends IMetadataSection {
             if (obj.has("type")) {
                 JsonElement typeEle = obj.get("type");
                 if (typeEle.isJsonPrimitive() && typeEle.getAsJsonPrimitive().isString()) {
-                    ITextureType type = TextureTypeRegistry.getType(typeEle.getAsString());
-                    if (type == null) {
-                        throw new JsonParseException("Invalid render type given: " + typeEle);
-                    } else {
-                        ret.type = type;
-                    }
+                    ret.type = TextureTypes.getType(typeEle.getAsString()).orElseThrow(() ->
+                            new JsonParseException("Invalid texture type: " + typeEle));
                 }
             }
 
