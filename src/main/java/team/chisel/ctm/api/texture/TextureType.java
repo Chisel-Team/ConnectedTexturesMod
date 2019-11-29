@@ -24,7 +24,7 @@ import team.chisel.ctm.client.texture.type.TextureTypeCTMV;
 public @interface TextureType {
 
     /**
-     * The alias of the annotated texture type, used to reference it from model or texture metadata
+     * An alias of the annotated texture type, used to reference it from model or texture metadata
      * <p>
      * If the value is left blank (default) the alias will be inferred from the annotated field or class name
      * 
