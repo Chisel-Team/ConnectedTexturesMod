@@ -74,8 +74,7 @@ public interface IMetadataSectionCTM extends IMetadataSection {
     @Getter
     public static class V1 implements IMetadataSectionCTM {
         
-        private ITextureType type = TextureTypes.getType("NORMAL").orElseThrow(() ->
-                new IllegalStateException("Missing normal texture type"));
+        private ITextureType type = TextureTypes.normal();
         private BlockRenderLayer layer = null;
         private String proxy;
         private ResourceLocation[] additionalTextures = new ResourceLocation[0];

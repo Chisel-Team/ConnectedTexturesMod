@@ -23,6 +23,16 @@ public final class TextureTypes {
     }
 
     /**
+     * Gets the normal (default) texture type from the registry
+     *
+     * @return The normal texture type
+     * @throws IllegalStateException If the type has not been registered yet
+     */
+    public static ITextureType normal() {
+        return getType("normal").orElseThrow(() -> new IllegalStateException("Normal texture type not registered"));
+    }
+
+    /**
      * Gets the {@link ITextureType} registered under the given {@code alias}
      *
      * @param alias An alias of the texture type
