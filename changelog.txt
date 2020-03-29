@@ -1,3 +1,7 @@
+1.0.2:
+Fixes
+- #115 Fix CTM models using the no-layer cache on the incorrect model, should fix the iChisel's preview mode
+
 1.0.1:
 Changes
 - If no layer is specified, the default will now be null (same as textures with no metadata) rather than SOLID
