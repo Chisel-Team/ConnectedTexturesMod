@@ -5,11 +5,12 @@ import static team.chisel.ctm.CTM.MOD_ID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.resources.SimpleReloadableResourceManager;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -33,15 +34,18 @@ public class CTM {
     public CTM() {
     	instance = this;
     	
-    	FMLJavaModLoadingContext.get().getModEventBus().addListener(this::preInit);
-        FMLJavaModLoadingContext.get().getModEventBus().register(TextureMetadataHandler.INSTANCE);
-        FMLJavaModLoadingContext.get().getModEventBus().register(new CTMPackReloadListener());
+    	DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
+    	    IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+    	    modBus.addListener(this::preInit);
+    	    modBus.register(TextureMetadataHandler.INSTANCE);
+    	    modBus.register(new CTMPackReloadListener());
+    	    
+            TextureTypeRegistry.scan();
+    	});
     }
     
     @SubscribeEvent
     public void preInit(FMLClientSetupEvent event) {
-        TextureTypeRegistry.preInit(event);
-
         ModelLoaderRegistry.registerLoader(new ResourceLocation(MOD_ID, "ctm"), ModelLoaderCTM.INSTANCE);
     }
 }
