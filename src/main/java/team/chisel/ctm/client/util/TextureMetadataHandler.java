@@ -1,39 +1,34 @@
 package team.chisel.ctm.client.util;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayDeque;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 
 import it.unimi.dsi.fastutil.objects.Object2BooleanLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import lombok.SneakyThrows;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.TransformationMatrix;
-import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.IUnbakedModel;
 import net.minecraft.client.renderer.model.Material;
 import net.minecraft.client.renderer.model.ModelBakery;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.ModelBakeEvent;
+import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.client.model.ModelLoader;
-import net.minecraftforge.client.model.SimpleModelTransform;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import team.chisel.ctm.CTM;
-import team.chisel.ctm.api.model.IModelCTM;
+import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 import team.chisel.ctm.client.model.ModelBakedCTM;
 import team.chisel.ctm.client.model.ModelCTM;
 import team.chisel.ctm.client.texture.IMetadataSectionCTM;
@@ -48,28 +43,25 @@ public enum TextureMetadataHandler {
     /*
      * Handle stitching metadata additional textures
      */
-	/* TODO 1.15
-    @SubscribeEvent
-    public void onTextureStitch(TextureCollectedEvent event) {
-        if (Minecraft.getInstance().getTextureMap() != null) {
-            TextureAtlasSprite sprite = event.getSprite();
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onTextureStitch(TextureStitchEvent.Pre event) {
+    	Set<ResourceLocation> sprites = new HashSet<>(ObfuscationReflectionHelper.getPrivateValue(TextureStitchEvent.Pre.class, event, "sprites"));
+        for (ResourceLocation rel : sprites) {
             try {
-                ResourceLocation rel = sprite.getName();
                 rel = new ResourceLocation(rel.getNamespace(), "textures/" + rel.getPath() + ".png");
                 IMetadataSectionCTM metadata = ResourceUtil.getMetadata(rel);
                 if (metadata != null) {
-                	IResourceManager rm = Minecraft.getInstance().getResourceManager();
                     // Load proxy data
                     if (metadata.getProxy() != null) {
                         ResourceLocation proxysprite = new ResourceLocation(metadata.getProxy());
                         IMetadataSectionCTM proxymeta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(proxysprite));
                         // Load proxy's base sprite
-                        event.getMap().registerSprite(rm, proxysprite);
+                        event.addSprite(proxysprite);
                         if (proxymeta != null) {
                             // Load proxy's additional textures
                             for (ResourceLocation r : proxymeta.getAdditionalTextures()) {
                             	if (registeredTextures.add(r)) {
-                            		event.getMap().registerSprite(rm, r);
+                            		event.addSprite(r);
                             	}
                             }
                         }
@@ -77,7 +69,7 @@ public enum TextureMetadataHandler {
                     // Load additional textures
                     for (ResourceLocation r : metadata.getAdditionalTextures()) {
                         if (registeredTextures.add(r)) {
-                            event.getMap().registerSprite(rm, r);
+                            event.addSprite(r);
                         }
                     }
                 }
@@ -88,7 +80,6 @@ public enum TextureMetadataHandler {
             }
         }
     }
-    */
     /*
      * Handle wrapping models that use CTM textures 
      */
@@ -117,7 +108,11 @@ public enum TextureMetadataHandler {
         Map<ResourceLocation, IUnbakedModel> stateModels = ObfuscationReflectionHelper.getPrivateValue(ModelBakery.class, event.getModelLoader(), "field_217849_F");
         for (ResourceLocation rl : event.getModelRegistry().keySet()) {
             IUnbakedModel rootModel = stateModels.get(rl);
-            if (rootModel != null && !(rootModel instanceof IModelCTM)) {
+            if (rootModel != null) {
+            	IBakedModel baked = event.getModelRegistry().get(rl);
+            	if (baked instanceof AbstractCTMBakedModel) {
+            		continue;
+            	}
                 Deque<ResourceLocation> dependencies = new ArrayDeque<>();
                 Set<ResourceLocation> seenModels = new HashSet<>();
                 dependencies.push(rl);
@@ -154,12 +149,13 @@ public enum TextureMetadataHandler {
                     
                     for (Material tex : textures) {
                         IMetadataSectionCTM meta = null;
+                        // Cache all dependent texture metadata
                         try {
                             meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex.getTextureLocation()));
                         } catch (IOException e) {} // Fallthrough
                         if (meta != null) {
+                        	// At least one texture has CTM metadata, so we should wrap this model
                             shouldWrap = true;
-                            break;
                         }
                     }
                     
@@ -172,7 +168,7 @@ public enum TextureMetadataHandler {
                 wrappedModels.put(rl, shouldWrap);
                 if (shouldWrap) {
                     try {
-                        event.getModelRegistry().put(rl, wrap(rl, rootModel, event.getModelRegistry().get(rl), event.getModelLoader()));
+                        event.getModelRegistry().put(rl, wrap(rl, rootModel, baked, event.getModelLoader()));
                         dependencies.clear();
                     } catch (IOException e) {
                         CTM.logger.error("Could not wrap model " + rl + ". Aborting...", e);
@@ -184,7 +180,7 @@ public enum TextureMetadataHandler {
 
     private @Nonnull IBakedModel wrap(ResourceLocation loc, IUnbakedModel model, IBakedModel object, ModelLoader loader) throws IOException {
         ModelCTM modelchisel = new ModelCTM(model);
-        modelchisel.bake(loader, m -> Minecraft.getInstance().getAtlasSpriteGetter(m.getAtlasLocation()).apply(m.getTextureLocation()), new SimpleModelTransform(TransformationMatrix.identity()), loc);
+        modelchisel.initializeTextures(loader, m -> Minecraft.getInstance().getAtlasSpriteGetter(m.getAtlasLocation()).apply(m.getTextureLocation()));
         return new ModelBakedCTM(modelchisel, object); 	
     }
 

@@ -17,7 +17,6 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
@@ -69,7 +68,7 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
                     if (tex != null) {
                         TextureAtlasSprite spriteReplacement = getModel().getOverrideSprite(q.getTintIndex());
                         if (spriteReplacement != null) {
-                            q = new BakedQuadRetextured(q, spriteReplacement); // TODO 1.15 retextured quads
+                            q = new BakedQuadRetextured(q, spriteReplacement);
                         }
 
                         texturemap.put(q, tex);

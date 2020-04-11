@@ -88,7 +88,7 @@ public interface IMetadataSectionCTM {
         }
 
         public static IMetadataSectionCTM fromJson(JsonObject obj) throws JsonParseException {
-            V1 ret = new V1();
+             V1 ret = new V1();
             
             if (obj.has("proxy")) {
                 JsonElement proxyEle = obj.get("proxy");

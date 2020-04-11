@@ -12,7 +12,6 @@ import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.resources.SimpleReloadableResourceManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -38,6 +37,7 @@ public class CTM {
     	instance = this;
     	
     	FMLJavaModLoadingContext.get().getModEventBus().addListener(this::preInit);
+        FMLJavaModLoadingContext.get().getModEventBus().register(TextureMetadataHandler.INSTANCE);
     }
     
     @SubscribeEvent
@@ -46,7 +46,6 @@ public class CTM {
 
         ModelLoaderRegistry.registerLoader(new ResourceLocation(MOD_ID, "ctm"), ModelLoaderCTM.INSTANCE);
         
-        MinecraftForge.EVENT_BUS.register(TextureMetadataHandler.INSTANCE);
         ((SimpleReloadableResourceManager)Minecraft.getInstance().getResourceManager()).addReloadListener(CTMPackReloadListener.INSTANCE);
 
         // TODO 1.15 temp

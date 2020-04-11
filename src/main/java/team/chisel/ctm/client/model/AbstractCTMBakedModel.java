@@ -46,8 +46,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ILightReader;
 import net.minecraft.world.World;
 import net.minecraftforge.client.MinecraftForgeClient;
+import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.client.model.data.IDynamicBakedModel;
 import net.minecraftforge.client.model.data.IModelData;
+import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.client.model.data.ModelProperty;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
@@ -195,6 +197,9 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
     
     @Override
     public IModelData getModelData(ILightReader world, BlockPos pos, BlockState state, IModelData tileData) {
+    	if (tileData == EmptyModelData.INSTANCE) {
+    		tileData = new ModelDataMap.Builder().withProperty(CTM_CONTEXT).build();
+    	}
     	tileData.setData(CTM_CONTEXT, new CTMContext(world, pos));
     	return tileData;
     }

@@ -133,32 +133,37 @@ public class ModelCTM implements IModelCTM {
 	}
 	
 	public IBakedModel bake(ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ResourceLocation modelLocation) {
-        IBakedModel parent = vanillamodel.bakeModel(bakery, rl -> {
-            TextureAtlasSprite sprite = spriteGetter.apply(rl);
-            IMetadataSectionCTM chiselmeta = null;
-            try {
-                chiselmeta = ResourceUtil.getMetadata(sprite);
-            } catch (IOException e) {}
-            final IMetadataSectionCTM meta = chiselmeta;
-            textures.computeIfAbsent(sprite.getName(), s -> {
-                ICTMTexture<?> tex;
-                if (meta == null) {
-                    tex = new TextureNormal(TextureTypeNormal.INSTANCE, new TextureInfo(new TextureAtlasSprite[] { sprite }, Optional.empty(), null));
-                } else {
-                    tex = meta.makeTexture(sprite, spriteGetter);
-                }
-                layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
-                return tex;
-            });
-            return sprite;
-        }, modelTransform, modelLocation);
+        IBakedModel parent = vanillamodel.bakeModel(bakery, spriteGetter, modelTransform, modelLocation);
+        initializeTextures(bakery, spriteGetter);
+        return new ModelBakedCTM(this, parent);
+    }
+	
+	public void initializeTextures(ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter) {
+		for (Material m : getTextures(null, bakery::getUnbakedModel, new HashSet<>())) {
+		    TextureAtlasSprite sprite = spriteGetter.apply(m);
+		    IMetadataSectionCTM chiselmeta = null;
+		    try {
+		        chiselmeta = ResourceUtil.getMetadata(sprite);
+		    } catch (IOException e) {}
+		    final IMetadataSectionCTM meta = chiselmeta;
+		    textures.computeIfAbsent(sprite.getName(), s -> {
+		        ICTMTexture<?> tex;
+		        if (meta == null) {
+		            tex = new TextureNormal(TextureTypeNormal.INSTANCE, new TextureInfo(new TextureAtlasSprite[] { sprite }, Optional.empty(), null));
+		        } else {
+		            tex = meta.makeTexture(sprite, spriteGetter);
+		        }
+		        layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
+		        return tex;
+		    });
+		}
         if (spriteOverrides == null) {
             spriteOverrides = new Int2ObjectArrayMap<>();
             // Convert all primitive values into sprites
             for (Entry<Integer, JsonElement> e : overrides.entrySet()) {
                 if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
                     TextureAtlasSprite sprite = spriteGetter.apply(new Material(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation(e.getValue().getAsString())));
-                    spriteOverrides.put(e.getKey(), sprite);
+                    spriteOverrides.put(e.getKey().intValue(), sprite);
                 }
             }
         }
@@ -181,8 +186,7 @@ public class ModelCTM implements IModelCTM {
                 }
             }
         }
-        return new ModelBakedCTM(this, parent);
-    }
+	}
 
     @Override
     public void load() {}
