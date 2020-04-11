@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -81,7 +80,7 @@ public class ModelCTM implements IModelCTM {
     	this.modelinfo = modelinfo;
     	this.overrides = overrides;
         this.textureDependencies = new HashSet<>();
-        for (Entry<Integer, JsonElement> e : this.overrides.entrySet()) {
+        for (Int2ObjectMap.Entry<JsonElement> e : this.overrides.int2ObjectEntrySet()) {
             IMetadataSectionCTM meta = null;
             if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
                 ResourceLocation rl = new ResourceLocation(e.getValue().getAsString());
@@ -96,7 +95,7 @@ public class ModelCTM implements IModelCTM {
                 meta = new IMetadataSectionCTM.Serializer().deserialize(obj);
             }
             if (meta != null ) {
-                metaOverrides.put(e.getKey(), meta);
+                metaOverrides.put(e.getIntKey(), meta);
                 textureDependencies.addAll(Arrays.asList(meta.getAdditionalTextures()));
             }
         }
@@ -160,29 +159,29 @@ public class ModelCTM implements IModelCTM {
         if (spriteOverrides == null) {
             spriteOverrides = new Int2ObjectArrayMap<>();
             // Convert all primitive values into sprites
-            for (Entry<Integer, JsonElement> e : overrides.entrySet()) {
+            for (Int2ObjectMap.Entry<JsonElement> e : overrides.int2ObjectEntrySet()) {
                 if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
                     TextureAtlasSprite sprite = spriteGetter.apply(new Material(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation(e.getValue().getAsString())));
-                    spriteOverrides.put(e.getKey().intValue(), sprite);
+                    spriteOverrides.put(e.getIntKey(), sprite);
                 }
             }
         }
         if (textureOverrides == null) {
             textureOverrides = new HashMap<>();
-            for (Entry<Integer, IMetadataSectionCTM> e : metaOverrides.entrySet()) {
-                List<BlockPartFace> matches = modelinfo.getElements().stream().flatMap(b -> b.mapFaces.values().stream()).filter(b -> b.tintIndex == e.getKey()).collect(Collectors.toList());
+            for (Int2ObjectMap.Entry<IMetadataSectionCTM> e : metaOverrides.int2ObjectEntrySet()) {
+                List<BlockPartFace> matches = modelinfo.getElements().stream().flatMap(b -> b.mapFaces.values().stream()).filter(b -> b.tintIndex == e.getIntKey()).collect(Collectors.toList());
                 Multimap<Material, BlockPartFace> bySprite = HashMultimap.create();
                 // TODO 1.15 this isn't right
                 matches.forEach(part -> bySprite.put(modelinfo.textures.getOrDefault(part.texture.substring(1), Either.right(part.texture)).left().get(), part));
                 for (val e2 : bySprite.asMap().entrySet()) {
                     ResourceLocation texLoc = e2.getKey().getTextureLocation();
-                    TextureAtlasSprite sprite = getOverrideSprite(e.getKey());
+                    TextureAtlasSprite sprite = getOverrideSprite(e.getIntKey());
                     if (sprite == null) {
                     	sprite = spriteGetter.apply(new Material(AtlasTexture.LOCATION_BLOCKS_TEXTURE, texLoc));
                     }
                     ICTMTexture<?> tex = e.getValue().makeTexture(sprite, spriteGetter);
                     layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
-                    textureOverrides.put(Pair.of(e.getKey(), texLoc.toString()), tex);
+                    textureOverrides.put(Pair.of(e.getIntKey(), texLoc.toString()), tex);
                 }
             }
         }
