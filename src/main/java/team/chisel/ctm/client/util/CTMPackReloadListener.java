@@ -7,7 +7,6 @@ import net.minecraftforge.resource.IResourceType;
 import net.minecraftforge.resource.ISelectiveResourceReloadListener;
 import net.minecraftforge.resource.VanillaResourceType;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
-import team.chisel.ctm.client.model.parsing.ModelLoaderCTM;
 
 public enum CTMPackReloadListener implements ISelectiveResourceReloadListener {
     
@@ -21,7 +20,6 @@ public enum CTMPackReloadListener implements ISelectiveResourceReloadListener {
     	}
     	if (predicate.test(VanillaResourceType.MODELS)) {
 	        AbstractCTMBakedModel.invalidateCaches();
-	        ModelLoaderCTM.parsedLocations.clear();
     	}
     }
 }

@@ -1,20 +1,29 @@
 package team.chisel.ctm.client.texture.ctx;
 
+import java.util.EnumMap;
+
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import com.google.common.base.Preconditions;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Axis;
+
+import lombok.Value;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import team.chisel.ctm.client.texture.render.TextureMap;
 import team.chisel.ctm.client.util.FaceOffset;
 
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
-import javax.vecmath.Point2i;
-import java.util.EnumMap;
-
 @ParametersAreNonnullByDefault
 public abstract class TextureContextGrid extends TextureContextPosition {
+	
+	@Value
+	public static class Point2i {
+	    
+	    int x, y;
+
+	}
     
     public static class Patterned extends TextureContextGrid {
 
@@ -23,7 +32,7 @@ public abstract class TextureContextGrid extends TextureContextPosition {
         }
 
         @Override
-        protected Point2i calculateTextureCoord(BlockPos pos, int w, int h, EnumFacing side) {
+        protected Point2i calculateTextureCoord(BlockPos pos, int w, int h, Direction side) {
             int x = pos.getX();
             int y = pos.getY();
             int z = pos.getZ();
@@ -35,7 +44,7 @@ public abstract class TextureContextGrid extends TextureContextPosition {
             if (side.getAxis().isVertical()) {
                 // DOWN || UP
                 tx = x % w;
-                ty = (side.getFrontOffsetY() * z + 1) % h;
+                ty = (side.getYOffset() * z + 1) % h;
             } else if (side.getAxis() == Axis.Z) {
                 // NORTH || SOUTH
                 tx = x % w;
@@ -47,7 +56,7 @@ public abstract class TextureContextGrid extends TextureContextPosition {
             }
 
             // Reverse x order for north and east
-            if (side == EnumFacing.NORTH || side == EnumFacing.EAST) {
+            if (side == Direction.NORTH || side == Direction.EAST) {
                 tx = (w - tx - 1) % w;
             }
 
@@ -72,7 +81,7 @@ public abstract class TextureContextGrid extends TextureContextPosition {
         }
 
         @Override
-        protected Point2i calculateTextureCoord(BlockPos pos, int w, int h, EnumFacing side) {
+        protected Point2i calculateTextureCoord(BlockPos pos, int w, int h, Direction side) {
 
             rand.setSeed(MathHelper.getPositionRandom(pos) + side.ordinal());
             rand.nextBoolean();
@@ -84,7 +93,7 @@ public abstract class TextureContextGrid extends TextureContextPosition {
         }
     }
     
-    private final EnumMap<EnumFacing, Point2i> textureCoords = new EnumMap<>(EnumFacing.class);    
+    private final EnumMap<Direction, Point2i> textureCoords = new EnumMap<>(Direction.class);    
     private final long serialized;
 
     @SuppressWarnings("null")
@@ -99,7 +108,7 @@ public abstract class TextureContextGrid extends TextureContextPosition {
         }
         
         long serialized = 0;
-        for (@Nonnull EnumFacing side : EnumFacing.VALUES) {
+        for (@Nonnull Direction side : Direction.values()) {
             BlockPos modifiedPosition = position.add(FaceOffset.getBlockPosOffsetFromFaceOffset(side, tex.getXOffset(), tex.getYOffset()));
 
             Point2i coords = calculateTextureCoord(modifiedPosition, tex.getXSize(), tex.getYSize(), side);
@@ -112,10 +121,10 @@ public abstract class TextureContextGrid extends TextureContextPosition {
         this.serialized = serialized;
     }
     
-    protected abstract Point2i calculateTextureCoord(BlockPos pos, int w, int h, EnumFacing side);
+    protected abstract Point2i calculateTextureCoord(BlockPos pos, int w, int h, Direction side);
     
     @SuppressWarnings("null")
-    public Point2i getTextureCoords(EnumFacing side) {
+    public Point2i getTextureCoords(Direction side) {
         return textureCoords.get(side);
     }
 

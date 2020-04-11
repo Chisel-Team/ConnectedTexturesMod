@@ -21,7 +21,7 @@ public enum OffsetProviderRegistry {
     }
     
     public BlockPos getOffset(World world, BlockPos pos) {
-        BlockPos ret = BlockPos.ORIGIN;
+        BlockPos ret = BlockPos.ZERO;
         for (IOffsetProvider p : providers) {
             ret = ret.add(p.getOffset(world, pos));
         }

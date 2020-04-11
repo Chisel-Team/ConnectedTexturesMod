@@ -2,7 +2,7 @@ package team.chisel.ctm.client.texture.type;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import team.chisel.ctm.api.texture.ICTMTexture;
@@ -38,7 +38,7 @@ public class TextureTypeEldritch implements ITextureType {
     }
 
     @Override
-    public ITextureContext getBlockRenderContext(IBlockState state, IBlockReader world, BlockPos pos, ICTMTexture<?> tex) {
+    public ITextureContext getBlockRenderContext(BlockState state, IBlockReader world, BlockPos pos, ICTMTexture<?> tex) {
         return new Context(pos);
     }
 

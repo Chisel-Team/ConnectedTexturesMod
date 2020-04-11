@@ -5,10 +5,9 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Axis;
-import net.minecraft.util.EnumFacing.AxisDirection;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockReader;
@@ -37,18 +36,18 @@ public class TextureTypeEdges extends TextureTypeCTM {
         private boolean obscured;
         
         @Override
-        public boolean isConnected(IBlockReader world, BlockPos current, BlockPos connection, EnumFacing dir, IBlockState state) {
+        public boolean isConnected(IBlockReader world, BlockPos current, BlockPos connection, Direction dir, BlockState state) {
             if (isObscured()) {
                 return false;
             }
-            IBlockState obscuring = getConnectionState(world, current.offset(dir), dir, current);
+            BlockState obscuring = getConnectionState(world, current.offset(dir), dir, current);
             if (stateComparator(state, obscuring, dir)) {
                 setObscured(true);
                 return false;
             }
 
-            IBlockState con = getConnectionState(world, connection, dir, current);
-            IBlockState obscuringcon = getConnectionState(world, connection.offset(dir), dir, current);
+            BlockState con = getConnectionState(world, connection, dir, current);
+            BlockState obscuringcon = getConnectionState(world, connection.offset(dir), dir, current);
             
             if (stateComparator(state, con, dir) || stateComparator(state, obscuringcon, dir)) {
                 Vec3d difference = new Vec3d(connection.subtract(current));
@@ -94,11 +93,11 @@ public class TextureTypeEdges extends TextureTypeCTM {
     }
     
     @Override
-    public TextureContextCTM getBlockRenderContext(IBlockState state, IBlockReader world, BlockPos pos, ICTMTexture<?> tex) {
+    public TextureContextCTM getBlockRenderContext(BlockState state, IBlockReader world, BlockPos pos, ICTMTexture<?> tex) {
         return new TextureContextCTM(state, world, pos, (TextureEdges) tex) {
             
             @Override
-            protected CTMLogic createCTM(IBlockState state) {
+            protected CTMLogic createCTM(BlockState state) {
                 CTMLogic parent = super.createCTM(state);
                 // FIXME
                 CTMLogic ret = new CTMLogicEdges();

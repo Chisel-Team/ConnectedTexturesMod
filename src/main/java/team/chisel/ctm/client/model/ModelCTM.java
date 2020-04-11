@@ -1,53 +1,47 @@
 package team.chisel.ctm.client.model;
 
 import java.io.IOException;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.val;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.renderer.model.BlockPart;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.client.renderer.model.BlockPartFace;
 import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ModelBlock;
+import net.minecraft.client.renderer.model.IModelTransform;
+import net.minecraft.client.renderer.model.IUnbakedModel;
+import net.minecraft.client.renderer.model.ItemOverrideList;
+import net.minecraft.client.renderer.model.Material;
+import net.minecraft.client.renderer.model.ModelBakery;
+import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.client.model.IModel;
-import net.minecraftforge.client.model.ModelLoaderRegistry;
-import net.minecraftforge.common.model.IModelState;
-import net.minecraftforge.common.model.TRSRTransformation;
+import net.minecraftforge.client.model.IModelConfiguration;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -58,10 +52,8 @@ import team.chisel.ctm.client.util.ResourceUtil;
 
 public class ModelCTM implements IModelCTM {
     
-    private static final Gson GSON = new GsonBuilder().registerTypeAdapter(IMetadataSectionCTM.class, new IMetadataSectionCTM.Serializer()).create();
-
-    private final ModelBlock modelinfo;
-    private IModel vanillamodel;
+    private final IUnbakedModel vanillamodel;
+    private final @Nullable BlockModel modelinfo;
 
     // Populated from overrides data during construction
     private final Int2ObjectMap<JsonElement> overrides;
@@ -75,15 +67,20 @@ public class ModelCTM implements IModelCTM {
     
     private transient byte layers;
 
-    private Map<String, ICTMTexture<?>> textures = new HashMap<>();
+    private Map<ResourceLocation, ICTMTexture<?>> textures = new HashMap<>();
     
-    public ModelCTM(ModelBlock modelinfo, IModel vanillamodel, Int2ObjectMap<JsonElement> overrides) throws IOException {
-        this.modelinfo = modelinfo;
-        this.vanillamodel = vanillamodel;
-        this.overrides = overrides;
-        
+    public ModelCTM(IUnbakedModel modelinfo) {
+        this.vanillamodel = modelinfo;
+        this.modelinfo = null;
+        this.overrides = new Int2ObjectOpenHashMap<>();
         this.textureDependencies = new HashSet<>();
-        this.textureDependencies.addAll(vanillamodel.getTextures());
+    }
+    
+    public ModelCTM(BlockModel modelinfo, Int2ObjectMap<JsonElement> overrides) throws IOException {
+    	this.vanillamodel = modelinfo;
+    	this.modelinfo = modelinfo;
+    	this.overrides = overrides;
+        this.textureDependencies = new HashSet<>();
         for (Entry<Integer, JsonElement> e : this.overrides.entrySet()) {
             IMetadataSectionCTM meta = null;
             if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
@@ -96,7 +93,7 @@ public class ModelCTM implements IModelCTM {
                     // This model can only be version 1, TODO improve this
                     obj.add("ctm_version", new JsonPrimitive(1));
                 }
-                meta = GSON.fromJson(obj, IMetadataSectionCTM.class);
+                meta = new IMetadataSectionCTM.Serializer().deserialize(obj);
             }
             if (meta != null ) {
                 metaOverrides.put(e.getKey(), meta);
@@ -105,63 +102,39 @@ public class ModelCTM implements IModelCTM {
         }
         
         this.textureDependencies.removeIf(rl -> rl.getPath().startsWith("#"));
-        
+	}
+
+	@Override
+	public Collection<Material> getTextures(IModelConfiguration owner, Function<ResourceLocation, IUnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors) {
+		List<Material> ret = textureDependencies.stream()
+				.map(rl -> new Material(AtlasTexture.LOCATION_BLOCKS_TEXTURE, rl))
+    			.collect(Collectors.toList());
+    	ret.addAll(vanillamodel.getTextures(modelGetter, missingTextureErrors));
         // Validate all texture metadata
-        for (ResourceLocation res : getTextures()) {
-            IMetadataSectionCTM meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(res));
+    	for (Material tex : ret) {
+            IMetadataSectionCTM meta;
+			try {
+				meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex.getTextureLocation()));
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
             if (meta != null) {
                 if (meta.getType().requiredTextures() != meta.getAdditionalTextures().length + 1) {
-                    throw new IOException(String.format("Texture type %s requires exactly %d textures. %d were provided.", meta.getType(), meta.getType().requiredTextures(), meta.getAdditionalTextures().length + 1));
+                    throw new IllegalArgumentException(String.format("Texture type %s requires exactly %d textures. %d were provided.", meta.getType(), meta.getType().requiredTextures(), meta.getAdditionalTextures().length + 1));
                 }
             }
-        }
+    	}
+    	return ret;
     }
-    
-    @Override
-    public IModel getVanillaParent() {
-        return vanillamodel;
-    }
-    
-    // TODO remove this reflection
-    private static final MethodHandle _asVanillaModel; static {
-        MethodHandle mh;
-        try {
-            mh = MethodHandles.lookup().unreflect(IModel.class.getMethod("asVanillaModel"));
-        } catch (IllegalAccessException | NoSuchMethodException | SecurityException e) {
-            mh = null;
-        }
-        _asVanillaModel = mh;
-    }
-    
-    // @Override Soft override
-    @SuppressWarnings("unchecked")
-    public Optional<ModelBlock> asVanillaModel() {
-        return Optional.ofNullable(_asVanillaModel)
-                .<Optional<ModelBlock>>map(mh -> {
-                    try {
-                        return (Optional<ModelBlock>) mh.invokeExact(getVanillaParent());
-                    } catch (Throwable e1) {
-                        return Optional.empty();
-                    }
-                })
-                .filter(Optional::isPresent)
-                .orElse(Optional.ofNullable(modelinfo));
-    }
-
-    @Override
-    public Collection<ResourceLocation> getDependencies() {
-        return Collections.emptySet();
-    }
-
-    @Override
-    public Collection<ResourceLocation> getTextures() {
-        return textureDependencies;
-    }
-
-    @Override
-    public IBakedModel bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
-        IBakedModel parent = vanillamodel.bake(state, format, rl -> {
-            TextureAtlasSprite sprite = bakedTextureGetter.apply(rl);
+	
+	@Override
+	public IBakedModel bake(IModelConfiguration owner, ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ItemOverrideList itemOverrides, ResourceLocation modelLocation) {
+		return bake(bakery, spriteGetter, modelTransform, modelLocation);
+	}
+	
+	public IBakedModel bake(ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ResourceLocation modelLocation) {
+        IBakedModel parent = vanillamodel.bakeModel(bakery, rl -> {
+            TextureAtlasSprite sprite = spriteGetter.apply(rl);
             IMetadataSectionCTM chiselmeta = null;
             try {
                 chiselmeta = ResourceUtil.getMetadata(sprite);
@@ -172,19 +145,19 @@ public class ModelCTM implements IModelCTM {
                 if (meta == null) {
                     tex = new TextureNormal(TextureTypeNormal.INSTANCE, new TextureInfo(new TextureAtlasSprite[] { sprite }, Optional.empty(), null));
                 } else {
-                    tex = meta.makeTexture(sprite, bakedTextureGetter);
+                    tex = meta.makeTexture(sprite, spriteGetter);
                 }
                 layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
                 return tex;
             });
             return sprite;
-        });
+        }, modelTransform, modelLocation);
         if (spriteOverrides == null) {
             spriteOverrides = new Int2ObjectArrayMap<>();
             // Convert all primitive values into sprites
             for (Entry<Integer, JsonElement> e : overrides.entrySet()) {
                 if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
-                    TextureAtlasSprite sprite = bakedTextureGetter.apply(new ResourceLocation(e.getValue().getAsString()));
+                    TextureAtlasSprite sprite = spriteGetter.apply(new Material(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation(e.getValue().getAsString())));
                     spriteOverrides.put(e.getKey(), sprite);
                 }
             }
@@ -193,26 +166,22 @@ public class ModelCTM implements IModelCTM {
             textureOverrides = new HashMap<>();
             for (Entry<Integer, IMetadataSectionCTM> e : metaOverrides.entrySet()) {
                 List<BlockPartFace> matches = modelinfo.getElements().stream().flatMap(b -> b.mapFaces.values().stream()).filter(b -> b.tintIndex == e.getKey()).collect(Collectors.toList());
-                Multimap<String, BlockPartFace> bySprite = HashMultimap.create();
-                matches.forEach(part -> bySprite.put(modelinfo.textures.getOrDefault(part.texture.substring(1), part.texture), part));
+                Multimap<Material, BlockPartFace> bySprite = HashMultimap.create();
+                // TODO 1.15 this isn't right
+                matches.forEach(part -> bySprite.put(modelinfo.textures.getOrDefault(part.texture.substring(1), Either.right(part.texture)).left().get(), part));
                 for (val e2 : bySprite.asMap().entrySet()) {
-                    ResourceLocation texLoc = new ResourceLocation(e2.getKey());
+                    ResourceLocation texLoc = e2.getKey().getTextureLocation();
                     TextureAtlasSprite sprite = getOverrideSprite(e.getKey());
                     if (sprite == null) {
-                    	sprite = bakedTextureGetter.apply(texLoc);
+                    	sprite = spriteGetter.apply(new Material(AtlasTexture.LOCATION_BLOCKS_TEXTURE, texLoc));
                     }
-                    ICTMTexture<?> tex = e.getValue().makeTexture(sprite, bakedTextureGetter);
+                    ICTMTexture<?> tex = e.getValue().makeTexture(sprite, spriteGetter);
                     layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
                     textureOverrides.put(Pair.of(e.getKey(), texLoc.toString()), tex);
                 }
             }
         }
         return new ModelBakedCTM(this, parent);
-    }
-
-    @Override
-    public IModelState getDefaultState() {
-        return TRSRTransformation.identity();
     }
 
     @Override
@@ -224,14 +193,14 @@ public class ModelCTM implements IModelCTM {
     }
     
     @Override
-    public ICTMTexture<?> getTexture(String iconName) {
+    public ICTMTexture<?> getTexture(ResourceLocation iconName) {
         return textures.get(iconName);
     }
 
     @Override
-    public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
+    public boolean canRenderInLayer(BlockState state, RenderType layer) {
         // sign bit is used to signify that a layer-less (vanilla) texture is present
-        return (layers < 0 && state.getBlock().getBlockLayer() == layer) || ((layers >> layer.ordinal()) & 1) == 1;
+        return true; // TODO 1.15 (layers < 0 && state.getBlock().getBlockLayer() == layer) || ((layers >> layer.ordinal()) & 1) == 1;
     }
 
     @Override
@@ -242,57 +211,7 @@ public class ModelCTM implements IModelCTM {
     
     @Override
     @Nullable
-    public ICTMTexture<?> getOverrideTexture(int tintIndex, String sprite) {
+    public ICTMTexture<?> getOverrideTexture(int tintIndex, ResourceLocation sprite) {
         return textureOverrides.get(Pair.of(tintIndex, sprite));
-    }
-
-    @Override
-    public IModel retexture(ImmutableMap<String, String> textures) {
-        try {
-            return retexture(this, textures);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ModelLoaderRegistry.getMissingModel();
-        }
-    }
-
-    private static ModelCTM retexture(ModelCTM current, ImmutableMap<String, String> textures) throws IOException {
-        IModel vanillamodel = current.getVanillaParent().retexture(textures);
-
-        // Deep copy logic taken from ModelLoader$VanillaModelWrapper
-        List<BlockPart> parts = new ArrayList<>();
-        for (BlockPart part : current.modelinfo.getElements()) {
-        	parts.add(new BlockPart(part.positionFrom, part.positionTo, Maps.newHashMap(part.mapFaces), part.partRotation, part.shade));
-        }
-        
-        ModelBlock newModel = new ModelBlock(current.modelinfo.getParentLocation(), parts,
-                Maps.newHashMap(current.modelinfo.textures), current.modelinfo.isAmbientOcclusion(), current.modelinfo.isGui3d(),
-                current.modelinfo.getAllTransforms(), Lists.newArrayList(current.modelinfo.getOverrides()));
-        
-        newModel.name = current.modelinfo.name;
-        newModel.parent = current.modelinfo.parent;
-        ModelCTM ret = new ModelCTM(newModel, vanillamodel, new Int2ObjectArrayMap<>(current.overrides));
-
-        ret.modelinfo.textures.putAll(textures);
-        for (Entry<Integer, IMetadataSectionCTM> e : ret.metaOverrides.entrySet()) {
-            ResourceLocation[] additionals = e.getValue().getAdditionalTextures();
-            for (int i = 0; i < additionals.length; i++) {
-                ResourceLocation res = additionals[i];
-                if (res.getPath().startsWith("#")) {
-                    additionals[i] = new ResourceLocation(textures.get(res.getPath().substring(1)));
-                    ret.textureDependencies.add(additionals[i]);
-                }
-            }
-        }
-        for (int i : ret.overrides.keySet()) {
-            ret.overrides.compute(i, (idx, ele) -> {
-                if (ele.isJsonPrimitive() && ele.getAsJsonPrimitive().isString()) {
-                    ele = new JsonPrimitive(textures.get(ele.getAsString().substring(1)));
-                    ret.textureDependencies.add(new ResourceLocation(ele.getAsString()));
-                }
-                return ele;
-            });
-        }
-        return ret;
     }
 }

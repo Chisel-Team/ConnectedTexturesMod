@@ -1,5 +1,20 @@
 package team.chisel.ctm.client.texture.ctx;
 
+import static team.chisel.ctm.client.util.ConnectionLocations.DOWN;
+import static team.chisel.ctm.client.util.ConnectionLocations.EAST;
+import static team.chisel.ctm.client.util.ConnectionLocations.NORTH;
+import static team.chisel.ctm.client.util.ConnectionLocations.NORTH_EAST_DOWN;
+import static team.chisel.ctm.client.util.ConnectionLocations.NORTH_EAST_UP;
+import static team.chisel.ctm.client.util.ConnectionLocations.NORTH_WEST_DOWN;
+import static team.chisel.ctm.client.util.ConnectionLocations.NORTH_WEST_UP;
+import static team.chisel.ctm.client.util.ConnectionLocations.SOUTH;
+import static team.chisel.ctm.client.util.ConnectionLocations.SOUTH_EAST_DOWN;
+import static team.chisel.ctm.client.util.ConnectionLocations.SOUTH_EAST_UP;
+import static team.chisel.ctm.client.util.ConnectionLocations.SOUTH_WEST_DOWN;
+import static team.chisel.ctm.client.util.ConnectionLocations.SOUTH_WEST_UP;
+import static team.chisel.ctm.client.util.ConnectionLocations.UP;
+import static team.chisel.ctm.client.util.ConnectionLocations.WEST;
+
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
@@ -8,18 +23,15 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import com.google.common.collect.ObjectArrays;
 
-import static team.chisel.ctm.client.util.ConnectionLocations.*;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.client.util.ConnectionLocations;
-import team.chisel.ctm.client.util.RegionCache;
 
 public class TextureContextCTMV implements ITextureContext {
 
@@ -36,14 +48,14 @@ public class TextureContextCTMV implements ITextureContext {
     @ToString
     public static class Connections {
         
-        private EnumSet<EnumFacing> connections;        
+        private EnumSet<Direction> connections;        
         
-        public boolean connected(EnumFacing facing) {
+        public boolean connected(Direction facing) {
             return connections.contains(facing);
         }
         
-        public boolean connectedAnd(EnumFacing... facings) {
-            for (EnumFacing f : facings) {
+        public boolean connectedAnd(Direction... facings) {
+            for (Direction f : facings) {
                 if (!connected(f)) {
                     return false;
                 }
@@ -51,8 +63,8 @@ public class TextureContextCTMV implements ITextureContext {
             return true;
         }
         
-        public boolean connectedOr(EnumFacing... facings) {
-            for (EnumFacing f : facings) {
+        public boolean connectedOr(Direction... facings) {
+            for (Direction f : facings) {
                 if (connected(f)) {
                     return true;
                 }
@@ -61,12 +73,12 @@ public class TextureContextCTMV implements ITextureContext {
         }
         
         public static Connections forPos(IBlockReader world, BlockPos pos) {
-            IBlockState state = world.getBlockState(pos);
+            BlockState state = world.getBlockState(pos);
             return forPos(world, state, pos);
         }
 
-        public static Connections forData(long data, EnumFacing offset) {
-            EnumSet<EnumFacing> connections = EnumSet.noneOf(EnumFacing.class);
+        public static Connections forData(long data, Direction offset) {
+            EnumSet<Direction> connections = EnumSet.noneOf(Direction.class);
             if (offset == null) {
                 for (ConnectionLocations loc : MAIN_VALUES) {
                     if ((data & loc.getMask()) != 0) {
@@ -76,7 +88,7 @@ public class TextureContextCTMV implements ITextureContext {
             } else {
                 for (ConnectionLocations loc : OFFSET_VALUES) {
                     if ((data & loc.getMask()) != 0) {
-                        EnumFacing facing = loc.clipOrDestroy(offset);
+                        Direction facing = loc.clipOrDestroy(offset);
                         if (facing != null) {
                             connections.add(facing);
                         }
@@ -86,11 +98,11 @@ public class TextureContextCTMV implements ITextureContext {
             return new Connections(connections);
         }
 
-        public static Connections forPos(IBlockReader world, IBlockState baseState, BlockPos pos) {
-            EnumSet<EnumFacing> connections = EnumSet.noneOf(EnumFacing.class);
-            IBlockState state = world.getBlockState(pos);
+        public static Connections forPos(IBlockReader world, BlockState baseState, BlockPos pos) {
+            EnumSet<Direction> connections = EnumSet.noneOf(Direction.class);
+            BlockState state = world.getBlockState(pos);
             if (state == baseState) {
-                for (EnumFacing f : EnumFacing.VALUES) {
+                for (Direction f : Direction.values()) {
                     if (world.getBlockState(pos.offset(f)) == baseState) {
                         connections.add(f);
                     }
@@ -105,24 +117,24 @@ public class TextureContextCTMV implements ITextureContext {
 
         @Getter
         private Connections connections;
-        private Map<EnumFacing, Connections> connectionConnections = new EnumMap<>(EnumFacing.class);
+        private Map<Direction, Connections> connectionConnections = new EnumMap<>(Direction.class);
 
         public ConnectionData(IBlockReader world, BlockPos pos) {
             connections = Connections.forPos(world, pos);
-            IBlockState state = world.getBlockState(pos);
-            for (EnumFacing f : EnumFacing.VALUES) {
+            BlockState state = world.getBlockState(pos);
+            for (Direction f : Direction.values()) {
                 connectionConnections.put(f, Connections.forPos(world, state, pos.offset(f)));
             }
         }
 
         public ConnectionData(long data){
             connections = Connections.forData(data, null);
-            for (EnumFacing f : EnumFacing.VALUES){
+            for (Direction f : Direction.values()){
                 connectionConnections.put(f, Connections.forData(data, f));
             }
         }
 
-        public Connections getConnections(EnumFacing facing) {
+        public Connections getConnections(Direction facing) {
             return connectionConnections.get(facing);
         }
     }
@@ -135,7 +147,7 @@ public class TextureContextCTMV implements ITextureContext {
     public TextureContextCTMV(IBlockReader world, BlockPos pos) {
         data = new ConnectionData(world, pos);
 
-        IBlockState state = world.getBlockState(pos);
+        BlockState state = world.getBlockState(pos);
         for (ConnectionLocations loc : ALL_VALUES) {
             if (state == world.getBlockState(loc.transform(pos))){
                 compressedData = compressedData | loc.getMask();

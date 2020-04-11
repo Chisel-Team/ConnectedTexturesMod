@@ -10,13 +10,11 @@ import com.google.common.base.Preconditions;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.fluid.IFluidState;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
-import net.minecraft.world.WorldType;
-import net.minecraft.world.biome.Biome;
 
 /**
  * Used by render state creation to avoid unnecessary block lookups through the world.
@@ -38,7 +36,7 @@ public class RegionCache implements IBlockReader {
     private final int radius;
     
     private WeakReference<IBlockReader> passthrough;
-    private final Long2ObjectMap<IBlockState> stateCache = new Long2ObjectOpenHashMap<>();
+    private final Long2ObjectMap<BlockState> stateCache = new Long2ObjectOpenHashMap<>();
 
     public RegionCache(BlockPos center, int radius, @Nullable IBlockReader passthrough) {
         this.center = center;
@@ -67,46 +65,51 @@ public class RegionCache implements IBlockReader {
         return getPassthrough().getTileEntity(pos);
     }
 
-    @Override
-    public int getCombinedLight(BlockPos pos, int lightValue) {
-        // In cases with direct passthroughs, these are never used by our code.
-        // But in case something out there does use them, this will work
-        return getPassthrough().getCombinedLight(pos, lightValue);
-    }
+//    @Override
+//    public int getCombinedLight(BlockPos pos, int lightValue) {
+//        // In cases with direct passthroughs, these are never used by our code.
+//        // But in case something out there does use them, this will work
+//        return getPassthrough().getCombinedLight(pos, lightValue);
+//    }
 
     @Override
-    public IBlockState getBlockState(BlockPos pos) {
+    public BlockState getBlockState(BlockPos pos) {
         long address = pos.toLong();
-        IBlockState ret = stateCache.get(address);
+        BlockState ret = stateCache.get(address);
         if (ret == null) {
             stateCache.put(address, ret = getPassthrough().getBlockState(pos));
         }
         return ret;
     }
 
-    @Override
-    public boolean isAirBlock(BlockPos pos) {
-        IBlockState state = getBlockState(pos);
-        return state.getBlock().isAir(state, this, pos);
-    }
+//    @Override
+//    public boolean isAirBlock(BlockPos pos) {
+//        BlockState state = getBlockState(pos);
+//        return state.getBlock().isAir(state, this, pos);
+//    }
+//
+//    @Override
+//    public Biome getBiome(BlockPos pos) {
+//        return getPassthrough().getBiome(pos);
+//    }
+//
+//    @Override
+//    public int getStrongPower(BlockPos pos, EnumFacing direction) {
+//        return getPassthrough().getStrongPower(pos, direction);
+//    }
+//
+//    @Override
+//    public WorldType getWorldType() {
+//        return getPassthrough().getWorldType();
+//    }
+//
+//    @Override
+//    public boolean isSideSolid(BlockPos pos, EnumFacing side, boolean _default) {
+//        return getPassthrough().isSideSolid(pos, side, _default);
+//    }
 
-    @Override
-    public Biome getBiome(BlockPos pos) {
-        return getPassthrough().getBiome(pos);
-    }
-
-    @Override
-    public int getStrongPower(BlockPos pos, EnumFacing direction) {
-        return getPassthrough().getStrongPower(pos, direction);
-    }
-
-    @Override
-    public WorldType getWorldType() {
-        return getPassthrough().getWorldType();
-    }
-
-    @Override
-    public boolean isSideSolid(BlockPos pos, EnumFacing side, boolean _default) {
-        return getPassthrough().isSideSolid(pos, side, _default);
-    }
+	@Override
+	public IFluidState getFluidState(BlockPos pos) {
+		return getPassthrough().getFluidState(pos);
+	}
 }

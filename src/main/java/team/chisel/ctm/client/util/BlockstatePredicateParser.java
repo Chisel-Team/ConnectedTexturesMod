@@ -34,11 +34,11 @@ import lombok.ToString;
 import lombok.Value;
 import lombok.val;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Blocks;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.state.IProperty;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.JsonUtils;
+import net.minecraft.util.Direction;
+import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -78,61 +78,61 @@ public class BlockstatePredicateParser {
         AND(Predicate::and),
         OR(Predicate::or);
         
-        private final BiFunction<Predicate<IBlockState>, Predicate<IBlockState>, Predicate<IBlockState>> composer;
+        private final BiFunction<Predicate<BlockState>, Predicate<BlockState>, Predicate<BlockState>> composer;
     }
     
     @Value
-    class PropertyPredicate<T extends Comparable<T>> implements Predicate<IBlockState> {
+    class PropertyPredicate<T extends Comparable<T>> implements Predicate<BlockState> {
         private Block block;
         private IProperty<T> prop;
         private T value;
         private ComparisonType type;
         
         @Override
-        public boolean test(IBlockState t) {
+        public boolean test(BlockState t) {
             return t.getBlock() == block && type.compareFunc.test(t.get(prop).compareTo(value));
         }
     }
     
     @Value
-    static class MultiPropertyPredicate<T extends Comparable<T>> implements Predicate<IBlockState> {
+    static class MultiPropertyPredicate<T extends Comparable<T>> implements Predicate<BlockState> {
         private Block block;
         private IProperty<T> prop;
         private Set<T> validValues;
         
         @Override
-        public boolean test(IBlockState t) {
+        public boolean test(BlockState t) {
             return t.getBlock() == block && validValues.contains(t.get(prop));
         }
     }
     
     @Value
-    class BlockPredicate implements Predicate<IBlockState> {
+    class BlockPredicate implements Predicate<BlockState> {
         private Block block;
         
         @Override
-        public boolean test(IBlockState t) {
+        public boolean test(BlockState t) {
             return t.getBlock() == block;
         }
     }
     
     @RequiredArgsConstructor
     @ToString
-    class PredicateComposition implements Predicate<IBlockState> {
+    class PredicateComposition implements Predicate<BlockState> {
         private final Composition type;
-        private final List<Predicate<IBlockState>> composed;
+        private final List<Predicate<BlockState>> composed;
         
         @Override
-        public boolean test(IBlockState t) {
+        public boolean test(BlockState t) {
             if (type == Composition.AND) {
-                for (Predicate<IBlockState> p : composed) {
+                for (Predicate<BlockState> p : composed) {
                     if (!p.test(t)) {
                         return false;
                     }
                 }
                 return true;
             } else {
-                for (Predicate<IBlockState> p : composed) {
+                for (Predicate<BlockState> p : composed) {
                     if (p.test(t)) {
                         return true;
                     }
@@ -142,19 +142,19 @@ public class BlockstatePredicateParser {
         }
     }
     
-    class PredicateDeserializer implements JsonDeserializer<Predicate<IBlockState>> {
+    class PredicateDeserializer implements JsonDeserializer<Predicate<BlockState>> {
         
-        final Predicate<IBlockState> EMPTY = p -> false;
+        final Predicate<BlockState> EMPTY = p -> false;
         
         // Unlikely that this will be threaded, but I think foamfix tries, so let's be safe
         // A global cache for the default predicate for use in creating deferring predicates
-        ThreadLocal<Predicate<IBlockState>> defaultPredicate = new ThreadLocal<>();
+        ThreadLocal<Predicate<BlockState>> defaultPredicate = new ThreadLocal<>();
 
         @Override
-        public Predicate<IBlockState> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        public Predicate<BlockState> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (json.isJsonObject()) {
                 JsonObject obj = json.getAsJsonObject();
-                Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(JsonUtils.getString(obj, "block")));
+                Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(JSONUtils.getString(obj, "block")));
                 if (block == Blocks.AIR) {
                     return EMPTY;
                 }
@@ -164,9 +164,9 @@ public class BlockstatePredicateParser {
                         throw new JsonParseException("Cannot defer when no default is set!");
                     }
                     try {
-                        composition = Composition.valueOf(JsonUtils.getString(obj, "defer").toUpperCase(Locale.ROOT));
+                        composition = Composition.valueOf(JSONUtils.getString(obj, "defer").toUpperCase(Locale.ROOT));
                     } catch (IllegalArgumentException e) {
-                        throw new JsonSyntaxException(JsonUtils.getString(obj, "defer") + " is not a valid defer type.");
+                        throw new JsonSyntaxException(JSONUtils.getString(obj, "defer") + " is not a valid defer type.");
                     }
                 }
                 if (!obj.has("predicate")) {
@@ -176,7 +176,7 @@ public class BlockstatePredicateParser {
                 if (propsEle.isJsonObject()) {
                     return compose(composition, parsePredicate(block, propsEle.getAsJsonObject(), context));
                 } else if (propsEle.isJsonArray()) {
-                    List<Predicate<IBlockState>> predicates = new ArrayList<>();
+                    List<Predicate<BlockState>> predicates = new ArrayList<>();
                     for (JsonElement ele : propsEle.getAsJsonArray()) {
                         if (ele.isJsonObject()) {
                             predicates.add(parsePredicate(block, ele.getAsJsonObject(), context));
@@ -187,9 +187,9 @@ public class BlockstatePredicateParser {
                     return compose(composition, new PredicateComposition(Composition.AND, predicates));
                 }
             } else if (json.isJsonArray()) {
-                List<Predicate<IBlockState>> predicates = new ArrayList<>();
+                List<Predicate<BlockState>> predicates = new ArrayList<>();
                 for (JsonElement ele : json.getAsJsonArray()) {
-                    Predicate<IBlockState> p = context.deserialize(ele, PREDICATE_TYPE);
+                    Predicate<BlockState> p = context.deserialize(ele, PREDICATE_TYPE);
                     if (p != EMPTY) {
                         predicates.add(p);
                     }
@@ -199,7 +199,7 @@ public class BlockstatePredicateParser {
             throw new JsonSyntaxException("Predicate deserialization expects an object or an array. Found: " + json);
         }
         
-        private Predicate<IBlockState> compose(@Nullable Composition composition, @Nonnull Predicate<IBlockState> child) {
+        private Predicate<BlockState> compose(@Nullable Composition composition, @Nonnull Predicate<BlockState> child) {
             if (composition == null) {
                 return child;
             }
@@ -207,8 +207,8 @@ public class BlockstatePredicateParser {
         }
 
         @SuppressWarnings({ "rawtypes", "unchecked" })
-        private Predicate<IBlockState> parsePredicate(@Nonnull Block block, JsonObject obj, JsonDeserializationContext context) {
-            ComparisonType compareFunc = JsonUtils.deserializeClass(obj, "compare_func", ComparisonType.EQUAL, context, ComparisonType.class);
+        private Predicate<BlockState> parsePredicate(@Nonnull Block block, JsonObject obj, JsonDeserializationContext context) {
+            ComparisonType compareFunc = JSONUtils.deserializeClass(obj, "compare_func", ComparisonType.EQUAL, context, ComparisonType.class);
             obj.remove("compare_func");
             
             val entryset = obj.entrySet();
@@ -232,7 +232,7 @@ public class BlockstatePredicateParser {
         
         @SuppressWarnings({ "rawtypes", "unchecked" })
         private Comparable parseValue(IProperty prop, JsonElement ele) {
-            String valstr = JsonUtils.getString(ele, prop.getName());
+            String valstr = JSONUtils.getString(ele, prop.getName());
             Optional<Comparable> value = (Optional<Comparable>) prop.getAllowedValues().stream().filter(v -> prop.getName((Comparable) v).equalsIgnoreCase(valstr)).findFirst();
             if (!value.isPresent()) {
                 throw new JsonParseException(valstr + " is not a valid value for property " + prop);
@@ -242,12 +242,12 @@ public class BlockstatePredicateParser {
     }
 
     @RequiredArgsConstructor
-    class PredicateMap implements BiPredicate<EnumFacing, IBlockState> {
+    class PredicateMap implements BiPredicate<Direction, BlockState> {
                 
-        private final EnumMap<EnumFacing, Predicate<IBlockState>> predicates = new EnumMap<>(EnumFacing.class);
+        private final EnumMap<Direction, Predicate<BlockState>> predicates = new EnumMap<>(Direction.class);
         
         @Override
-        public boolean test(EnumFacing dir, IBlockState state) {
+        public boolean test(Direction dir, BlockState state) {
             return predicates.get(dir).test(state);
         }
     }
@@ -264,15 +264,15 @@ public class BlockstatePredicateParser {
                 }
                 PredicateMap ret = new PredicateMap();
                 ret.predicates.putAll(context.deserialize(obj, MAP_TYPE));
-                for (EnumFacing dir : EnumFacing.values()) {
+                for (Direction dir : Direction.values()) {
                     ret.predicates.putIfAbsent(dir, Optional.ofNullable(predicateDeserializer.defaultPredicate.get()).orElse(predicateDeserializer.EMPTY));
                 }
                 predicateDeserializer.defaultPredicate.set(null);
                 return ret;
             } else if (json.isJsonArray()) {
-                Predicate<IBlockState> predicate = context.deserialize(json, PREDICATE_TYPE);
+                Predicate<BlockState> predicate = context.deserialize(json, PREDICATE_TYPE);
                 PredicateMap ret = new PredicateMap();
-                for (EnumFacing dir : EnumFacing.values()) {
+                for (Direction dir : Direction.values()) {
                     ret.predicates.put(dir, predicate);
                 }
                 return ret;
@@ -281,19 +281,19 @@ public class BlockstatePredicateParser {
         }
     }
     
-    static final Type MAP_TYPE = new TypeToken<EnumMap<EnumFacing, Predicate<IBlockState>>>(){}.getType();
-    static final Type PREDICATE_TYPE = new TypeToken<Predicate<IBlockState>>() {}.getType();
+    static final Type MAP_TYPE = new TypeToken<EnumMap<Direction, Predicate<BlockState>>>(){}.getType();
+    static final Type PREDICATE_TYPE = new TypeToken<Predicate<BlockState>>() {}.getType();
     
     final PredicateDeserializer predicateDeserializer = new PredicateDeserializer();
     
     private final Gson GSON = new GsonBuilder()
                                      .registerTypeAdapter(PREDICATE_TYPE, predicateDeserializer)
                                      .registerTypeAdapter(ComparisonType.class, new ComparisonType.Deserializer())
-                                     .registerTypeAdapter(MAP_TYPE, (InstanceCreator<?>) type -> new EnumMap<>(EnumFacing.class))
+                                     .registerTypeAdapter(MAP_TYPE, (InstanceCreator<?>) type -> new EnumMap<>(Direction.class))
                                      .registerTypeAdapter(PredicateMap.class, new MapDeserializer())
                                      .create();
 
-    public @Nullable BiPredicate<EnumFacing, IBlockState> parse(JsonElement json) {
+    public @Nullable BiPredicate<Direction, BlockState> parse(JsonElement json) {
         return GSON.fromJson(json, PredicateMap.class);
     }
 }

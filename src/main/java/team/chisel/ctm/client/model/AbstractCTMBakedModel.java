@@ -1,27 +1,25 @@
 package team.chisel.ctm.client.model;
 
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import javax.vecmath.Matrix4f;
-import javax.vecmath.Vector3f;
-
-import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
+import com.mojang.blaze3d.matrix.MatrixStack;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import lombok.Getter;
@@ -29,33 +27,36 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.ToString;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.model.ItemOverrideList;
 import net.minecraft.client.renderer.model.ModelResourceLocation;
 import net.minecraft.client.renderer.model.WeightedBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.item.ItemBlock;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Direction;
+import net.minecraft.util.WeightedRandom;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.ILightReader;
 import net.minecraft.world.World;
 import net.minecraftforge.client.MinecraftForgeClient;
-import net.minecraftforge.common.model.TRSRTransformation;
+import net.minecraftforge.client.model.data.IDynamicBakedModel;
+import net.minecraftforge.client.model.data.IModelData;
+import net.minecraftforge.client.model.data.ModelProperty;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.util.RenderContextList;
-import team.chisel.ctm.client.asm.CTMCoreMethods;
-import team.chisel.ctm.client.state.CTMExtendedState;
+import team.chisel.ctm.client.state.CTMContext;
 import team.chisel.ctm.client.util.ProfileUtil;
 
 @RequiredArgsConstructor
-public abstract class AbstractCTMBakedModel implements IBakedModel {
+public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
 
     private static Cache<ModelResourceLocation, AbstractCTMBakedModel> itemcache = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.SECONDS).<ModelResourceLocation, AbstractCTMBakedModel>build();
     private static Cache<State, AbstractCTMBakedModel> modelcache = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).maximumSize(5000).<State, AbstractCTMBakedModel>build();
@@ -75,18 +76,18 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
 
         @Override
         @SneakyThrows
-        public IBakedModel handleItemState(IBakedModel originalModel, ItemStack stack, World world, EntityLivingBase entity) {
+        public IBakedModel getModelWithOverrides(IBakedModel originalModel, ItemStack stack, World world, LivingEntity entity) {
             Block block = null;
-            if (stack.getItem() instanceof ItemBlock) {
-                block = ((ItemBlock) stack.getItem()).getBlock();
+            if (stack.getItem() instanceof BlockItem) {
+                block = ((BlockItem) stack.getItem()).getBlock();
             }
-            final IBlockState state = block == null ? null : block.getDefaultState();
+            final BlockState state = block == null ? null : block.getDefaultState();
             ModelResourceLocation mrl = ModelUtil.getMesh(stack);
             if (mrl == null) {
                 // this must be a missing/invalid model
                 return Minecraft.getInstance().getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getMissingModel();
             }
-            return itemcache.get(mrl, () -> createModel(state, model, null, 0));
+            return itemcache.get(mrl, () -> createModel(state, model, null, new Random()));
         }
     }
     
@@ -94,7 +95,7 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
     @RequiredArgsConstructor 
     @ToString
     private static class State {
-        private final @Nonnull IBlockState cleanState;
+        private final @Nonnull BlockState cleanState;
         private final @Nullable Object2LongMap<ICTMTexture<?>> serializedContext;
         private final @Nonnull IBakedModel parent;
         
@@ -143,36 +144,36 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
     private final @Nonnull IBakedModel parent;
     private final @Nonnull Overrides overrides = new Overrides();
 
-    protected final ListMultimap<BlockRenderLayer, BakedQuad> genQuads = MultimapBuilder.enumKeys(BlockRenderLayer.class).arrayListValues().build();
-    protected final Table<BlockRenderLayer, EnumFacing, List<BakedQuad>> faceQuads = Tables.newCustomTable(Maps.newEnumMap(BlockRenderLayer.class), () -> Maps.newEnumMap(EnumFacing.class));
+    protected final ListMultimap<RenderType, BakedQuad> genQuads = MultimapBuilder.hashKeys().arrayListValues().build();
+    protected final Table<RenderType, Direction, List<BakedQuad>> faceQuads = Tables.newCustomTable(new HashMap<>(), () -> Maps.newEnumMap(Direction.class));
+    
+    protected static final ModelProperty<CTMContext> CTM_CONTEXT = new ModelProperty<>();
 
     @Override
-    @SneakyThrows
-    public @Nonnull List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long rand) {        
-        if (CTMCoreMethods.renderingDamageModel.get()) {
-            return parent.getQuads(state, side, rand);
-        }
-        
+    public List<BakedQuad> getQuads(BlockState state, Direction side, Random rand, IModelData extraData) {   
         IBakedModel parent = getParent(rand);
 
         ProfileUtil.start("ctm_models");
         
         AbstractCTMBakedModel baked = this;
-        BlockRenderLayer layer = MinecraftForgeClient.getRenderLayer();
+        RenderType layer = MinecraftForgeClient.getRenderLayer();
 
-        if (Minecraft.getInstance().world != null && state instanceof CTMExtendedState) {
-            ProfileUtil.start("state_creation");
-            CTMExtendedState ext = (CTMExtendedState) state;
-            RenderContextList ctxList = ext.getContextList(ext.getClean(), model);
-
-            Object2LongMap<ICTMTexture<?>> serialized = ctxList.serialized();
-            ProfileUtil.endAndStart("model_creation");
-            baked = modelcache.get(new State(ext.getClean(), serialized, parent), () -> createModel(state, model, ctxList, rand));
-            ProfileUtil.end();
-        } else if (state != null)  {
-            ProfileUtil.start("model_creation");
-            baked = modelcache.get(new State(state, null, getParent(rand)), () -> createModel(state, model, null, rand));
-            ProfileUtil.end();
+        try {
+	        if (Minecraft.getInstance().world != null && extraData.hasProperty(CTM_CONTEXT)) {
+	            ProfileUtil.start("state_creation");
+	            RenderContextList ctxList = extraData.getData(CTM_CONTEXT).getContextList(state, model);
+	
+	            Object2LongMap<ICTMTexture<?>> serialized = ctxList.serialized();
+	            ProfileUtil.endAndStart("model_creation");
+	            baked = modelcache.get(new State(state, serialized, parent), () -> createModel(state, model, ctxList, rand));
+	            ProfileUtil.end();
+	        } else if (state != null)  {
+	            ProfileUtil.start("model_creation");
+	            baked = modelcache.get(new State(state, null, getParent(rand)), () -> createModel(state, model, null, rand));
+	            ProfileUtil.end();
+	        }
+        } catch (ExecutionException e) {
+        	throw new RuntimeException(e);
         }
 
         ProfileUtil.start("quad_lookup");
@@ -191,14 +192,21 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
         ProfileUtil.end();
         return ret;
     }
+    
+    @Override
+    public IModelData getModelData(ILightReader world, BlockPos pos, BlockState state, IModelData tileData) {
+    	tileData.setData(CTM_CONTEXT, new CTMContext(world, pos));
+    	return tileData;
+    }
 
     /**
      * Random sensitive parent, will proxy to {@link WeightedBakedModel} if possible.
      */
     @Nonnull
-    public IBakedModel getParent(long rand) {
+    public IBakedModel getParent(Random rand) {
         if (getParent() instanceof WeightedBakedModel) {
-            return ((WeightedBakedModel)parent).getRandomModel(rand);
+        	 List<WeightedBakedModel.WeightedModel> models = ((WeightedBakedModel)getParent()).models;
+        	 return WeightedRandom.getRandomItem(models, Math.abs((int)rand.nextLong()) % ((WeightedBakedModel)getParent()).totalWeight).model;
         }
         return getParent();
     }
@@ -233,33 +241,19 @@ public abstract class AbstractCTMBakedModel implements IBakedModel {
         return ItemCameraTransforms.DEFAULT;
     }
 
-    private static @Nonnull TRSRTransformation get(float tx, float ty, float tz, float ax, float ay, float az, float s) {
-        return new TRSRTransformation(
-            new Vector3f(tx / 16, ty / 16, tz / 16),
-            TRSRTransformation.quatFromXYZDegrees(new Vector3f(ax, ay, az)),
-            new Vector3f(s, s, s),
-            null);
-    }
-        
-    public static final Map<TransformType, TRSRTransformation> TRANSFORMS = ImmutableMap.<TransformType, TRSRTransformation>builder()
-            .put(TransformType.GUI,                         get(0, 0, 0, 30, 45, 0, 0.625f))
-            .put(TransformType.THIRD_PERSON_RIGHT_HAND,     get(0, 2.5f, 0, 75, 45, 0, 0.375f))
-            .put(TransformType.THIRD_PERSON_LEFT_HAND,      get(0, 2.5f, 0, 75, 45, 0, 0.375f))
-            .put(TransformType.FIRST_PERSON_RIGHT_HAND,     get(0, 0, 0, 0, 45, 0, 0.4f))
-            .put(TransformType.FIRST_PERSON_LEFT_HAND,      get(0, 0, 0, 0, 225, 0, 0.4f))
-            .put(TransformType.GROUND,                      get(0, 2, 0, 0, 0, 0, 0.25f))
-            .put(TransformType.FIXED,                       get(0, 0, 0, 0, 0, 0, 0.5f))
-            .build();
-    
-    public static final TRSRTransformation DEFAULT_TRANSFORM = get(0, 0, 0, 0, 0, 0, 1);
-
     @Override
-    public Pair<? extends IBakedModel, Matrix4f> handlePerspective(ItemCameraTransforms.TransformType cameraTransformType) {
-        return Pair.of(this, TRANSFORMS.getOrDefault(cameraTransformType, DEFAULT_TRANSFORM).getMatrix());
+    public IBakedModel handlePerspective(ItemCameraTransforms.TransformType cameraTransformType, MatrixStack ms) {
+    	parent.handlePerspective(cameraTransformType, ms);
+        return this;
     }
     
-    protected static final BlockRenderLayer[] LAYERS = BlockRenderLayer.values();
+    protected static final RenderType[] LAYERS = RenderType.getBlockRenderTypes().toArray(new RenderType[0]);
     
-    protected abstract AbstractCTMBakedModel createModel(IBlockState state, @Nonnull IModelCTM model, RenderContextList ctx, long rand);
+    protected abstract AbstractCTMBakedModel createModel(BlockState state, @Nonnull IModelCTM model, RenderContextList ctx, Random rand);
+
+	@Override
+	public boolean func_230044_c_() {
+		return getParent().func_230044_c_();
+	}
 
 }

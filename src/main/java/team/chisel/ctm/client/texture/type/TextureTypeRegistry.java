@@ -1,5 +1,6 @@
 package team.chisel.ctm.client.texture.type;
 
+import java.lang.annotation.ElementType;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -7,17 +8,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Throwables;
+import org.objectweb.asm.Type;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 
 import net.minecraft.util.StringUtils;
-import net.minecraftforge.fml.common.discovery.ASMDataTable.ASMData;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.forgespi.language.ModFileScanData;
 import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.texture.TextureType;
-import team.chisel.ctm.api.texture.TextureTypeList;
 
 /**
  * Registry for all the different texture types
@@ -28,36 +30,36 @@ public class TextureTypeRegistry {
 
     @SuppressWarnings("unchecked")
     public static void preInit(FMLClientSetupEvent event) {
-        Multimap<ASMData, String> annots = HashMultimap.create();
-        for (ASMData list : event.getAsmData().getAll(TextureTypeList.class.getName())) {
-            for (String value : ((List<Map<String, String>>) list.getAnnotationInfo().get("value")).stream().map(m -> m.get("value")).collect(Collectors.toList())) {
-                annots.put(list, value);
-            }
+        final List<ModFileScanData.AnnotationData> annotations = ModList.get().getAllScanData().stream()
+                .map(ModFileScanData::getAnnotations)
+                .flatMap(Collection::stream)
+                .filter(a -> TextureType.class.getName().equals(a.getAnnotationType().getClassName()))
+                .collect(Collectors.toList());
+        Multimap<ModFileScanData.AnnotationData, String> annots = HashMultimap.create();
+        for (ModFileScanData.AnnotationData single : annotations) {
+        	annots.put(single, (String) single.getAnnotationData().get("value"));
         }
-        for (ASMData single : event.getAsmData().getAll(TextureType.class.getName())) {
-            if (single.getObjectName() != null) {
-                annots.put(single, (String) single.getAnnotationInfo().get("value"));
-            }
-        }
-        for (Entry<ASMData, Collection<String>> data : annots.asMap().entrySet()) {
+        for (Entry<ModFileScanData.AnnotationData, Collection<String>> data : annots.asMap().entrySet()) {
             ITextureType type;
-            try {
-                type = ((Class<? extends ITextureType>) Class.forName(data.getKey().getClassName())).newInstance();
-            } catch (InstantiationException e) {
-                // This might be a field, let's try that
+            if (data.getKey().getTargetType() == ElementType.FIELD) {
                 try {
-                    Class<?> c = Class.forName(data.getKey().getClassName());
-                    type = (ITextureType) c.getDeclaredField(data.getKey().getObjectName()).get(null);
-                } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException | ClassNotFoundException e1) {
-                    // nope
-                    throw Throwables.propagate(e1);
+                    Class<?> c = Class.forName(data.getKey().getClassType().getClassName());
+                    type = (ITextureType) c.getDeclaredField(data.getKey().getMemberName()).get(null);
+                } catch (Exception e) {
+                    throw new RuntimeException("Exception loading texture type for class: " + data.getKey().getClassType(), e);
                 }
-            } catch (IllegalAccessException | ClassNotFoundException e) {
-                throw Throwables.propagate(e);
+            } else if (data.getKey().getTargetType() == ElementType.TYPE) {
+	            try {
+	                type = ((Class<? extends ITextureType>) Class.forName(data.getKey().getClassType().getClassName())).newInstance();
+	            } catch (Exception e) {
+	                throw new RuntimeException("Exception loading texture type for class: " + data.getKey().getClassType() + " (on member " + data.getKey().getMemberName() + ")", e);
+	            }
+            } else {
+            	throw new IllegalArgumentException("@TextureType found on invalid element type: " + data.getKey().getTargetType() + " (" + data.getKey().getClassType() + ")");
             }
             for (String name : data.getValue()) {
                 if (StringUtils.isNullOrEmpty(name)) {
-                    name = data.getKey().getObjectName();
+                    name = data.getKey().getMemberName();
                     name = name.substring(name.lastIndexOf('.') + 1);
                 }
                 register(name, type);

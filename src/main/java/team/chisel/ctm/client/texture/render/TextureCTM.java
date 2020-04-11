@@ -18,10 +18,10 @@ import it.unimi.dsi.fastutil.objects.Object2ByteOpenCustomHashMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.JsonUtils;
+import net.minecraft.util.Direction;
+import net.minecraft.util.JSONUtils;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTM;
@@ -43,15 +43,15 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
 	private final Optional<Boolean> connectInside;
 	
 	@Getter
-	private final boolean ignoreStates, actualStates;
+	private final boolean ignoreStates;
 	
 	@Nullable
-	private final BiPredicate<EnumFacing, IBlockState> connectionChecks;
+	private final BiPredicate<Direction, BlockState> connectionChecks;
 	
 	@RequiredArgsConstructor
 	private static final class CacheKey {
-		private final IBlockState from;
-		private final EnumFacing dir;
+		private final BlockState from;
+		private final Direction dir;
 		
 		@Override
 		public int hashCode() {
@@ -79,21 +79,20 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
 		}
 	}
 
-	private final Map<CacheKey, Object2ByteMap<IBlockState>> connectionCache = new HashMap<>();
+	private final Map<CacheKey, Object2ByteMap<BlockState>> connectionCache = new HashMap<>();
 
     public TextureCTM(T type, TextureInfo info) {
         super(type, info);
         this.connectInside = info.getInfo().flatMap(obj -> ParseUtils.getBoolean(obj, "connect_inside"));
-        this.ignoreStates = info.getInfo().map(obj -> JsonUtils.getBoolean(obj, "ignore_states", false)).orElse(false);
-        this.actualStates = info.getInfo().map(obj -> JsonUtils.getBoolean(obj, "use_actual_state", false)).orElse(false);
+        this.ignoreStates = info.getInfo().map(obj -> JSONUtils.getBoolean(obj, "ignore_states", false)).orElse(false);
         this.connectionChecks = info.getInfo().map(obj -> predicateParser.parse(obj.get("connect_to"))).orElse(null);
     }
     
-    public boolean connectTo(CTMLogic ctm, IBlockState from, IBlockState to, EnumFacing dir) {
+    public boolean connectTo(CTMLogic ctm, BlockState from, BlockState to, Direction dir) {
         synchronized (connectionCache) {
-        	Object2ByteMap<IBlockState> sidecache = connectionCache.computeIfAbsent(new CacheKey(from, dir), 
+        	Object2ByteMap<BlockState> sidecache = connectionCache.computeIfAbsent(new CacheKey(from, dir), 
 				k -> {
-					Object2ByteMap<IBlockState> map = new Object2ByteOpenCustomHashMap<>(new IdentityStrategy<>());
+					Object2ByteMap<BlockState> map = new Object2ByteOpenCustomHashMap<>(new IdentityStrategy<>());
 					map.defaultReturnValue((byte) -1);
 					return map;
 				});

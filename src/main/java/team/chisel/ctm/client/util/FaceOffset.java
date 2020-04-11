@@ -1,15 +1,15 @@
 package team.chisel.ctm.client.util;
 
-import mcp.MethodsReturnNonnullByDefault;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
-
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import mcp.MethodsReturnNonnullByDefault;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockPos;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
 public class FaceOffset {
-    public static BlockPos getBlockPosOffsetFromFaceOffset(EnumFacing facing, int xOffset, int yOffset) {
+    public static BlockPos getBlockPosOffsetFromFaceOffset(Direction facing, int xOffset, int yOffset) {
         switch (facing) {
             default: // UP
                 return new BlockPos(xOffset, 0, -yOffset);

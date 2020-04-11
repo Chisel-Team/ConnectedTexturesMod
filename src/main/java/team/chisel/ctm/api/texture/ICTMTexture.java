@@ -8,8 +8,8 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ResourceLocation;
+import team.chisel.ctm.client.util.BlockRenderLayer;
 
 /**
  * Represents a CTM Texture/resource

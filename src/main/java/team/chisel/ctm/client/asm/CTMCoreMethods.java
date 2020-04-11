@@ -3,7 +3,7 @@
 import javax.annotation.Nonnull;
 
 import lombok.SneakyThrows;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.state.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.WeightedBakedModel;
@@ -21,7 +21,7 @@ import team.chisel.ctm.client.util.ProfileUtil;
 public class CTMCoreMethods {
     
     @SneakyThrows
-    public static Boolean canRenderInLayer(@Nonnull IBlockState state, @Nonnull BlockRenderLayer layer) {
+    public static Boolean canRenderInLayer(@Nonnull BlockState state, @Nonnull BlockRenderLayer layer) {
         ProfileUtil.start("ctm_render_in_layer");
         IBakedModel model = Minecraft.getInstance().getBlockRendererDispatcher().getModelForState(state);
         if (model instanceof WeightedBakedModel) {

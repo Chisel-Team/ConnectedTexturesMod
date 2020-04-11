@@ -1,7 +1,6 @@
 package team.chisel.ctm.client.texture;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Function;
@@ -12,22 +11,23 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.google.common.collect.ObjectArrays;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
 import lombok.Getter;
 import lombok.ToString;
+import net.minecraft.client.renderer.model.Material;
+import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.data.IMetadataSectionSerializer;
-import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ResourceLocation;
 import team.chisel.ctm.CTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.type.TextureTypeRegistry;
+import team.chisel.ctm.client.util.BlockRenderLayer;
 import team.chisel.ctm.client.util.ResourceUtil;
 
 @ParametersAreNonnullByDefault
@@ -47,10 +47,10 @@ public interface IMetadataSectionCTM {
 
     JsonObject getExtraData();
     
-    default ICTMTexture<?> makeTexture(TextureAtlasSprite sprite, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter) {
+    default ICTMTexture<?> makeTexture(TextureAtlasSprite sprite, Function<Material, TextureAtlasSprite> bakedTextureGetter) {
         IMetadataSectionCTM meta = this;
         if (getProxy() != null) {
-            TextureAtlasSprite proxySprite = bakedTextureGetter.apply(new ResourceLocation(getProxy()));
+            TextureAtlasSprite proxySprite = bakedTextureGetter.apply(new Material(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation(getProxy())));
             try {
                 meta = ResourceUtil.getMetadata(proxySprite);
                 if (meta == null) {
@@ -63,7 +63,10 @@ public interface IMetadataSectionCTM {
             }
         }
         return meta.getType().makeTexture(new TextureInfo(
-                Arrays.stream(ObjectArrays.concat(sprite.getName(), meta.getAdditionalTextures())).map(bakedTextureGetter::apply).toArray(TextureAtlasSprite[]::new), 
+                Arrays.stream(ObjectArrays.concat(sprite.getName(), meta.getAdditionalTextures()))
+                	  .map(rl -> new Material(AtlasTexture.LOCATION_BLOCKS_TEXTURE, rl))
+                	  .map(bakedTextureGetter::apply)
+                	  .toArray(TextureAtlasSprite[]::new), 
                 Optional.of(meta.getExtraData()), 
                 meta.getLayer()
         ));

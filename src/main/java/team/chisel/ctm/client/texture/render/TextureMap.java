@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.vecmath.Point2i;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
@@ -20,6 +19,7 @@ import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.ctx.TextureContextGrid;
+import team.chisel.ctm.client.texture.ctx.TextureContextGrid.Point2i;
 import team.chisel.ctm.client.texture.ctx.TextureContextPosition;
 import team.chisel.ctm.client.texture.type.TextureTypeMap;
 import team.chisel.ctm.client.util.Quad;
@@ -38,8 +38,8 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
                 float intervalX = 16f / tex.getXSize();
                 float intervalY = 16f / tex.getYSize();
                 
-                float maxU = textureCoords.x * intervalX;
-                float maxV = textureCoords.y * intervalY;
+                float maxU = textureCoords.getX() * intervalX;
+                float maxV = textureCoords.getY() * intervalY;
                 ISubmap uvs = new Submap(intervalX, intervalY, maxU - intervalX, maxV - intervalY);
 
                 Quad q = tex.makeQuad(quad, context).setFullbright(tex.fullbright);
@@ -75,8 +75,8 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
                 float intervalV = 16f / tex.ySize;
 
                 // throw new RuntimeException(index % variationSize+" and "+index/variationSize);
-                float minU = intervalU * textureCoords.x;
-                float minV = intervalV * textureCoords.y;
+                float minU = intervalU * textureCoords.getX();
+                float minV = intervalV * textureCoords.getY();
 
                 ISubmap submap = new Submap(intervalU, intervalV, minU, minV);
 

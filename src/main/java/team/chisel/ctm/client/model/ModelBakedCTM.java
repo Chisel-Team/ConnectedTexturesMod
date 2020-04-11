@@ -6,23 +6,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Random;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import javax.vecmath.Matrix4f;
-
-import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.collect.ObjectArrays;
+import com.mojang.blaze3d.matrix.MatrixStack;
 
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Direction;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
@@ -36,18 +36,18 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
         super(model, parent);
     }
 
-    private static final EnumFacing[] FACINGS = ObjectArrays.concat(EnumFacing.VALUES, (EnumFacing) null);
+    private static final Direction[] FACINGS = ObjectArrays.concat(Direction.values(), (Direction) null);
 
     @Override
-    protected AbstractCTMBakedModel createModel(@Nullable IBlockState state, IModelCTM model, @Nullable RenderContextList ctx, long rand) {
+    protected AbstractCTMBakedModel createModel(@Nullable BlockState state, IModelCTM model, @Nullable RenderContextList ctx, Random rand) {
         IBakedModel parent = getParent(rand);
         while (parent instanceof ModelBakedCTM) {
             parent = ((AbstractCTMBakedModel)parent).getParent(rand);
         }
 
         AbstractCTMBakedModel ret = new ModelBakedCTM(model, parent);
-        for (BlockRenderLayer layer : LAYERS) {
-            for (EnumFacing facing : FACINGS) {
+        for (RenderType layer : LAYERS) {
+            for (Direction facing : FACINGS) {
                 List<BakedQuad> parentQuads = parent.getQuads(state, facing, rand);
                 List<BakedQuad> quads;
                 if (facing != null) {
@@ -61,15 +61,15 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
                 // Gather all quads and map them to their textures
                 // All quads should have an associated ICTMTexture, so ignore any that do not
                 for (BakedQuad q : parentQuads) {
-                    ICTMTexture<?> tex = this.getModel().getOverrideTexture(q.getTintIndex(), q.getSprite().getName());
+                    ICTMTexture<?> tex = this.getModel().getOverrideTexture(q.getTintIndex(), q.func_187508_a().getName());
                     if (tex == null) {
-                        tex = this.getModel().getTexture(q.getSprite().getName());
+                        tex = this.getModel().getTexture(q.func_187508_a().getName());
                     }
 
                     if (tex != null) {
                         TextureAtlasSprite spriteReplacement = getModel().getOverrideSprite(q.getTintIndex());
                         if (spriteReplacement != null) {
-                            q = new BakedQuadRetextured(q, spriteReplacement);
+                            q = new BakedQuadRetextured(q, spriteReplacement); // TODO 1.15 retextured quads
                         }
 
                         texturemap.put(q, tex);
@@ -82,10 +82,11 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
                 int quadGoal = ctx == null ? 1 : texturemap.values().stream().mapToInt(tex -> tex.getType().getQuadsPerSide()).max().orElse(1);
                 for (Entry<BakedQuad, ICTMTexture<?>> e : texturemap.entrySet()) {
                     // If the layer is null, this is a wrapped vanilla texture, so passthrough the layer check to the block
-                    if (e.getValue().getLayer() == layer || (e.getValue().getLayer() == null && (state == null || state.getBlock().canRenderInLayer(state, layer)))) {
+                	// TODO 1.15 add hook to replace layer check
+                    //if ((e.getValue().getLayer() != null && e.getValue().getLayer().getRenderType() == layer) || (e.getValue().getLayer() == null && (state == null || RenderTypeLookup.canRenderInLayer(state, layer)))) {
                         ITextureContext tcx = ctx == null ? null : ctx.getRenderContext(e.getValue());
                         quads.addAll(e.getValue().transformQuad(e.getKey(), tcx, quadGoal));
-                    }
+                    //}
                 }
             }
         }
@@ -100,8 +101,9 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
     }
     
     @Override
-    public Pair<? extends IBakedModel, Matrix4f> handlePerspective(TransformType cameraTransformType) {
+    public IBakedModel handlePerspective(TransformType cameraTransformType, MatrixStack ms) {
     	// FIXME this won't work if parent returns a different model (shouldn't happen for vanilla)
-    	return Pair.of(this, getParent().handlePerspective(cameraTransformType).getRight());
+    	getParent().handlePerspective(cameraTransformType, ms);
+    	return this;
     }
 }

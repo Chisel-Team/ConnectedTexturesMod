@@ -6,10 +6,8 @@ import java.util.List;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
 
 /**
  * Represents all the different spot for connection locations for a ctm block
@@ -19,44 +17,44 @@ public enum ConnectionLocations {
 
     UP(Dir.TOP),
     DOWN(Dir.BOTTOM),
-    NORTH(EnumFacing.EAST, Dir.RIGHT),
-    SOUTH(EnumFacing.EAST, Dir.LEFT),
+    NORTH(Direction.EAST, Dir.RIGHT),
+    SOUTH(Direction.EAST, Dir.LEFT),
     EAST(Dir.RIGHT),
     WEST(Dir.LEFT),
     
-    NORTH_EAST(EnumFacing.UP, Dir.TOP_RIGHT),
-    NORTH_WEST(EnumFacing.UP, Dir.TOP_LEFT),
-    SOUTH_EAST(EnumFacing.UP, Dir.BOTTOM_RIGHT),
-    SOUTH_WEST(EnumFacing.UP, Dir.BOTTOM_LEFT),
+    NORTH_EAST(Direction.UP, Dir.TOP_RIGHT),
+    NORTH_WEST(Direction.UP, Dir.TOP_LEFT),
+    SOUTH_EAST(Direction.UP, Dir.BOTTOM_RIGHT),
+    SOUTH_WEST(Direction.UP, Dir.BOTTOM_LEFT),
     
-    NORTH_UP(EnumFacing.EAST, Dir.TOP_RIGHT),
-    NORTH_DOWN(EnumFacing.EAST, Dir.BOTTOM_RIGHT),
-    SOUTH_UP(EnumFacing.EAST, Dir.TOP_LEFT),
-    SOUTH_DOWN(EnumFacing.EAST, Dir.BOTTOM_LEFT),
+    NORTH_UP(Direction.EAST, Dir.TOP_RIGHT),
+    NORTH_DOWN(Direction.EAST, Dir.BOTTOM_RIGHT),
+    SOUTH_UP(Direction.EAST, Dir.TOP_LEFT),
+    SOUTH_DOWN(Direction.EAST, Dir.BOTTOM_LEFT),
     
     EAST_UP(Dir.TOP_RIGHT),
     EAST_DOWN(Dir.BOTTOM_RIGHT),
     WEST_UP(Dir.TOP_LEFT),
     WEST_DOWN(Dir.BOTTOM_LEFT),
     
-    NORTH_EAST_UP(EnumFacing.EAST, Dir.TOP_RIGHT, true),
-    NORTH_EAST_DOWN(EnumFacing.EAST, Dir.BOTTOM_RIGHT, true),
+    NORTH_EAST_UP(Direction.EAST, Dir.TOP_RIGHT, true),
+    NORTH_EAST_DOWN(Direction.EAST, Dir.BOTTOM_RIGHT, true),
     
-    SOUTH_EAST_UP(EnumFacing.EAST, Dir.TOP_LEFT, true),
-    SOUTH_EAST_DOWN(EnumFacing.EAST, Dir.BOTTOM_LEFT, true),
+    SOUTH_EAST_UP(Direction.EAST, Dir.TOP_LEFT, true),
+    SOUTH_EAST_DOWN(Direction.EAST, Dir.BOTTOM_LEFT, true),
     
-    SOUTH_WEST_UP(EnumFacing.WEST, Dir.TOP_LEFT, true),
-    SOUTH_WEST_DOWN(EnumFacing.WEST, Dir.BOTTOM_LEFT, true),
+    SOUTH_WEST_UP(Direction.WEST, Dir.TOP_LEFT, true),
+    SOUTH_WEST_DOWN(Direction.WEST, Dir.BOTTOM_LEFT, true),
     
-    NORTH_WEST_UP(EnumFacing.WEST, Dir.TOP_RIGHT, true),
-    NORTH_WEST_DOWN(EnumFacing.WEST, Dir.BOTTOM_RIGHT, true),
+    NORTH_WEST_UP(Direction.WEST, Dir.TOP_RIGHT, true),
+    NORTH_WEST_DOWN(Direction.WEST, Dir.BOTTOM_RIGHT, true),
     
-    UP_UP(EnumFacing.UP, null, true),
-    DOWN_DOWN(EnumFacing.DOWN, null, true),
-    NORTH_NORTH(EnumFacing.NORTH, null, true),
-    SOUTH_SOUTH(EnumFacing.SOUTH, null, true),
-    EAST_EAST(EnumFacing.EAST, null, true),
-    WEST_WEST(EnumFacing.WEST, null, true),
+    UP_UP(Direction.UP, null, true),
+    DOWN_DOWN(Direction.DOWN, null, true),
+    NORTH_NORTH(Direction.NORTH, null, true),
+    SOUTH_SOUTH(Direction.SOUTH, null, true),
+    EAST_EAST(Direction.EAST, null, true),
+    WEST_WEST(Direction.WEST, null, true),
     
     ;
     
@@ -65,35 +63,35 @@ public enum ConnectionLocations {
     /**
      * The enum facing directions needed to get to this connection location
      */
-    private final EnumFacing normal;
+    private final Direction normal;
     private final @Nullable Dir dir;
     private boolean offset;
 
     private ConnectionLocations(@Nullable Dir dir) {
-        this(EnumFacing.SOUTH, dir);
+        this(Direction.SOUTH, dir);
     }
     
     private ConnectionLocations(@Nullable Dir dir, boolean offset) {
-        this(EnumFacing.SOUTH, dir, offset);
+        this(Direction.SOUTH, dir, offset);
     }
     
-    private ConnectionLocations(EnumFacing normal, @Nullable Dir dir){
+    private ConnectionLocations(Direction normal, @Nullable Dir dir){
         this(normal, dir, false);
     }
     
-    private ConnectionLocations(EnumFacing normal, @Nullable Dir dir, boolean offset) {
+    private ConnectionLocations(Direction normal, @Nullable Dir dir, boolean offset) {
         this.normal = normal;
         this.dir = dir;
         this.offset = offset;
     }
 
-    public @Nullable Dir getDirForSide(EnumFacing facing){
+    public @Nullable Dir getDirForSide(Direction facing){
         return dir == null ? null : dir.relativize(facing);
     }
 
-    public @Nullable EnumFacing clipOrDestroy(EnumFacing direction) {
+    public @Nullable Direction clipOrDestroy(Direction direction) {
         throw new UnsupportedOperationException();
-//        EnumFacing[] dirs = dir == null ? new EnumFacing[] {normal, normal} : dir.getNormalizedDirs(direction);
+//        Direction[] dirs = dir == null ? new Direction[] {normal, normal} : dir.getNormalizedDirs(direction);
 //        if (dirs[0] == direction) {
 //            return dirs.length > 1 ? dirs[1] : null;
 //        } else if (dirs.length > 1 && dirs[1] == direction) {
@@ -117,7 +115,7 @@ public enum ConnectionLocations {
         return pos;
     }
 
-    public static ConnectionLocations fromFacing(EnumFacing facing){
+    public static ConnectionLocations fromFacing(Direction facing){
         switch (facing){
             case NORTH: return NORTH;
             case SOUTH: return SOUTH;
@@ -129,15 +127,15 @@ public enum ConnectionLocations {
         }
     }
 
-    public static EnumFacing toFacing(ConnectionLocations loc){
+    public static Direction toFacing(ConnectionLocations loc){
         switch (loc){
-            case NORTH: return EnumFacing.NORTH;
-            case SOUTH: return EnumFacing.SOUTH;
-            case EAST: return EnumFacing.EAST;
-            case WEST: return EnumFacing.WEST;
-            case UP: return EnumFacing.UP;
-            case DOWN: return EnumFacing.DOWN;
-            default: return EnumFacing.NORTH;
+            case NORTH: return Direction.NORTH;
+            case SOUTH: return Direction.SOUTH;
+            case EAST: return Direction.EAST;
+            case WEST: return Direction.WEST;
+            case UP: return Direction.UP;
+            case DOWN: return Direction.DOWN;
+            default: return Direction.NORTH;
         }
     }
 

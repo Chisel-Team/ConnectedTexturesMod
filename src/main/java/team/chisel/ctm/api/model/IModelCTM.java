@@ -4,27 +4,26 @@ import java.util.Collection;
 
 import javax.annotation.Nullable;
 
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraftforge.client.model.IModel;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.model.geometry.IModelGeometry;
 import team.chisel.ctm.api.texture.ICTMTexture;
 
-public interface IModelCTM extends IModel {
-    
-    IModel getVanillaParent();
+public interface IModelCTM extends IModelGeometry<IModelCTM> {
 
     void load();
     
     Collection<ICTMTexture<?>> getCTMTextures();
     
-    ICTMTexture<?> getTexture(String iconName);
+    ICTMTexture<?> getTexture(ResourceLocation loc);
 
-    boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer);
+    boolean canRenderInLayer(BlockState state, RenderType layer);
 
     @Nullable
     TextureAtlasSprite getOverrideSprite(int tintIndex);
 
     @Nullable
-    ICTMTexture<?> getOverrideTexture(int tintIndex, String sprite);
+    ICTMTexture<?> getOverrideTexture(int tintIndex, ResourceLocation loc);
 }

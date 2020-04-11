@@ -1,0 +1,14 @@
+modLoader="javafml"
+loaderVersion="[28,)"
+issueTrackerURL="https://github.com/Chisel-Team/ConnectedTexturesMod/issues/"
+
+[[mods]]
+modId="ctm"
+version="${file.jarVersion}"
+displayName="ConnectedTexturesMod"
+displayURL="https://chisel.team/ctm"
+#logoFile="examplemod.png"
+authors="tterrag, Drullkus, minecreatr"
+description='''
+Allows resource packs to add connected textures, emissive rendering, and much more.
+'''

@@ -1,11 +1,11 @@
 package team.chisel.ctm.client.texture.render;
 
-import static net.minecraft.util.EnumFacing.DOWN;
-import static net.minecraft.util.EnumFacing.EAST;
-import static net.minecraft.util.EnumFacing.NORTH;
-import static net.minecraft.util.EnumFacing.SOUTH;
-import static net.minecraft.util.EnumFacing.UP;
-import static net.minecraft.util.EnumFacing.WEST;
+import static net.minecraft.util.Direction.DOWN;
+import static net.minecraft.util.Direction.EAST;
+import static net.minecraft.util.Direction.NORTH;
+import static net.minecraft.util.Direction.SOUTH;
+import static net.minecraft.util.Direction.UP;
+import static net.minecraft.util.Direction.WEST;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -13,8 +13,8 @@ import java.util.List;
 import com.google.common.collect.Lists;
 
 import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Axis;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Direction.Axis;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -22,6 +22,7 @@ import team.chisel.ctm.client.texture.ctx.TextureContextCTMV;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTMV.ConnectionData;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTMV.Connections;
 import team.chisel.ctm.client.texture.type.TextureTypeCTMV;
+import team.chisel.ctm.client.util.DirectionHelper;
 import team.chisel.ctm.client.util.Quad;
 import team.chisel.ctm.client.util.Submap;
 
@@ -48,7 +49,7 @@ public class TextureCTMV extends AbstractTexture<TextureTypeCTMV> {
         Connections cons = data.getConnections();
         
         // This is the order of operations for connections
-        EnumSet<EnumFacing> realConnections = EnumSet.copyOf(data.getConnections().getConnections());
+        EnumSet<Direction> realConnections = EnumSet.copyOf(data.getConnections().getConnections());
         if (cons.connectedOr(UP, DOWN)) {
             // If connected up or down, ignore all other connections
             realConnections.removeIf(f -> f.getAxis().isHorizontal());
@@ -109,7 +110,7 @@ public class TextureCTMV extends AbstractTexture<TextureTypeCTMV> {
         return q.transformUVs(sprites[0]).rebake();
     }
 
-    private ISubmap getUVs(EnumFacing face1, EnumFacing face2, Connections cons) {
+    private ISubmap getUVs(Direction face1, Direction face2, Connections cons) {
         ISubmap uvs;
         if (cons.connectedAnd(face1, face2)) {
             uvs = Submap.X2[1][0];
@@ -123,16 +124,16 @@ public class TextureCTMV extends AbstractTexture<TextureTypeCTMV> {
         return uvs;
     }
 
-    private boolean blockConnectionY(EnumFacing dir, ConnectionData data) {
-        return blockConnection(dir, Axis.Y, data) || blockConnection(dir, dir.rotateAround(Axis.Y).getAxis(), data);
+    private boolean blockConnectionY(Direction dir, ConnectionData data) {
+        return blockConnection(dir, Axis.Y, data) || blockConnection(dir, dir.rotateY().getAxis(), data);
     }
 
-    private boolean blockConnectionZ(EnumFacing dir, ConnectionData data) {
+    private boolean blockConnectionZ(Direction dir, ConnectionData data) {
         return blockConnection(dir, Axis.Z, data);
     }
 
-    private boolean blockConnection(EnumFacing dir, Axis axis, ConnectionData data) {
-        EnumFacing rot = dir.rotateAround(axis);
+    private boolean blockConnection(Direction dir, Axis axis, ConnectionData data) {
+        Direction rot = DirectionHelper.rotateAround(dir, axis);
         return data.getConnections(dir).connectedOr(rot, rot.getOpposite());
     }
 }

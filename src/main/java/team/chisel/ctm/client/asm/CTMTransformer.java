@@ -15,16 +15,16 @@ public class CTMTransformer implements IClassTransformer {
     private static final String BLOCK_CLASS = "net.minecraft.block.Block";
     private static final String EXTENDED_STATE_METHOD_NAME = "getExtendedState";
     private static final String CAN_RENDER_IN_LAYER_METHOD_NAME = "canRenderInLayer";
-    private static final String CAN_RENDER_IN_LAYER_METHOD_DESC = "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/BlockRenderLayer;)Z";
+    private static final String CAN_RENDER_IN_LAYER_METHOD_DESC = "(Lnet/minecraft/block/state/BlockState;Lnet/minecraft/util/BlockRenderLayer;)Z";
 
     private static final String WRAPPER_CLASS_NAME = "team/chisel/ctm/client/state/CTMExtendedState";
     private static final String WRAPPER_CLASS_CONSTRUCTOR_NAME = "<init>";
-    private static final String WRAPPER_CLASS_CONSTRUCTOR_DESC = "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)V";
+    private static final String WRAPPER_CLASS_CONSTRUCTOR_DESC = "(Lnet/minecraft/block/state/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)V";
     
     private static final String CHISEL_METHODS_CLASS_NAME = "team/chisel/ctm/client/asm/CTMCoreMethods";
     
     private static final String CHISEL_METHODS_LAYER_NAME = "canRenderInLayer";
-    private static final String CHISEL_METHODS_LAYER_DESC = "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/BlockRenderLayer;)Ljava/lang/Boolean;";
+    private static final String CHISEL_METHODS_LAYER_DESC = "(Lnet/minecraft/block/state/BlockState;Lnet/minecraft/util/BlockRenderLayer;)Ljava/lang/Boolean;";
     private static final String CHISEL_METHODS_DAMAGE_PRE_NAME = "preDamageModel";
     private static final String CHISEL_METHODS_DAMAGE_POST_NAME = "postDamageModel";
     private static final String CHISEL_METHODS_TRANFORM_PARENT_NAME = "transformParent";

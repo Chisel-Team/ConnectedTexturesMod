@@ -17,7 +17,7 @@ buildscript {
 }
 plugins {
     id "io.freefair.lombok" version "4.1.5"
-	id 'com.matthewprenger.cursegradle' version '1.4.0'
+    id 'com.matthewprenger.cursegradle' version '1.4.0'
 }
 apply plugin: 'eclipse'
 apply plugin: 'net.minecraftforge.gradle'
@@ -44,39 +44,37 @@ targetCompatibility = '1.8'
 minecraft {
     mappings channel: 'snapshot', version: '20200409-1.15.1'
     
-    //accessTransformer = file('my_at.cfg')
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
     // default run configurations.
     // these can be tweaked, removed, or duplicated as needed.
-	runs {
+    runs {
         client {
+            taskName 'ctm_client'
             workingDirectory project.file('run')
-
-            // Recommended logging data for a userdev environment
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
 
             mods {
-                examplemod {
+                ctm {
                     source sourceSets.main
+                    source sourceSets.test
                 }
             }
         }
 
         server {
+            taskName 'ctm_server'
             workingDirectory project.file('run')
-
-            // Recommended logging data for a userdev environment
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
 
             mods {
-                examplemod {
+                ctm {
                     source sourceSets.main
+                    source sourceSets.test
                 }
             }
         }
@@ -126,7 +124,7 @@ lombok {
 task apiJar(type: Jar) {
     from sourceSets.main.allSource
     from sourceSets.main.output
-	include 'team/chisel/ctm/api/**/*'
+    include 'team/chisel/ctm/api/**/*'
     classifier = 'api'
 }
 

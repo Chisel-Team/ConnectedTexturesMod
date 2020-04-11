@@ -1,8 +1,5 @@
 package team.chisel.ctm.api.util;
 
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenCustomHashMap;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,7 +9,9 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.google.common.collect.Maps;
 
-import net.minecraft.block.state.IBlockState;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenCustomHashMap;
+import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import team.chisel.ctm.api.texture.ICTMTexture;
@@ -29,12 +28,12 @@ import team.chisel.ctm.client.util.RegionCache;
 public class RenderContextList {
     
     private static final ThreadLocal<RegionCache> regionMetaCache = ThreadLocal.withInitial(
-            () -> new RegionCache(BlockPos.ORIGIN, 0, null));
+            () -> new RegionCache(BlockPos.ZERO, 0, null));
     
     private final Map<ICTMTexture<?>, ITextureContext> contextMap = Maps.newIdentityHashMap();
     private final Object2LongMap<ICTMTexture<?>> serialized = new Object2LongOpenCustomHashMap<>(new IdentityStrategy<>());
 
-    public RenderContextList(IBlockState state, Collection<ICTMTexture<?>> textures, final IBlockReader world, BlockPos pos) {
+    public RenderContextList(BlockState state, Collection<ICTMTexture<?>> textures, final IBlockReader world, BlockPos pos) {
         ProfileUtil.start("ctm_region_cache_update");
     	IBlockReader cachedWorld = regionMetaCache.get().updateWorld(world);
     	

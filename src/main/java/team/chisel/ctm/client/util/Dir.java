@@ -1,11 +1,11 @@
 package team.chisel.ctm.client.util;
 
-import static net.minecraft.util.EnumFacing.DOWN;
-import static net.minecraft.util.EnumFacing.EAST;
-import static net.minecraft.util.EnumFacing.NORTH;
-import static net.minecraft.util.EnumFacing.SOUTH;
-import static net.minecraft.util.EnumFacing.UP;
-import static net.minecraft.util.EnumFacing.WEST;
+import static net.minecraft.util.Direction.DOWN;
+import static net.minecraft.util.Direction.EAST;
+import static net.minecraft.util.Direction.NORTH;
+import static net.minecraft.util.Direction.SOUTH;
+import static net.minecraft.util.Direction.UP;
+import static net.minecraft.util.Direction.WEST;
 
 import java.util.Arrays;
 
@@ -13,10 +13,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Axis;
-import net.minecraft.util.EnumFacing.AxisDirection;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Direction.Axis;
+import net.minecraft.util.Direction.AxisDirection;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import team.chisel.ctm.api.util.NonnullType;
@@ -46,7 +46,7 @@ public enum Dir {
 	 * All values of this enum, used to prevent unnecessary allocation via {@link #values()}.
 	 */
 	public static final Dir[] VALUES = values();
-	private static final EnumFacing NORMAL = SOUTH;
+	private static final Direction NORMAL = SOUTH;
 	
 	static {
 	    // Run after static init
@@ -55,31 +55,31 @@ public enum Dir {
 	    }
 	}
 
-	private @NonnullType EnumFacing[] dirs;
+	private @NonnullType Direction[] dirs;
 	
 	private @NonnullType BlockPos[] offsets = new BlockPos[6];
 
-	private Dir(EnumFacing... dirs) {
+	private Dir(Direction... dirs) {
 		this.dirs = dirs;
     }
 	
     private void buildCaches() {
         // Fill normalized dirs
-        for (EnumFacing normal : EnumFacing.values()) {
-            @NonnullType EnumFacing[] normalized;
+        for (Direction normal : Direction.values()) {
+            @NonnullType Direction[] normalized;
             if (normal == NORMAL) {
                 normalized = dirs;
             } else if (normal == NORMAL.getOpposite()) {
                 // If this is the opposite direction of the default normal, we
                 // need to mirror the dirs
                 // A mirror version does not affect y+ and y- so we ignore those
-                EnumFacing[] ret = new EnumFacing[dirs.length];
+                Direction[] ret = new Direction[dirs.length];
                 for (int i = 0; i < ret.length; i++) {
                     ret[i] = dirs[i].getYOffset() != 0 ? dirs[i] : dirs[i].getOpposite();
                 }
                 normalized = ret;
             } else {
-                EnumFacing axis;
+                Direction axis;
                 // Next, we need different a different rotation axis depending
                 // on if this is up/down or not
                 if (normal.getYOffset() == 0) {
@@ -90,15 +90,15 @@ public enum Dir {
                     // If it is up/down, pick either the up or down rotation.
                     axis = normal == UP ? NORMAL.rotateYCCW() : NORMAL.rotateY();
                 }
-                EnumFacing[] ret = new EnumFacing[dirs.length];
+                Direction[] ret = new Direction[dirs.length];
                 // Finally apply all the rotations
                 for (int i = 0; i < ret.length; i++) {
                     ret[i] = rotate(dirs[i], axis);
                 }
                 normalized = ret;
             }
-            BlockPos ret = BlockPos.ORIGIN;
-            for (EnumFacing dir : normalized) {
+            BlockPos ret = BlockPos.ZERO;
+            for (Direction dir : normalized) {
                 ret = ret.offset(dir);
             }
             offsets[normal.ordinal()] = ret;
@@ -118,7 +118,7 @@ public enum Dir {
      *            The side of the current face.
      * @return True if the block is connected in the given Dir, false otherwise.
      */
-    public boolean isConnected(CTMLogic ctm, IBlockReader world, BlockPos pos, EnumFacing side) {
+    public boolean isConnected(CTMLogic ctm, IBlockReader world, BlockPos pos, Direction side) {
         return ctm.isConnected(world, pos, applyConnection(pos, side), side);
     }
 
@@ -137,22 +137,22 @@ public enum Dir {
      *            The state to check for connection with.
      * @return True if the block is connected in the given Dir, false otherwise.
      */
-    public boolean isConnected(CTMLogic ctm, IBlockReader world, BlockPos pos, EnumFacing side, IBlockState state) {
+    public boolean isConnected(CTMLogic ctm, IBlockReader world, BlockPos pos, Direction side, BlockState state) {
         return ctm.isConnected(world, pos, applyConnection(pos, side), side, state);
     }
 
     /**
-     * Apply this Dir to the given BlockPos for the given EnumFacing normal direction.
+     * Apply this Dir to the given BlockPos for the given Direction normal direction.
      * 
      * @return The offset BlockPos
      */
     @SuppressWarnings("null")
     @Nonnull
-    public BlockPos applyConnection(BlockPos pos, EnumFacing side) {
+    public BlockPos applyConnection(BlockPos pos, Direction side) {
         return pos.add(getOffset(side));
     }
 
-    public Dir relativize(EnumFacing normal) {
+    public Dir relativize(Direction normal) {
         /*
         if (normal == NORMAL) {
             return this;
@@ -172,11 +172,11 @@ public enum Dir {
     }
     
     @Nonnull
-    public BlockPos getOffset(EnumFacing normal) {
+    public BlockPos getOffset(Direction normal) {
         return offsets[normal.ordinal()];
     }
 	
-	public @Nullable Dir getDirFor(EnumFacing[] dirs) {
+	public @Nullable Dir getDirFor(Direction[] dirs) {
 	    if (dirs == this.dirs) { // Short circuit for identical return from getNormalizedDirs
 	        return this; 
 	    }
@@ -189,18 +189,18 @@ public enum Dir {
 	    return null;
 	}
 
-	private EnumFacing rotate(EnumFacing facing, EnumFacing axisFacing) {
+	private Direction rotate(Direction facing, Direction axisFacing) {
         Axis axis = axisFacing.getAxis();
         AxisDirection axisDir = axisFacing.getAxisDirection();
 
         if (axisDir == AxisDirection.POSITIVE) {
-            return facing.rotateAround(axis);
+            return DirectionHelper.rotateAround(facing, axis);
         }
 
         if (facing.getAxis() != axis) {
             switch (axis) {
             case X:
-                // Inverted results from EnumFacing#rotateX
+                // Inverted results from Direction#rotateX
                 switch (facing) {
                 case NORTH:
                     return UP;
@@ -216,7 +216,7 @@ public enum Dir {
             case Y:
                 return facing.rotateYCCW();
             case Z:
-                // Inverted results from EnumFacing#rotateZ
+                // Inverted results from Direction#rotateZ
                 switch (facing) {
                 case EAST:
                     return EAST;

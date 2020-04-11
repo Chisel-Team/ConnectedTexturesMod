@@ -5,8 +5,12 @@ import static team.chisel.ctm.CTM.MOD_ID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.resources.SimpleReloadableResourceManager;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -40,9 +44,12 @@ public class CTM {
     public void preInit(FMLClientSetupEvent event) {
         TextureTypeRegistry.preInit(event);
 
-        ModelLoaderRegistry.registerLoader(ModelLoaderCTM.INSTANCE);
+        ModelLoaderRegistry.registerLoader(new ResourceLocation(MOD_ID, "ctm"), ModelLoaderCTM.INSTANCE);
         
         MinecraftForge.EVENT_BUS.register(TextureMetadataHandler.INSTANCE);
         ((SimpleReloadableResourceManager)Minecraft.getInstance().getResourceManager()).addReloadListener(CTMPackReloadListener.INSTANCE);
+
+        // TODO 1.15 temp
+        RenderTypeLookup.setRenderLayer(Blocks.REDSTONE_BLOCK, RenderType.getCutoutMipped());
     }
 }

@@ -1,15 +1,12 @@
-/*package team.chisel.ctm;
+package team.chisel.ctm;
 
-import net.minecraftforge.common.config.Config;
-
-@Config(modid = CTM.MOD_ID)
+//@Config(modid = CTM.MOD_ID)
 public class Configurations {
     
-    @Config.Comment("Disable connected textures entirely.")
+//    @Config.Comment("Disable connected textures entirely.")
     public static boolean disableCTM = false;
     
-    @Config.Comment("Choose whether the inside corner is disconnected on a CTM block - http://imgur.com/eUywLZ4")
+//    @Config.Comment("Choose whether the inside corner is disconnected on a CTM block - http://imgur.com/eUywLZ4")
     public static boolean connectInsideCTM = false;
 
 }
-*/

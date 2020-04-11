@@ -11,9 +11,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import lombok.Getter;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import team.chisel.ctm.api.texture.ICTMTexture;
@@ -21,6 +21,7 @@ import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.util.NonnullType;
 import team.chisel.ctm.api.util.TextureInfo;
+import team.chisel.ctm.client.util.BlockRenderLayer;
 import team.chisel.ctm.client.util.Quad;
 
 
