@@ -47,6 +47,8 @@ import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 import team.chisel.ctm.client.texture.render.TextureNormal;
 import team.chisel.ctm.client.texture.type.TextureTypeNormal;
+import team.chisel.ctm.client.util.BlockRenderLayer;
+import team.chisel.ctm.client.util.CTMPackReloadListener;
 import team.chisel.ctm.client.util.ResourceUtil;
 
 public class ModelCTM implements IModelCTM {
@@ -203,7 +205,7 @@ public class ModelCTM implements IModelCTM {
     @Override
     public boolean canRenderInLayer(BlockState state, RenderType layer) {
         // sign bit is used to signify that a layer-less (vanilla) texture is present
-        return true; // TODO 1.15 (layers < 0 && state.getBlock().getBlockLayer() == layer) || ((layers >> layer.ordinal()) & 1) == 1;
+        return (layers < 0 && CTMPackReloadListener.canRenderInLayerFallback(state, layer)) || ((layers >> BlockRenderLayer.fromType(layer).ordinal()) & 1) == 1;
     }
 
     @Override

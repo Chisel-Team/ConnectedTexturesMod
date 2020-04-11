@@ -27,6 +27,7 @@ import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.util.BakedQuadRetextured;
+import team.chisel.ctm.client.util.CTMPackReloadListener;
 
 @ParametersAreNonnullByDefault
 public class ModelBakedCTM extends AbstractCTMBakedModel {
@@ -81,11 +82,10 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
                 int quadGoal = ctx == null ? 1 : texturemap.values().stream().mapToInt(tex -> tex.getType().getQuadsPerSide()).max().orElse(1);
                 for (Entry<BakedQuad, ICTMTexture<?>> e : texturemap.entrySet()) {
                     // If the layer is null, this is a wrapped vanilla texture, so passthrough the layer check to the block
-                	// TODO 1.15 add hook to replace layer check
-                    //if ((e.getValue().getLayer() != null && e.getValue().getLayer().getRenderType() == layer) || (e.getValue().getLayer() == null && (state == null || RenderTypeLookup.canRenderInLayer(state, layer)))) {
+                    if ((e.getValue().getLayer() != null && e.getValue().getLayer().getRenderType() == layer) || (e.getValue().getLayer() == null && (state == null || CTMPackReloadListener.canRenderInLayerFallback(state, layer)))) {
                         ITextureContext tcx = ctx == null ? null : ctx.getRenderContext(e.getValue());
                         quads.addAll(e.getValue().transformQuad(e.getKey(), tcx, quadGoal));
-                    //}
+                    }
                 }
             }
         }
