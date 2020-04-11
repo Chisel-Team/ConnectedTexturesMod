@@ -136,6 +136,7 @@ publishing {
     tasks.publish.dependsOn 'build'
     publications {
         mavenJava(MavenPublication) {
+            artifactId = 'CTM'
             artifact jar
             //artifact sourceJar
             artifact apiJar
