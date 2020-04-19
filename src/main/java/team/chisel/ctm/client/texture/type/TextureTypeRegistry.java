@@ -1,6 +1,7 @@
 package team.chisel.ctm.client.texture.type;
 
 import java.lang.annotation.ElementType;
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -13,7 +14,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 
 import lombok.extern.log4j.Log4j2;
-import net.minecraft.util.StringUtils;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.ModFileScanData;
 import team.chisel.ctm.api.texture.ITextureType;
@@ -47,13 +47,17 @@ public class TextureTypeRegistry {
             if (data.getKey().getTargetType() == ElementType.FIELD) {
                 try {
                     Class<?> c = Class.forName(data.getKey().getClassType().getClassName());
-                    type = (ITextureType) c.getDeclaredField(data.getKey().getMemberName()).get(null);
+                    Field f = c.getDeclaredField(data.getKey().getMemberName());
+                    type = (ITextureType) f.get(null);
+                    registerReflectively(type, f.getAnnotationsByType(TextureType.class));
                 } catch (Exception e) {
                     throw new RuntimeException("Exception loading texture type for class: " + data.getKey().getClassType(), e);
                 }
             } else if (data.getKey().getTargetType() == ElementType.TYPE) {
 	            try {
-	                type = ((Class<? extends ITextureType>) Class.forName(data.getKey().getClassType().getClassName())).newInstance();
+	                Class<? extends ITextureType> clazz = (Class<? extends ITextureType>) Class.forName(data.getKey().getClassType().getClassName());
+	                type = clazz.newInstance();
+                    registerReflectively(type, clazz.getAnnotationsByType(TextureType.class));
 	            } catch (Exception e) {
 	                throw new RuntimeException("Exception loading texture type for class: " + data.getKey().getClassType() + " (on member " + data.getKey().getMemberName() + ")", e);
 	            }
@@ -61,12 +65,21 @@ public class TextureTypeRegistry {
             	throw new IllegalArgumentException("@TextureType found on invalid element type: " + data.getKey().getTargetType() + " (" + data.getKey().getClassType() + ")");
             }
             for (String name : data.getValue()) {
-                if (StringUtils.isNullOrEmpty(name)) {
-                    name = data.getKey().getMemberName();
-                    name = name.substring(name.lastIndexOf('.') + 1);
-                }
-                log.debug("Registering scanned texture type: {}", name);
-                register(name, type);
+                // TODO move back to this way of doing it after forge bug is fixed
+//                log.debug("Registering scanned texture type: {}", name);
+//                register(name, type);
+            }
+        }
+    }
+
+    @Deprecated // TODO remove once forge bug is fixed: https://github.com/MinecraftForge/ForgeSPI/pull/3
+    private static void registerReflectively(ITextureType type, TextureType[] annotationsByType) {
+        for (TextureType annot : annotationsByType) {
+            log.debug("Registering scanned texture type: {}", annot.value());
+            try {
+                register(annot.value(), type);
+            } catch (IllegalArgumentException e) {
+                log.warn("Saw texture type " + annot.value() + " more than once. Was the forge bug fixed? https://github.com/MinecraftForge/ForgeSPI/pull/3");
             }
         }
     }
