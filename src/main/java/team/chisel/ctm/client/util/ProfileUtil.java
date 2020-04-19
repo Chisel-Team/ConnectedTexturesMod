@@ -3,19 +3,16 @@ package team.chisel.ctm.client.util;
 import javax.annotation.Nonnull;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.profiler.EmptyProfiler;
 import net.minecraft.profiler.IProfiler;
-import net.minecraft.profiler.Profiler;
 
 public class ProfileUtil {
-    
-    /** Will never be "on" so calls to it will short-circuit */
-    private static final IProfiler dummyProfiler = new Profiler(0, () -> 0, false);
     
     private static ThreadLocal<IProfiler> profiler = ThreadLocal.withInitial(() -> {
         if (Thread.currentThread().getId() == 1) {
             return Minecraft.getInstance().getProfiler();
         } else {
-            return dummyProfiler;
+            return EmptyProfiler.INSTANCE;            
         }
     });
     
