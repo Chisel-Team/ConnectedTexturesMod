@@ -1,3 +1,7 @@
+1.1.0:
+New
+- Update to 1.15.2. This is a beta version, which may have bugs and future API changes.
+
 1.0.2:
 Fixes
 - #115 Fix CTM models using the no-layer cache on the incorrect model, should fix the iChisel's preview mode
