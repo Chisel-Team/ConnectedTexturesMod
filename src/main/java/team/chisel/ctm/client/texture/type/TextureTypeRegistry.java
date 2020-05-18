@@ -49,7 +49,6 @@ public class TextureTypeRegistry {
                     Class<?> c = Class.forName(data.getKey().getClassType().getClassName());
                     Field f = c.getDeclaredField(data.getKey().getMemberName());
                     type = (ITextureType) f.get(null);
-                    registerReflectively(type, f.getAnnotationsByType(TextureType.class));
                 } catch (Exception e) {
                     throw new RuntimeException("Exception loading texture type for class: " + data.getKey().getClassType(), e);
                 }
@@ -57,7 +56,6 @@ public class TextureTypeRegistry {
 	            try {
 	                Class<? extends ITextureType> clazz = (Class<? extends ITextureType>) Class.forName(data.getKey().getClassType().getClassName());
 	                type = clazz.newInstance();
-                    registerReflectively(type, clazz.getAnnotationsByType(TextureType.class));
 	            } catch (Exception e) {
 	                throw new RuntimeException("Exception loading texture type for class: " + data.getKey().getClassType() + " (on member " + data.getKey().getMemberName() + ")", e);
 	            }
@@ -65,21 +63,8 @@ public class TextureTypeRegistry {
             	throw new IllegalArgumentException("@TextureType found on invalid element type: " + data.getKey().getTargetType() + " (" + data.getKey().getClassType() + ")");
             }
             for (String name : data.getValue()) {
-                // TODO move back to this way of doing it after forge bug is fixed
-//                log.debug("Registering scanned texture type: {}", name);
-//                register(name, type);
-            }
-        }
-    }
-
-    @Deprecated // TODO remove once forge bug is fixed: https://github.com/MinecraftForge/ForgeSPI/pull/3
-    private static void registerReflectively(ITextureType type, TextureType[] annotationsByType) {
-        for (TextureType annot : annotationsByType) {
-            log.debug("Registering scanned texture type: {}", annot.value());
-            try {
-                register(annot.value(), type);
-            } catch (IllegalArgumentException e) {
-                log.warn("Saw texture type " + annot.value() + " more than once. Was the forge bug fixed? https://github.com/MinecraftForge/ForgeSPI/pull/3");
+                log.debug("Registering scanned texture type: {}", name);
+                register(name, type);
             }
         }
     }
