@@ -17,7 +17,7 @@ import com.google.gson.JsonParseException;
 
 import lombok.Getter;
 import lombok.ToString;
-import net.minecraft.client.renderer.model.Material;
+import net.minecraft.client.renderer.model.RenderMaterial;
 import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.data.IMetadataSectionSerializer;
@@ -47,10 +47,10 @@ public interface IMetadataSectionCTM {
 
     JsonObject getExtraData();
     
-    default ICTMTexture<?> makeTexture(TextureAtlasSprite sprite, Function<Material, TextureAtlasSprite> bakedTextureGetter) {
+    default ICTMTexture<?> makeTexture(TextureAtlasSprite sprite, Function<RenderMaterial, TextureAtlasSprite> bakedTextureGetter) {
         IMetadataSectionCTM meta = this;
         if (getProxy() != null) {
-            TextureAtlasSprite proxySprite = bakedTextureGetter.apply(new Material(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation(getProxy())));
+            TextureAtlasSprite proxySprite = bakedTextureGetter.apply(new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation(getProxy())));
             try {
                 meta = ResourceUtil.getMetadata(proxySprite);
                 if (meta == null) {
@@ -64,7 +64,7 @@ public interface IMetadataSectionCTM {
         }
         return meta.getType().makeTexture(new TextureInfo(
                 Arrays.stream(ObjectArrays.concat(sprite.getName(), meta.getAdditionalTextures()))
-                	  .map(rl -> new Material(AtlasTexture.LOCATION_BLOCKS_TEXTURE, rl))
+                	  .map(rl -> new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, rl))
                 	  .map(bakedTextureGetter::apply)
                 	  .toArray(TextureAtlasSprite[]::new), 
                 Optional.of(meta.getExtraData()), 

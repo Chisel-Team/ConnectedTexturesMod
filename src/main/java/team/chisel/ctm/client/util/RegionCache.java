@@ -11,7 +11,7 @@ import com.google.common.base.Preconditions;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.block.BlockState;
-import net.minecraft.fluid.IFluidState;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
@@ -109,7 +109,7 @@ public class RegionCache implements IBlockReader {
 //    }
 
 	@Override
-	public IFluidState getFluidState(BlockPos pos) {
+	public FluidState getFluidState(BlockPos pos) {
 		return getPassthrough().getFluidState(pos);
 	}
 }
