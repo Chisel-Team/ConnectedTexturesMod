@@ -15,6 +15,7 @@ public enum BlockRenderLayer {
 	CUTOUT(RenderType::getCutout),
 	CUTOUT_MIPPED(RenderType::getCutoutMipped),
 	TRANSLUCENT(RenderType::getTranslucent),
+    TRIPWIRE(RenderType::func_241715_r_)
 	;
 	
     private static final Map<RenderType, BlockRenderLayer> reverseLookup = new IdentityHashMap<>();

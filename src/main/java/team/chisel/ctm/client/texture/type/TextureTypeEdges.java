@@ -1,7 +1,6 @@
 package team.chisel.ctm.client.texture.type;
 
 import javax.annotation.ParametersAreNonnullByDefault;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -9,7 +8,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.IBlockReader;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.TextureType;
@@ -50,14 +49,14 @@ public class TextureTypeEdges extends TextureTypeCTM {
             BlockState obscuringcon = getConnectionState(world, connection.offset(dir), dir, current);
             
             if (stateComparator(state, con, dir) || stateComparator(state, obscuringcon, dir)) {
-                Vec3d difference = new Vec3d(connection.subtract(current));
+                Vector3d difference = Vector3d.func_237491_b_(connection.subtract(current));
                 if (difference.lengthSquared() > 1) {
                     difference = difference.normalize();
                     if (dir.getAxis() == Axis.Z) {
                         difference = difference.rotateYaw((float) (-Math.PI / 2));
                     }
                     float ang = (float) Math.PI / 4;
-                    Vec3d vA, vB;
+                    Vector3d vA, vB;
                     if (dir.getAxis().isVertical()) {
                         vA = difference.rotateYaw(ang);
                         vB = difference.rotateYaw(-ang);

@@ -1,25 +1,19 @@
 package team.chisel.ctm.client.util;
 
-import java.util.List;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
-
-import org.apache.commons.lang3.tuple.Pair;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MultimapBuilder;
-
+import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.Value;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.Vector3f;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.MissingTextureSprite;
@@ -27,11 +21,12 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraft.client.renderer.vertex.VertexFormatElement.Usage;
 import net.minecraft.util.Direction;
-import net.minecraft.util.math.Vec2f;
+import net.minecraft.util.math.vector.Vector2f;
+import net.minecraft.util.math.vector.Vector3f;
 import net.minecraftforge.client.model.pipeline.BakedQuadBuilder;
 import net.minecraftforge.client.model.pipeline.IVertexConsumer;
+import org.apache.commons.lang3.tuple.Pair;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.util.NonnullType;
 
@@ -51,7 +46,7 @@ public class Quad {
     @Value
     public static class Vertex {
         Vector3f pos;
-        Vec2f uvs;
+        Vector2f uvs;
     }
 
     private static final TextureAtlasSprite BASE = Minecraft.getInstance().getAtlasSpriteGetter(AtlasTexture.LOCATION_BLOCKS_TEXTURE).apply(MissingTextureSprite.getLocation());
@@ -65,20 +60,20 @@ public class Quad {
         @Getter
         private final TextureAtlasSprite sprite;
         
-        private final Vec2f[] data;
+        private final Vector2f[] data;
         
-        private UVs(Vec2f... data) {
+        private UVs(Vector2f... data) {
             this(BASE, data);
         }
         
-        private UVs(TextureAtlasSprite sprite, Vec2f... data) {
+        private UVs(TextureAtlasSprite sprite, Vector2f... data) {
             this.data = data;
             this.sprite = sprite;
             
             float minU = Float.MAX_VALUE;
             float minV = Float.MAX_VALUE;
             float maxU = 0, maxV = 0;
-            for (Vec2f v : data) {
+            for (Vector2f v : data) {
                 minU = Math.min(minU, v.x);
                 minV = Math.min(minV, v.y);
                 maxU = Math.max(maxU, v.x);
@@ -116,10 +111,10 @@ public class Quad {
 
             // TODO this is horrid
             return new UVs(other, 
-                    new Vec2f(data[0].x == this.minU ? minU : maxU, data[0].y == this.minV ? minV : maxV), 
-                    new Vec2f(data[1].x == this.minU ? minU : maxU, data[1].y == this.minV ? minV : maxV), 
-                    new Vec2f(data[2].x == this.minU ? minU : maxU, data[2].y == this.minV ? minV : maxV), 
-                    new Vec2f(data[3].x == this.minU ? minU : maxU, data[3].y == this.minV ? minV : maxV))
+                    new Vector2f(data[0].x == this.minU ? minU : maxU, data[0].y == this.minV ? minV : maxV), 
+                    new Vector2f(data[1].x == this.minU ? minU : maxU, data[1].y == this.minV ? minV : maxV), 
+                    new Vector2f(data[2].x == this.minU ? minU : maxU, data[2].y == this.minV ? minV : maxV), 
+                    new Vector2f(data[3].x == this.minU ? minU : maxU, data[3].y == this.minV ? minV : maxV))
                     .relativize();
         }
 
@@ -132,13 +127,13 @@ public class Quad {
             float maxUInterp = quadrant == 0 || quadrant == 3 ? 0.5f : 1;
             float maxVInterp = quadrant > 1 ? 0.5f : 1;
             
-            normal = new UVs(sprite, normalize(new Vec2f(minUInterp, minVInterp), new Vec2f(maxUInterp, maxVInterp), normal.vectorize()));
+            normal = new UVs(sprite, normalize(new Vector2f(minUInterp, minVInterp), new Vector2f(maxUInterp, maxVInterp), normal.vectorize()));
             return normal.relativize();
         }
         
         public UVs normalize() {
-            Vec2f min = new Vec2f(sprite.getMinU(), sprite.getMinV());
-            Vec2f max = new Vec2f(sprite.getMaxU(), sprite.getMaxV());
+            Vector2f min = new Vector2f(sprite.getMinU(), sprite.getMinV());
+            Vector2f max = new Vector2f(sprite.getMaxU(), sprite.getMaxV());
             return new UVs(sprite, normalize(min, max, data));
         }
 
@@ -147,38 +142,38 @@ public class Quad {
         }
 
         public UVs relativize(TextureAtlasSprite sprite) {
-            Vec2f min = new Vec2f(sprite.getMinU(), sprite.getMinV());
-            Vec2f max = new Vec2f(sprite.getMaxU(), sprite.getMaxV());
+            Vector2f min = new Vector2f(sprite.getMinU(), sprite.getMinV());
+            Vector2f max = new Vector2f(sprite.getMaxU(), sprite.getMaxV());
             return new UVs(sprite, lerp(min, max, data));
         }
 
         @SuppressWarnings("null")
-        public Vec2f[] vectorize() {
-            return data == null ? new Vec2f[]{ new Vec2f(minU, minV), new Vec2f(minU, maxV), new Vec2f(maxU, maxV), new Vec2f(maxU, minV) } : data;
+        public Vector2f[] vectorize() {
+            return data == null ? new Vector2f[]{ new Vector2f(minU, minV), new Vector2f(minU, maxV), new Vector2f(maxU, maxV), new Vector2f(maxU, minV) } : data;
         }
         
-        private Vec2f[] normalize(Vec2f min, Vec2f max, @NonnullType Vec2f... vecs) {
-            Vec2f[] ret = new Vec2f[vecs.length];
+        private Vector2f[] normalize(Vector2f min, Vector2f max, @NonnullType Vector2f... vecs) {
+            Vector2f[] ret = new Vector2f[vecs.length];
             for (int i = 0; i < ret.length; i++) {
                 ret[i] = normalize(min, max, vecs[i]);
             }
             return ret;
         }
         
-        private Vec2f normalize(Vec2f min, Vec2f max, Vec2f vec) {
-            return new Vec2f(Quad.normalize(min.x, max.x, vec.x), Quad.normalize(min.y, max.y, vec.y));
+        private Vector2f normalize(Vector2f min, Vector2f max, Vector2f vec) {
+            return new Vector2f(Quad.normalize(min.x, max.x, vec.x), Quad.normalize(min.y, max.y, vec.y));
         }
         
-        private Vec2f[] lerp(Vec2f min, Vec2f max, @NonnullType Vec2f... vecs) {
-            Vec2f[] ret = new Vec2f[vecs.length];
+        private Vector2f[] lerp(Vector2f min, Vector2f max, @NonnullType Vector2f... vecs) {
+            Vector2f[] ret = new Vector2f[vecs.length];
             for (int i = 0; i < ret.length; i++) {
                 ret[i] = lerp(min, max, vecs[i]);
             }
             return ret;
         }
         
-        private Vec2f lerp(Vec2f min, Vec2f max, Vec2f vec) {
-            return new Vec2f(Quad.lerp(min.x, max.x, vec.x), Quad.lerp(min.y, max.y, vec.y));
+        private Vector2f lerp(Vector2f min, Vector2f max, Vector2f vec) {
+            return new Vector2f(Quad.lerp(min.x, max.x, vec.x), Quad.lerp(min.y, max.y, vec.y));
         }
         
         public int getQuadrant() {
@@ -199,7 +194,7 @@ public class Quad {
     }
 
     private final Vector3f[] vertPos;
-    private final Vec2f[] vertUv;
+    private final Vector2f[] vertUv;
         
     // Technically nonfinal, but treated as such except in constructor
     @Getter
@@ -209,16 +204,16 @@ public class Quad {
 
     private final int blocklight, skylight;
     
-    private Quad(Vector3f[] verts, Vec2f[] uvs, Builder builder, TextureAtlasSprite sprite) {
+    private Quad(Vector3f[] verts, Vector2f[] uvs, Builder builder, TextureAtlasSprite sprite) {
         this(verts, uvs, builder, sprite, 0, 0);
     }
 
     @Deprecated
-    private Quad(Vector3f[] verts, Vec2f[] uvs, Builder builder, TextureAtlasSprite sprite, boolean fullbright) {
+    private Quad(Vector3f[] verts, Vector2f[] uvs, Builder builder, TextureAtlasSprite sprite, boolean fullbright) {
         this(verts, uvs, builder, sprite, fullbright ? 15 : 0, fullbright ? 15 : 0);
     }
     
-    private Quad(Vector3f[] verts, Vec2f[] uvs, Builder builder, TextureAtlasSprite sprite, int blocklight, int skylight) {
+    private Quad(Vector3f[] verts, Vector2f[] uvs, Builder builder, TextureAtlasSprite sprite, int blocklight, int skylight) {
         this.vertPos = verts;
         this.vertUv = uvs;
         this.builder = builder;
@@ -252,13 +247,13 @@ public class Quad {
         return new Quad(newverts, getUvs(), builder);
     }
     
-    public Vec2f getUv(int index) {
-    	return new Vec2f(vertUv[index % 4].x, vertUv[index % 4].y);
+    public Vector2f getUv(int index) {
+    	return new Vector2f(vertUv[index % 4].x, vertUv[index % 4].y);
     }
     
-    public Quad withUv(int index, Vec2f uv) {
+    public Quad withUv(int index, Vector2f uv) {
         Preconditions.checkElementIndex(index, 4, "UV index out of range!");
-        Vec2f[] newuvs = new Vec2f[4];
+        Vector2f[] newuvs = new Vector2f[4];
         System.arraycopy(getUvs().vectorize(), 0, newuvs, 0, newuvs.length);
         newuvs[index] = uv;
         return new Quad(vertPos, new UVs(newuvs), builder);
@@ -366,32 +361,32 @@ public class Quad {
     }
     
     public Quad rotate(int amount) {
-        Vec2f[] uvs = new Vec2f[4];
+        Vector2f[] uvs = new Vector2f[4];
 
         TextureAtlasSprite s = getUvs().getSprite();
 
         for (int i = 0; i < 4; i++) {
-            Vec2f normalized = new Vec2f(normalize(s.getMinU(), s.getMaxU(), vertUv[i].x), normalize(s.getMinV(), s.getMaxV(), vertUv[i].y));
-            Vec2f uv;
+            Vector2f normalized = new Vector2f(normalize(s.getMinU(), s.getMaxU(), vertUv[i].x), normalize(s.getMinV(), s.getMaxV(), vertUv[i].y));
+            Vector2f uv;
             switch (amount) {
             case 1:
-                uv = new Vec2f(normalized.y, 1 - normalized.x);
+                uv = new Vector2f(normalized.y, 1 - normalized.x);
                 break;
             case 2:
-                uv = new Vec2f(1 - normalized.x, 1 - normalized.y);
+                uv = new Vector2f(1 - normalized.x, 1 - normalized.y);
                 break;
             case 3:
-                uv = new Vec2f(1 - normalized.y, normalized.x);
+                uv = new Vector2f(1 - normalized.y, normalized.x);
                 break;
             default:
-                uv = new Vec2f(normalized.x, normalized.y);
+                uv = new Vector2f(normalized.x, normalized.y);
                 break;
             }
             uvs[i] = uv;
         }
         
         for (int i = 0; i < uvs.length; i++) {
-            uvs[i] = new Vec2f(lerp(s.getMinU(), s.getMaxU(), uvs[i].x), lerp(s.getMinV(), s.getMaxV(), uvs[i].y));
+            uvs[i] = new Vector2f(lerp(s.getMinU(), s.getMaxU(), uvs[i].x), lerp(s.getMinV(), s.getMaxV(), uvs[i].y));
         }
 
         Quad ret = new Quad(vertPos, uvs, builder, getUvs().getSprite(), blocklight, skylight);
@@ -407,7 +402,7 @@ public class Quad {
             }
         }
         
-        Vec2f[] uvs = new Vec2f[4];
+        Vector2f[] uvs = new Vector2f[4];
         for (int i = 0; i < 4; i++) {
             uvs[i] = vertUv[(i + start) % 4];
         }
@@ -445,7 +440,7 @@ public class Quad {
                         builder.put(i, ((float) blocklight * 0x20) / 0xFFFF, ((float) skylight * 0x20) / 0xFFFF);
                         break;
                     } else if (ele.getIndex() == 0) {
-                        Vec2f uv = vertUv[v];
+                        Vector2f uv = vertUv[v];
                         builder.put(i, uv.x, uv.y);
                         break;
                     }
@@ -516,15 +511,15 @@ public class Quad {
         
         public Quad build() {
             Vector3f[] verts = fromData(data.get(DefaultVertexFormats.POSITION_3F), 3); 
-            Vec2f[] uvs = fromData(data.get(DefaultVertexFormats.TEX_2F), 2);
+            Vector2f[] uvs = fromData(data.get(DefaultVertexFormats.TEX_2F), 2);
             return new Quad(verts, uvs, this, getSprite());
         }
 
         @SuppressWarnings("unchecked")
         private <T> T[] fromData(List<float[]> data, int size) {
-            Object[] ret = size == 2 ? new Vec2f[data.size()] : new Vector3f[data.size()];
+            Object[] ret = size == 2 ? new Vector2f[data.size()] : new Vector3f[data.size()];
             for (int i = 0; i < data.size(); i++) {
-                ret[i] = size == 2 ? new Vec2f(data.get(i)[0], data.get(i)[1]) : new Vector3f(data.get(i)[0], data.get(i)[1], data.get(i)[2]);
+                ret[i] = size == 2 ? new Vector2f(data.get(i)[0], data.get(i)[1]) : new Vector3f(data.get(i)[0], data.get(i)[1], data.get(i)[2]);
             }
             return (T[]) ret;
         }

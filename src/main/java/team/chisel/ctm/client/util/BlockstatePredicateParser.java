@@ -36,7 +36,7 @@ import lombok.val;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.state.IProperty;
+import net.minecraft.state.Property;
 import net.minecraft.util.Direction;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
@@ -84,7 +84,7 @@ public class BlockstatePredicateParser {
     @Value
     class PropertyPredicate<T extends Comparable<T>> implements Predicate<BlockState> {
         private Block block;
-        private IProperty<T> prop;
+        private Property<T> prop;
         private T value;
         private ComparisonType type;
         
@@ -97,7 +97,7 @@ public class BlockstatePredicateParser {
     @Value
     static class MultiPropertyPredicate<T extends Comparable<T>> implements Predicate<BlockState> {
         private Block block;
-        private IProperty<T> prop;
+        private Property<T> prop;
         private Set<T> validValues;
         
         @Override
@@ -218,7 +218,7 @@ public class BlockstatePredicateParser {
             
             String key = entryset.iterator().next().getKey();
             
-            Optional<IProperty<?>> prop = block.getStateContainer().getProperties().stream().filter(p -> p.getName().equals(key)).findFirst();
+            Optional<Property<?>> prop = block.getStateContainer().getProperties().stream().filter(p -> p.getName().equals(key)).findFirst();
             if (!prop.isPresent()) {
                 throw new JsonParseException(key + " is not a valid property for blockstate " + block.getDefaultState());
             }
@@ -231,7 +231,7 @@ public class BlockstatePredicateParser {
         }
         
         @SuppressWarnings({ "rawtypes", "unchecked" })
-        private Comparable parseValue(IProperty prop, JsonElement ele) {
+        private Comparable parseValue(Property prop, JsonElement ele) {
             String valstr = JSONUtils.getString(ele, prop.getName());
             Optional<Comparable> value = (Optional<Comparable>) prop.getAllowedValues().stream().filter(v -> prop.getName((Comparable) v).equalsIgnoreCase(valstr)).findFirst();
             if (!value.isPresent()) {

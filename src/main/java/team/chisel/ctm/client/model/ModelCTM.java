@@ -1,5 +1,16 @@
 package team.chisel.ctm.client.model;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Multimap;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,21 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Multimap;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
-
-import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.val;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.RenderType;
@@ -35,8 +32,8 @@ import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.IModelTransform;
 import net.minecraft.client.renderer.model.IUnbakedModel;
 import net.minecraft.client.renderer.model.ItemOverrideList;
-import net.minecraft.client.renderer.model.Material;
 import net.minecraft.client.renderer.model.ModelBakery;
+import net.minecraft.client.renderer.model.RenderMaterial;
 import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
@@ -106,13 +103,13 @@ public class ModelCTM implements IModelCTM {
 	}
 
 	@Override
-	public Collection<Material> getTextures(IModelConfiguration owner, Function<ResourceLocation, IUnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors) {
-		List<Material> ret = textureDependencies.stream()
-				.map(rl -> new Material(AtlasTexture.LOCATION_BLOCKS_TEXTURE, rl))
+	public Collection<RenderMaterial> getTextures(IModelConfiguration owner, Function<ResourceLocation, IUnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors) {
+		List<RenderMaterial> ret = textureDependencies.stream()
+				.map(rl -> new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, rl))
     			.collect(Collectors.toList());
     	ret.addAll(vanillamodel.getTextures(modelGetter, missingTextureErrors));
         // Validate all texture metadata
-    	for (Material tex : ret) {
+    	for (RenderMaterial tex : ret) {
             IMetadataSectionCTM meta;
 			try {
 				meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex.getTextureLocation()));
@@ -129,18 +126,18 @@ public class ModelCTM implements IModelCTM {
     }
 	
 	@Override
-	public IBakedModel bake(IModelConfiguration owner, ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ItemOverrideList itemOverrides, ResourceLocation modelLocation) {
+	public IBakedModel bake(IModelConfiguration owner, ModelBakery bakery, Function<RenderMaterial, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ItemOverrideList itemOverrides, ResourceLocation modelLocation) {
 		return bake(bakery, spriteGetter, modelTransform, modelLocation);
 	}
 	
-	public IBakedModel bake(ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ResourceLocation modelLocation) {
+	public IBakedModel bake(ModelBakery bakery, Function<RenderMaterial, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ResourceLocation modelLocation) {
         IBakedModel parent = vanillamodel.bakeModel(bakery, spriteGetter, modelTransform, modelLocation);
         initializeTextures(bakery, spriteGetter);
         return new ModelBakedCTM(this, parent);
     }
 	
-	public void initializeTextures(ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter) {
-		for (Material m : getTextures(null, bakery::getUnbakedModel, new HashSet<>())) {
+	public void initializeTextures(ModelBakery bakery, Function<RenderMaterial, TextureAtlasSprite> spriteGetter) {
+		for (RenderMaterial m : getTextures(null, bakery::getUnbakedModel, new HashSet<>())) {
 		    TextureAtlasSprite sprite = spriteGetter.apply(m);
 		    IMetadataSectionCTM chiselmeta = null;
 		    try {
@@ -163,7 +160,7 @@ public class ModelCTM implements IModelCTM {
             // Convert all primitive values into sprites
             for (Int2ObjectMap.Entry<JsonElement> e : overrides.int2ObjectEntrySet()) {
                 if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
-                    TextureAtlasSprite sprite = spriteGetter.apply(new Material(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation(e.getValue().getAsString())));
+                    TextureAtlasSprite sprite = spriteGetter.apply(new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation(e.getValue().getAsString())));
                     spriteOverrides.put(e.getIntKey(), sprite);
                 }
             }
@@ -172,14 +169,14 @@ public class ModelCTM implements IModelCTM {
             textureOverrides = new HashMap<>();
             for (Int2ObjectMap.Entry<IMetadataSectionCTM> e : metaOverrides.int2ObjectEntrySet()) {
                 List<BlockPartFace> matches = modelinfo.getElements().stream().flatMap(b -> b.mapFaces.values().stream()).filter(b -> b.tintIndex == e.getIntKey()).collect(Collectors.toList());
-                Multimap<Material, BlockPartFace> bySprite = HashMultimap.create();
+                Multimap<RenderMaterial, BlockPartFace> bySprite = HashMultimap.create();
                 // TODO 1.15 this isn't right
                 matches.forEach(part -> bySprite.put(modelinfo.textures.getOrDefault(part.texture.substring(1), Either.right(part.texture)).left().get(), part));
                 for (val e2 : bySprite.asMap().entrySet()) {
                     ResourceLocation texLoc = e2.getKey().getTextureLocation();
                     TextureAtlasSprite sprite = getOverrideSprite(e.getIntKey());
                     if (sprite == null) {
-                    	sprite = spriteGetter.apply(new Material(AtlasTexture.LOCATION_BLOCKS_TEXTURE, texLoc));
+                    	sprite = spriteGetter.apply(new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, texLoc));
                     }
                     ICTMTexture<?> tex = e.getValue().makeTexture(sprite, spriteGetter);
                     layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());

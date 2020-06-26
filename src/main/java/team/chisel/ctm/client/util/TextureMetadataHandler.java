@@ -18,8 +18,8 @@ import lombok.SneakyThrows;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.Material;
 import net.minecraft.client.renderer.model.ModelBakery;
+import net.minecraft.client.renderer.model.RenderMaterial;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
@@ -128,7 +128,7 @@ public enum TextureMetadataHandler {
                         continue;
                     }
 
-                    Set<Material> textures = Sets.newHashSet(model.getTextures(event.getModelLoader()::getUnbakedModel, Sets.newHashSet()));
+                    Set<RenderMaterial> textures = Sets.newHashSet(model.getTextures(event.getModelLoader()::getUnbakedModel, Sets.newHashSet()));
                     // FORGE WHY
 //                    if (vanillaModelWrapperClass.isAssignableFrom(model.getClass())) {
 //                        BlockModel parent = ((BlockModel) modelWrapperModel.get(model)).parent;
@@ -147,7 +147,7 @@ public enum TextureMetadataHandler {
 //                        newDependencies.addAll(partModels.values().stream().flatMap(m -> m.getDependencies().stream()).collect(Collectors.toList()));
 //                    }
                     
-                    for (Material tex : textures) {
+                    for (RenderMaterial tex : textures) {
                         IMetadataSectionCTM meta = null;
                         // Cache all dependent texture metadata
                         try {

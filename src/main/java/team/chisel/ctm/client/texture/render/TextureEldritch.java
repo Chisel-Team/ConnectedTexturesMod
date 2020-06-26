@@ -13,7 +13,7 @@ import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec2f;
+import net.minecraft.util.math.vector.Vector2f;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.ctx.TextureContextPosition;
@@ -35,8 +35,8 @@ public class TextureEldritch extends AbstractTexture<TextureTypeEldritch> {
         Quad q = makeQuad(quad, context);
 
         Quad.UVs uvs = q.getUvs();
-        Vec2f min = new Vec2f(uvs.getMinU(), uvs.getMinV());
-        Vec2f max = new Vec2f(uvs.getMaxU(), uvs.getMaxV());
+        Vector2f min = new Vector2f(uvs.getMinU(), uvs.getMinV());
+        Vector2f max = new Vector2f(uvs.getMaxU(), uvs.getMaxV());
 
         Direction facing = quad.getFace();
 
@@ -49,13 +49,13 @@ public class TextureEldritch extends AbstractTexture<TextureTypeEldritch> {
         for (int i = 0; i < subdiv.length; i++) {
             Quad quadrant = subdiv[i];
             for (int j = 0; quadrant != null && j < 4; j++) {
-            	Vec2f uv = quadrant.getUv(j);
+            	Vector2f uv = quadrant.getUv(j);
                 if (uv.x != min.x && uv.x != max.x && uv.y != min.y && uv.y != max.y) {
                     float xinterp = Quad.normalize(min.x, max.x, uv.x);
                     float yinterp = Quad.normalize(min.y, max.y, uv.y);
                     xinterp += offx;
                     yinterp += offy;
-                    uv = new Vec2f(Quad.lerp(min.x, max.x, xinterp), Quad.lerp(min.y, max.y, yinterp));
+                    uv = new Vector2f(Quad.lerp(min.x, max.x, xinterp), Quad.lerp(min.y, max.y, yinterp));
                     subdiv[i] = quadrant.withUv(j, uv);
                 }
             }
