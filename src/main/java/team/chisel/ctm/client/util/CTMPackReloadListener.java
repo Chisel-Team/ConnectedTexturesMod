@@ -6,7 +6,6 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -28,7 +27,6 @@ import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.MultipartBakedModel;
 import net.minecraft.client.renderer.model.WeightedBakedModel;
-import net.minecraft.client.renderer.model.WeightedBakedModel.WeightedModel;
 import net.minecraft.client.resources.ReloadListener;
 import net.minecraft.profiler.IProfiler;
 import net.minecraft.resources.IResourceManager;
@@ -70,49 +68,50 @@ public class CTMPackReloadListener extends ReloadListener<Unit> {
 
         for (Block block : ForgeRegistries.BLOCKS.getValues()) {
             BlockState state = block.getDefaultState();
-            BiPredicate<BlockState, RenderType> predicate = getLayerCheck(Minecraft.getInstance().getModelManager().getBlockModelShapes().getModel(state));
+            Predicate<RenderType> predicate = getLayerCheck(state, Minecraft.getInstance().getModelManager().getBlockModelShapes().getModel(state));
 
             if (predicate != null) {
                 blockRenderChecks.put(block.delegate, getExistingRenderCheck(block));
-                RenderTypeLookup.setRenderLayer(block, layer -> predicate.test(state, layer));
+                RenderTypeLookup.setRenderLayer(block, predicate);
             }
         }
     }
     
     @RequiredArgsConstructor
-    private static class CachingLayerCheck implements BiPredicate<BlockState, RenderType> {
+    private static class CachingLayerCheck implements Predicate<RenderType> {
         
-        static <T> CachingLayerCheck of(Collection<T> rawModels, Function<T, IBakedModel> converter) {
+        static <T> CachingLayerCheck of(BlockState state, Collection<T> rawModels, Function<T, IBakedModel> converter) {
             List<AbstractCTMBakedModel> ctmModels = rawModels.stream()
                     .map(converter)
                     .filter(m -> m instanceof AbstractCTMBakedModel)
                     .map(m -> (AbstractCTMBakedModel) m)
                     .collect(Collectors.toList());
-            return new CachingLayerCheck(ctmModels, ctmModels.size() < rawModels.size());
+            return new CachingLayerCheck(state, ctmModels, ctmModels.size() < rawModels.size());
         }
         
+        private final BlockState state;
         private final List<AbstractCTMBakedModel> models;
         private final boolean useFallback;
         
-        private final Object2BooleanMap<Pair<BlockState, RenderType>> cache = new Object2BooleanOpenHashMap<>();
+        private final Object2BooleanMap<RenderType> cache = new Object2BooleanOpenHashMap<>();
         
         @Override
-        public boolean test(BlockState state, RenderType layer) {
-            return cache.computeBooleanIfAbsent(Pair.of(state, layer), pair -> 
-                models.stream().anyMatch(m -> m.getModel().canRenderInLayer(state, layer)) ||
+        public boolean test(RenderType layer) {
+            return cache.computeBooleanIfAbsent(layer, type -> 
+                models.stream().anyMatch(m -> m.getModel().canRenderInLayer(state, type)) ||
                 (useFallback && canRenderInLayerFallback(state, layer)));
         }
     }
     
-    private BiPredicate<BlockState, RenderType> getLayerCheck(IBakedModel model) {
+    private Predicate<RenderType> getLayerCheck(BlockState state, IBakedModel model) {
         if (model instanceof AbstractCTMBakedModel) {
-            return ((AbstractCTMBakedModel) model).getModel()::canRenderInLayer;
+            return layer -> ((AbstractCTMBakedModel) model).getModel().canRenderInLayer(state, layer);
         }
         if (model instanceof WeightedBakedModel) {
-            return CachingLayerCheck.of(((WeightedBakedModel)model).models, wm -> wm.model);
+            return CachingLayerCheck.of(state, ((WeightedBakedModel)model).models, wm -> wm.model);
         }
         if (model instanceof MultipartBakedModel) {
-            return CachingLayerCheck.of(((MultipartBakedModel)model).selectors, Pair::getRight);
+            return CachingLayerCheck.of(state, ((MultipartBakedModel)model).selectors, Pair::getRight);
         }
         return null;
     }
