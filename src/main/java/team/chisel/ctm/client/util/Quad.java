@@ -415,7 +415,7 @@ public class Quad {
     }
 
     public Quad setLight(int blocklight, int skylight) {
-        return new Quad(this.vertPos, uvs, builder, blocklight, skylight);
+        return new Quad(this.vertPos, uvs, builder, Math.max(this.blocklight, blocklight), Math.max(this.skylight, skylight));
     }
     
     @SuppressWarnings("null")
@@ -517,6 +517,7 @@ public class Quad {
         public Quad build() {
             Vector3f[] verts = fromData(data.get(DefaultVertexFormats.POSITION_3F), 3); 
             Vec2f[] uvs = fromData(data.get(DefaultVertexFormats.TEX_2F), 2);
+            // TODO need to extract light data here
             return new Quad(verts, uvs, this, getSprite());
         }
 

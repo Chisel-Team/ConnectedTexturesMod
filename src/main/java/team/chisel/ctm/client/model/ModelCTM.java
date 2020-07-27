@@ -17,6 +17,7 @@ import javax.annotation.Nullable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -34,6 +35,7 @@ import net.minecraft.client.renderer.model.BlockPartFace;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.IModelTransform;
 import net.minecraft.client.renderer.model.IUnbakedModel;
+import net.minecraft.client.renderer.model.ItemModelGenerator;
 import net.minecraft.client.renderer.model.ItemOverrideList;
 import net.minecraft.client.renderer.model.Material;
 import net.minecraft.client.renderer.model.ModelBakery;
@@ -133,8 +135,15 @@ public class ModelCTM implements IModelCTM {
 		return bake(bakery, spriteGetter, modelTransform, modelLocation);
 	}
 	
+	private static final ItemModelGenerator ITEM_MODEL_GENERATOR = new ItemModelGenerator();
+
 	public IBakedModel bake(ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ResourceLocation modelLocation) {
-        IBakedModel parent = vanillamodel.bakeModel(bakery, spriteGetter, modelTransform, modelLocation);
+        IBakedModel parent;
+        if (modelinfo != null && modelinfo.getRootModel() == ModelBakery.MODEL_GENERATED) { // Apply same special case that ModelBakery does
+            return ITEM_MODEL_GENERATOR.makeItemModel(spriteGetter, modelinfo).bakeModel(bakery, modelinfo, spriteGetter, modelTransform, modelLocation, false);
+        } else {
+            parent = vanillamodel.bakeModel(bakery, spriteGetter, modelTransform, modelLocation);
+        }
         initializeTextures(bakery, spriteGetter);
         return new ModelBakedCTM(this, parent);
     }
