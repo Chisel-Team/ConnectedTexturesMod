@@ -39,8 +39,7 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
     private static final Direction[] FACINGS = ObjectArrays.concat(Direction.values(), (Direction) null);
 
     @Override
-    protected AbstractCTMBakedModel createModel(@Nullable BlockState state, IModelCTM model, @Nullable RenderContextList ctx, Random rand) {
-        IBakedModel parent = getParent(rand);
+    protected AbstractCTMBakedModel createModel(@Nullable BlockState state, IModelCTM model, IBakedModel parent, @Nullable RenderContextList ctx, Random rand) {
         while (parent instanceof ModelBakedCTM) {
             parent = ((AbstractCTMBakedModel)parent).getParent(rand);
         }
