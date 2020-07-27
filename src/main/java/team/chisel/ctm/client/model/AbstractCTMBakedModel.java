@@ -252,7 +252,7 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
 
     @Override
     public boolean isBuiltInRenderer() {
-        return false;
+        return parent.isBuiltInRenderer();
     }
 
     @Override
