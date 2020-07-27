@@ -49,14 +49,14 @@ public class CTMPackReloadListener extends ReloadListener<Unit> {
     
     @Override
     protected Unit prepare(IResourceManager resourceManagerIn, IProfiler profilerIn) {
-        ResourceUtil.invalidateCaches();
-        TextureMetadataHandler.INSTANCE.invalidateCaches();
-        AbstractCTMBakedModel.invalidateCaches();
         return Unit.INSTANCE;
     }
 
     @Override
     protected void apply(Unit objectIn, IResourceManager resourceManagerIn, IProfiler profilerIn) {
+        ResourceUtil.invalidateCaches();
+        TextureMetadataHandler.INSTANCE.invalidateCaches();
+        AbstractCTMBakedModel.invalidateCaches();
         refreshLayerHacks();
     }
 
