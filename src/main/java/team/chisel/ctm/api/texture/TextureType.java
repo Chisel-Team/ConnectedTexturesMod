@@ -6,8 +6,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import team.chisel.ctm.client.texture.type.TextureTypeCTMV;
-
 /**
  * Annotation to register an {@link ITextureType}.
  * <p>
@@ -16,7 +14,7 @@ import team.chisel.ctm.client.texture.type.TextureTypeCTMV;
  * Can also be applied to fields.
  * <p>
  * <strong>Note: This annotation is {@link Repeatable}, so a single texture type can be assigned multiple aliases.</strong>
- * For an example of this, see {@link TextureTypeCTMV}.
+ * For an example of this, see {@link team.chisel.ctm.client.texture.type.TextureTypePillar}.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.TYPE, ElementType.FIELD })
