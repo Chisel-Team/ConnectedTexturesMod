@@ -36,16 +36,11 @@ public class CTM {
     	
     	DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
     	    IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
-    	    modBus.addListener(this::preInit);
+    	    ModelLoaderRegistry.registerLoader(new ResourceLocation(MOD_ID, "ctm"), ModelLoaderCTM.INSTANCE);
     	    modBus.register(TextureMetadataHandler.INSTANCE);
     	    modBus.register(new CTMPackReloadListener());
     	    
             TextureTypeRegistry.scan();
     	});
-    }
-    
-    @SubscribeEvent
-    public void preInit(FMLClientSetupEvent event) {
-        ModelLoaderRegistry.registerLoader(new ResourceLocation(MOD_ID, "ctm"), ModelLoaderCTM.INSTANCE);
     }
 }
