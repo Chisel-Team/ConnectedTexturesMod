@@ -18,31 +18,32 @@ import java.util.List;
 public class TexturePlane extends TextureCTM<TextureTypePlane> {
     private final Plane plane;
 
-    public TexturePlane(TextureTypePlane type, TextureInfo info) {
+    public TexturePlane(final TextureTypePlane type, final TextureInfo info) {
         super(type, info);
-        plane = type.getPlane();
+		this.plane = type.getPlane();
     }
 
     @Override
-    public List<BakedQuad> transformQuad(BakedQuad quad, ITextureContext context, int quadGoal) {
-        Quad q = makeQuad(quad, context);
-        CTMLogic ctm = (context != null) ? ((TextureContextCTM) context).getCTM(quad.getFace()) : null;
-        return Collections.singletonList(q.transformUVs(sprites[0], getQuad(ctm)).rebake());
+    public List<BakedQuad> transformQuad(final BakedQuad bakedQuad, final ITextureContext context, final int quads) {
+        final Quad quad = this.makeQuad(bakedQuad, context);
+        final CTMLogic logic = (context instanceof TextureContextCTM) ? ((TextureContextCTM) context).getCTM(bakedQuad.getFace()) : null;
+		return Collections.singletonList(quad.transformUVs(this.sprites[0], this.getQuad(logic)).rebake());
     }
 
-    private ISubmap getQuad(CTMLogic ctm) {
-        if (ctm == null) {
+    private ISubmap getQuad(final CTMLogic logic) {
+        if (logic == null) {
             return Submap.X2[0][0];
         }
-        final int u, v;
-        if (this.plane == Plane.VERTICAL) {
-            final boolean top = ctm.connected(Dir.TOP);
-            u = (top == ctm.connected(Dir.BOTTOM)) ? 0 : 1;
+        final int u;
+		final int v;
+		if (this.plane == Plane.VERTICAL) {
+            final boolean top = logic.connected(Dir.TOP);
+            u = (top == logic.connected(Dir.BOTTOM)) ? 0 : 1;
             v = top ? 1 : 0;
         } else {
-            final boolean left = ctm.connected(Dir.LEFT);
+            final boolean left = logic.connected(Dir.LEFT);
             u = left ? 1 : 0;
-            v = (left == ctm.connected(Dir.RIGHT)) ? 0 : 1;
+            v = (left == logic.connected(Dir.RIGHT)) ? 0 : 1;
         }
         return Submap.X2[v][u];
     }

@@ -16,34 +16,39 @@ import java.util.List;
 import java.util.Optional;
 
 public class TextureSCTM extends TextureCTM<TextureTypeSCTM> {
-
-    public TextureSCTM(TextureTypeSCTM type, TextureInfo info) {
+    public TextureSCTM(final TextureTypeSCTM type, final TextureInfo info) {
         super(type, info);
     }
 
     @Override
-    public List<BakedQuad> transformQuad(BakedQuad quad, ITextureContext context, int quadGoal) {
-        Quad q = makeQuad(quad, context);
-        CTMLogic ctm = context == null ? null : ((TextureContextCTM) context).getCTM(quad.getFace());
-        ISubmap submap = getQuad(ctm);
-        q = q.transformUVs(sprites[0], submap);
-        return Collections.singletonList(q.rebake());
+    public List<BakedQuad> transformQuad(final BakedQuad bakedQuad, final ITextureContext context, final int quads) {
+        final Quad quad = this.makeQuad(bakedQuad, context);
+        final CTMLogic ctm = (context instanceof TextureContextCTM) ? ((TextureContextCTM) context).getCTM(bakedQuad.getFace()) : null;
+        return Collections.singletonList(quad.transformUVs(this.sprites[0], this.getQuad(ctm)).rebake());
     }
 
-    private ISubmap getQuad(CTMLogic ctm) {
-        if (ctm == null || !ctm.connectedOr(Dir.TOP, Dir.RIGHT, Dir.BOTTOM, Dir.LEFT)) {
-            return Submap.X2[0][0];
-        } else if (ctm.connectedAnd(Dir.TOP, Dir.TOP_RIGHT, Dir.RIGHT, Dir.BOTTOM_RIGHT, Dir.BOTTOM, Dir.BOTTOM_LEFT, Dir.LEFT, Dir.TOP_LEFT)) {
-            return Submap.X2[1][1];
-        } else if (ctm.connectedAnd(Dir.TOP, Dir.RIGHT, Dir.BOTTOM, Dir.LEFT)) {
-            return Submap.X2[0][0];
-        } else if (ctm.connectedAnd(Dir.LEFT, Dir.RIGHT)) {
-            return Submap.X2[0][1];
-        } else if (ctm.connectedAnd(Dir.TOP, Dir.BOTTOM)) {
-            return Submap.X2[1][0];
-        } else {
+    private ISubmap getQuad(final CTMLogic logic) {
+        if (logic == null) {
             return Submap.X2[0][0];
         }
+        final boolean top = logic.connected(Dir.TOP);
+        final boolean bottom = logic.connected(Dir.BOTTOM);
+        final boolean left = logic.connected(Dir.LEFT);
+        final boolean right = logic.connected(Dir.RIGHT);
+        if (top || bottom || left || right) {
+            if (!top || !bottom) {
+                return Submap.X2[0][(left && right) ? 1 : 0];
+            }
+            if (!left || !right) {
+                return Submap.X2[1][0];
+            }
+            if (logic.connected(Dir.TOP_LEFT) && logic.connected(Dir.TOP_RIGHT)) {
+                if (logic.connected(Dir.BOTTOM_LEFT) && logic.connected(Dir.BOTTOM_RIGHT)) {
+                    return Submap.X2[1][1];
+                }
+            }
+        }
+        return Submap.X2[0][0];
     }
 
     @Override
