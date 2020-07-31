@@ -28,21 +28,14 @@ public class TexturePlane extends TextureCTM<TextureTypePlane> {
     @Override
     public List<BakedQuad> transformQuad(BakedQuad quad, ITextureContext context, int quadGoal) {
         Quad q = makeQuad(quad, context);
-        CTMLogic ctm = context == null ? null : ((TextureContextCTM) context).getCTM(quad.getFace());
-        ISubmap submap = getQuad(ctm);
-        q = q.transformUVs(sprites[0], submap);
+        if (context != null)
+            q = q.transformUVs(sprites[0], getQuad(((TextureContextCTM) context).getCTM(quad.getFace())));
         return Collections.singletonList(q.rebake());
     }
 
     private ISubmap getQuad(CTMLogic ctm) {
-        if (ctm == null || !ctm.connectedOr(dir0, dir1)) {
-            return Submap.X2[0][0];
-        } else if (ctm.connectedAnd(dir0, dir1)) {
-            return Submap.X2[0][1];
-        } else if (ctm.connected(dir0)) {
-            return Submap.X2[1][1];
-        } else {
-            return Submap.X2[1][0];
-        }
+        boolean c0 = (ctm != null) && ctm.connected(dir0);
+        boolean c1 = (ctm != null) && ctm.connected(dir1);
+        return Submap.X2[(!(c0 || c1) || (c0 && c1)) ? 0 : 1][c0 ? 1 : 0];
     }
 }
