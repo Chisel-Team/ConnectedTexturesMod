@@ -36,6 +36,6 @@ public class TexturePlane extends TextureCTM<TextureTypePlane> {
     private ISubmap getQuad(CTMLogic ctm) {
         boolean c0 = (ctm != null) && ctm.connected(dir0);
         boolean c1 = (ctm != null) && ctm.connected(dir1);
-        return Submap.X2[(!(c0 || c1) || (c0 && c1)) ? 0 : 1][c0 ? 1 : 0];
+        return Submap.X2[(c0 == c1) ? 0 : 1][c0 ? 1 : 0];
     }
 }
