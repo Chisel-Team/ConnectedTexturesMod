@@ -1,7 +1,6 @@
 package team.chisel.ctm.client.texture.render;
 
 import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.util.Direction;
 import net.minecraft.util.Direction.Plane;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.texture.ITextureContext;
@@ -27,17 +26,24 @@ public class TexturePlane extends TextureCTM<TextureTypePlane> {
     @Override
     public List<BakedQuad> transformQuad(BakedQuad quad, ITextureContext context, int quadGoal) {
         Quad q = makeQuad(quad, context);
-        CTMLogic ctm = null;
-        if (context != null)
-            ctm = ((TextureContextCTM) context).getCTM(quad.getFace());
-        q = q.transformUVs(sprites[0], getQuad(ctm));
-        return Collections.singletonList(q.rebake());
+        CTMLogic ctm = (context != null) ? ((TextureContextCTM) context).getCTM(quad.getFace()) : null;
+        return Collections.singletonList(q.transformUVs(sprites[0], getQuad(ctm)).rebake());
     }
 
     private ISubmap getQuad(CTMLogic ctm) {
-        boolean v = plane == Plane.VERTICAL;
-        boolean c0 = (ctm != null) && ctm.connected(v ? Dir.TOP : Dir.LEFT);
-        boolean c1 = (ctm != null) && ctm.connected(v ? Dir.BOTTOM : Dir.RIGHT);
-        return Submap.X2[(c0 == (c1 && !v)) ? 0 : 1][(c0 == (c1 && v)) ? 0 : 1];
+        if (ctm == null) {
+            return Submap.X2[0][0];
+        }
+        final int u, v;
+        if (this.plane == Plane.VERTICAL) {
+            final boolean top = ctm.connected(Dir.TOP);
+            u = top ? 1 : 0;
+            v = (top == ctm.connected(Dir.BOTTOM)) ? 0 : 1;
+        } else {
+            final boolean left = ctm.connected(Dir.LEFT);
+            u = (left == ctm.connected(Dir.RIGHT)) ? 0 : 1;
+            v = left ? 1 : 0;
+        }
+        return Submap.X2[u][v];
     }
 }
