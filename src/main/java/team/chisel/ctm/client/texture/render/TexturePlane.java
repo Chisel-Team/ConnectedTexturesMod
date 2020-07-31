@@ -37,13 +37,13 @@ public class TexturePlane extends TextureCTM<TextureTypePlane> {
         final int u, v;
         if (this.plane == Plane.VERTICAL) {
             final boolean top = ctm.connected(Dir.TOP);
-            u = top ? 1 : 0;
-            v = (top == ctm.connected(Dir.BOTTOM)) ? 0 : 1;
+            u = (top == ctm.connected(Dir.BOTTOM)) ? 0 : 1;
+            v = top ? 1 : 0;
         } else {
             final boolean left = ctm.connected(Dir.LEFT);
-            u = (left == ctm.connected(Dir.RIGHT)) ? 0 : 1;
-            v = left ? 1 : 0;
+            u = left ? 1 : 0;
+            v = (left == ctm.connected(Dir.RIGHT)) ? 0 : 1;
         }
-        return Submap.X2[u][v];
+        return Submap.X2[v][u];
     }
 }
