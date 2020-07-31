@@ -2,6 +2,7 @@ package team.chisel.ctm.client.texture.render;
 
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.util.Direction;
+import net.minecraft.util.Direction.Plane;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -16,13 +17,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class TexturePlane extends TextureCTM<TextureTypePlane> {
-    private final Dir dir0, dir1;
-    
+    private final Plane plane;
+
     public TexturePlane(TextureTypePlane type, TextureInfo info) {
         super(type, info);
-        boolean v = type.getPlane() == Direction.Plane.VERTICAL;
-        this.dir0 = v ? Dir.TOP : Dir.LEFT;
-        this.dir1 = v ? Dir.BOTTOM : Dir.RIGHT;
+        plane = type.getPlane();
     }
 
     @Override
@@ -36,8 +35,10 @@ public class TexturePlane extends TextureCTM<TextureTypePlane> {
     }
 
     private ISubmap getQuad(CTMLogic ctm) {
-        boolean c0 = (ctm != null) && ctm.connected(dir0);
-        boolean c1 = (ctm != null) && ctm.connected(dir1);
-        return Submap.X2[(c0 == c1) ? 0 : 1][c0 ? 1 : 0];
+        boolean vertical = plane == Plane.VERTICAL;
+        boolean c0 = (ctm != null) && ctm.connected(vertical ? Dir.TOP : Dir.LEFT);
+        boolean c1 = (ctm != null) && ctm.connected(vertical ? Dir.BOTTOM : Dir.RIGHT);
+        int u = (c0 == c1) ? 0 : 1, v = c0 ? 1 : 0;
+        return Submap.X2[vertical ? v : u][vertical ? u : v];
     }
 }
