@@ -28,8 +28,10 @@ public class TexturePlane extends TextureCTM<TextureTypePlane> {
     @Override
     public List<BakedQuad> transformQuad(BakedQuad quad, ITextureContext context, int quadGoal) {
         Quad q = makeQuad(quad, context);
+        CTMLogic ctm = null;
         if (context != null)
-            q = q.transformUVs(sprites[0], getQuad(((TextureContextCTM) context).getCTM(quad.getFace())));
+            ctm = ((TextureContextCTM) context).getCTM(quad.getFace());
+        q = q.transformUVs(sprites[0], getQuad(ctm));
         return Collections.singletonList(q.rebake());
     }
 
