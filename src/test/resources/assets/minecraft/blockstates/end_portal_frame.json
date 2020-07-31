@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "eye=false": {
+      "model": "block/end_portal_frame"
+    },
+    "eye=true": {
+      "model": "block/end_portal_frame_filled"
+    }
+  }
+}
