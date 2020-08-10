@@ -16,6 +16,6 @@ issueTrackerURL="https://github.com/Chisel-Team/ConnectedTexturesMod/issues/"
 [[dependencies.ctm]]
     modId="forge"
     mandatory=true
-    versionRange="[31.2,)"
+    versionRange="[32.0.108,)"
     ordering="NONE"
     side="BOTH"

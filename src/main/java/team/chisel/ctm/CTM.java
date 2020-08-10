@@ -7,12 +7,11 @@ import org.apache.logging.log4j.Logger;
 
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import team.chisel.ctm.client.model.parsing.ModelLoaderCTM;
 import team.chisel.ctm.client.texture.type.TextureTypeRegistry;
@@ -34,9 +33,9 @@ public class CTM {
     public CTM() {
     	instance = this;
     	
-    	DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
+    	DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
     	    IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
-    	    modBus.addListener(this::preInit);
+    	    modBus.addListener(this::modelRegistry);
     	    modBus.register(TextureMetadataHandler.INSTANCE);
     	    modBus.register(new CTMPackReloadListener());
     	    
@@ -44,8 +43,7 @@ public class CTM {
     	});
     }
     
-    @SubscribeEvent
-    public void preInit(FMLClientSetupEvent event) {
+    private void modelRegistry(ModelRegistryEvent event) {
         ModelLoaderRegistry.registerLoader(new ResourceLocation(MOD_ID, "ctm"), ModelLoaderCTM.INSTANCE);
     }
 }
