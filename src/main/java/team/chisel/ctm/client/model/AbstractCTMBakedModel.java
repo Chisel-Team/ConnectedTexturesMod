@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -90,7 +91,9 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
                 // this must be a missing/invalid model
                 return Minecraft.getInstance().getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getMissingModel();
             }
-            return itemcache.get(mrl, () -> createModel(state, model, null, new Random()));
+            Random random = new Random();
+            random.setSeed(42L);
+            return itemcache.get(mrl, () -> createModel(state, model, getParent(random), null, random));
         }
     }
     
@@ -171,11 +174,11 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
 	
 	            Object2LongMap<ICTMTexture<?>> serialized = ctxList.serialized();
 	            ProfileUtil.endAndStart("model_creation");
-	            baked = modelcache.get(new State(state, serialized, parent), () -> createModel(state, model, ctxList, rand));
+	            baked = modelcache.get(new State(state, serialized, parent), () -> createModel(state, model, parent, ctxList, rand));
 	            ProfileUtil.end();
 	        } else if (state != null)  {
 	            ProfileUtil.start("model_creation");
-	            baked = modelcache.get(new State(state, null, getParent(rand)), () -> createModel(state, model, null, rand));
+	            baked = modelcache.get(new State(state, null, parent), () -> createModel(state, model, parent, null, rand));
 	            ProfileUtil.end();
 	        }
         } catch (ExecutionException e) {
@@ -248,7 +251,7 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
 
     @Override
     public boolean isBuiltInRenderer() {
-        return false;
+        return parent.isBuiltInRenderer();
     }
 
     @Override
@@ -269,7 +272,7 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
     
     protected static final RenderType[] LAYERS = RenderType.getBlockRenderTypes().toArray(new RenderType[0]);
     
-    protected abstract AbstractCTMBakedModel createModel(BlockState state, @Nonnull IModelCTM model, RenderContextList ctx, Random rand);
+    protected abstract AbstractCTMBakedModel createModel(BlockState state, @Nonnull IModelCTM model, IBakedModel parent, RenderContextList ctx, Random rand);
 
 	@Override
 	public boolean func_230044_c_() {

@@ -113,6 +113,9 @@ public enum TextureMetadataHandler {
             	if (baked instanceof AbstractCTMBakedModel) {
             		continue;
             	}
+            	if (baked.isBuiltInRenderer()) { // Nothing we can add to builtin models
+            	    continue;
+            	}
                 Deque<ResourceLocation> dependencies = new ArrayDeque<>();
                 Set<ResourceLocation> seenModels = new HashSet<>();
                 dependencies.push(rl);

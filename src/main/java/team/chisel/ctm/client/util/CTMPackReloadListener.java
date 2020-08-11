@@ -3,12 +3,21 @@ package team.chisel.ctm.client.util;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.util.Unit;
 
+import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
+import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
+import lombok.RequiredArgsConstructor;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.LeavesBlock;
@@ -16,6 +25,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.model.MultipartBakedModel;
 import net.minecraft.client.renderer.model.WeightedBakedModel;
 import net.minecraft.client.resources.ReloadListener;
 import net.minecraft.profiler.IProfiler;
@@ -39,14 +49,14 @@ public class CTMPackReloadListener extends ReloadListener<Unit> {
     
     @Override
     protected Unit prepare(IResourceManager resourceManagerIn, IProfiler profilerIn) {
-        ResourceUtil.invalidateCaches();
-        TextureMetadataHandler.INSTANCE.invalidateCaches();
-        AbstractCTMBakedModel.invalidateCaches();
         return Unit.INSTANCE;
     }
 
     @Override
     protected void apply(Unit objectIn, IResourceManager resourceManagerIn, IProfiler profilerIn) {
+        ResourceUtil.invalidateCaches();
+        TextureMetadataHandler.INSTANCE.invalidateCaches();
+        AbstractCTMBakedModel.invalidateCaches();
         refreshLayerHacks();
     }
 
@@ -58,14 +68,52 @@ public class CTMPackReloadListener extends ReloadListener<Unit> {
 
         for (Block block : ForgeRegistries.BLOCKS.getValues()) {
             BlockState state = block.getDefaultState();
-            IBakedModel model = Minecraft.getInstance().getModelManager().getBlockModelShapes().getModel(state);
-            final IBakedModel actualModel = model instanceof WeightedBakedModel ? ((WeightedBakedModel) model).baseModel : model;
+            Predicate<RenderType> predicate = getLayerCheck(state, Minecraft.getInstance().getModelManager().getBlockModelShapes().getModel(state));
 
-            if (actualModel instanceof AbstractCTMBakedModel) {
+            if (predicate != null) {
                 blockRenderChecks.put(block.delegate, getExistingRenderCheck(block));
-                RenderTypeLookup.setRenderLayer(block, layer -> ((AbstractCTMBakedModel) actualModel).getModel().canRenderInLayer(state, layer));
+                RenderTypeLookup.setRenderLayer(block, predicate);
             }
         }
+    }
+    
+    @RequiredArgsConstructor
+    private static class CachingLayerCheck implements Predicate<RenderType> {
+        
+        static <T> CachingLayerCheck of(BlockState state, Collection<T> rawModels, Function<T, IBakedModel> converter) {
+            List<AbstractCTMBakedModel> ctmModels = rawModels.stream()
+                    .map(converter)
+                    .filter(m -> m instanceof AbstractCTMBakedModel)
+                    .map(m -> (AbstractCTMBakedModel) m)
+                    .collect(Collectors.toList());
+            return new CachingLayerCheck(state, ctmModels, ctmModels.size() < rawModels.size());
+        }
+        
+        private final BlockState state;
+        private final List<AbstractCTMBakedModel> models;
+        private final boolean useFallback;
+        
+        private final Object2BooleanMap<RenderType> cache = new Object2BooleanOpenHashMap<>();
+        
+        @Override
+        public boolean test(RenderType layer) {
+            return cache.computeBooleanIfAbsent(layer, type -> 
+                models.stream().anyMatch(m -> m.getModel().canRenderInLayer(state, type)) ||
+                (useFallback && canRenderInLayerFallback(state, layer)));
+        }
+    }
+    
+    private Predicate<RenderType> getLayerCheck(BlockState state, IBakedModel model) {
+        if (model instanceof AbstractCTMBakedModel) {
+            return layer -> ((AbstractCTMBakedModel) model).getModel().canRenderInLayer(state, layer);
+        }
+        if (model instanceof WeightedBakedModel) {
+            return CachingLayerCheck.of(state, ((WeightedBakedModel)model).models, wm -> wm.model);
+        }
+        if (model instanceof MultipartBakedModel) {
+            return CachingLayerCheck.of(state, ((MultipartBakedModel)model).selectors, Pair::getRight);
+        }
+        return null;
     }
 
     private static final Field _blockRenderChecks = ObfuscationReflectionHelper.findField(RenderTypeLookup.class, "blockRenderChecks");

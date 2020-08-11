@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+
 import lombok.val;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.RenderType;
@@ -31,6 +32,7 @@ import net.minecraft.client.renderer.model.BlockPartFace;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.IModelTransform;
 import net.minecraft.client.renderer.model.IUnbakedModel;
+import net.minecraft.client.renderer.model.ItemModelGenerator;
 import net.minecraft.client.renderer.model.ItemOverrideList;
 import net.minecraft.client.renderer.model.ModelBakery;
 import net.minecraft.client.renderer.model.RenderMaterial;
@@ -59,7 +61,7 @@ public class ModelCTM implements IModelCTM {
     
     // Populated during bake with real texture data
     protected Int2ObjectMap<TextureAtlasSprite> spriteOverrides;
-    protected Map<Pair<Integer, String>, ICTMTexture<?>> textureOverrides;
+    protected Map<Pair<Integer, ResourceLocation>, ICTMTexture<?>> textureOverrides;
 
     private final Collection<ResourceLocation> textureDependencies;
     
@@ -130,8 +132,15 @@ public class ModelCTM implements IModelCTM {
 		return bake(bakery, spriteGetter, modelTransform, modelLocation);
 	}
 	
+	private static final ItemModelGenerator ITEM_MODEL_GENERATOR = new ItemModelGenerator();
+
 	public IBakedModel bake(ModelBakery bakery, Function<RenderMaterial, TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ResourceLocation modelLocation) {
-        IBakedModel parent = vanillamodel.bakeModel(bakery, spriteGetter, modelTransform, modelLocation);
+        IBakedModel parent;
+        if (modelinfo != null && modelinfo.getRootModel() == ModelBakery.MODEL_GENERATED) { // Apply same special case that ModelBakery does
+            return ITEM_MODEL_GENERATOR.makeItemModel(spriteGetter, modelinfo).bakeModel(bakery, modelinfo, spriteGetter, modelTransform, modelLocation, false);
+        } else {
+            parent = vanillamodel.bakeModel(bakery, spriteGetter, modelTransform, modelLocation);
+        }
         initializeTextures(bakery, spriteGetter);
         return new ModelBakedCTM(this, parent);
     }
@@ -180,7 +189,7 @@ public class ModelCTM implements IModelCTM {
                     }
                     ICTMTexture<?> tex = e.getValue().makeTexture(sprite, spriteGetter);
                     layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
-                    textureOverrides.put(Pair.of(e.getIntKey(), texLoc.toString()), tex);
+                    textureOverrides.put(Pair.of(e.getIntKey(), texLoc), tex);
                 }
             }
         }
