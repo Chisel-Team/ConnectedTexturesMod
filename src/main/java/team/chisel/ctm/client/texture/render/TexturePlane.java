@@ -20,14 +20,14 @@ public class TexturePlane extends TextureCTM<TextureTypePlane> {
 
     public TexturePlane(final TextureTypePlane type, final TextureInfo info) {
         super(type, info);
-		this.plane = type.getPlane();
+        this.plane = type.getPlane();
     }
 
     @Override
     public List<BakedQuad> transformQuad(final BakedQuad bakedQuad, final ITextureContext context, final int quads) {
         final Quad quad = this.makeQuad(bakedQuad, context);
         final CTMLogic logic = (context instanceof TextureContextCTM) ? ((TextureContextCTM) context).getCTM(bakedQuad.getFace()) : null;
-		return Collections.singletonList(quad.transformUVs(this.sprites[0], this.getQuad(logic)).rebake());
+        return Collections.singletonList(quad.transformUVs(this.sprites[0], this.getQuad(logic)).rebake());
     }
 
     private ISubmap getQuad(final CTMLogic logic) {
@@ -35,8 +35,8 @@ public class TexturePlane extends TextureCTM<TextureTypePlane> {
             return Submap.X2[0][0];
         }
         final int u;
-		final int v;
-		if (this.plane == Plane.VERTICAL) {
+        final int v;
+        if (this.plane == Plane.VERTICAL) {
             final boolean top = logic.connected(Dir.TOP);
             u = (top == logic.connected(Dir.BOTTOM)) ? 0 : 1;
             v = top ? 1 : 0;
