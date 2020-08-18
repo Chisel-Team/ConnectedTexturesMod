@@ -1,3 +1,12 @@
+1.1.1:
+Fixes
+- #134, #135 Fix model overrides not applying
+- #128 Fix layer overrides not working for some model types
+- Fix ctm models breaking tile entity item renderers (like chests)
+- #129 Fix broken item models when resources are reloaded while the item is visible
+- #130 Fix generated item models being broken by model overrides
+- #133 Fix random model variants changing when CTM state changes
+
 1.1.0:
 New
 - Update to 1.16.2. This is a beta version, which may have bugs and future API changes.
