@@ -1,5 +1,6 @@
 1.1.1:
 Fixes
+- #140 Fix crash on forge 32.0.107+
 - #134, #135 Fix model overrides not applying
 - #128 Fix layer overrides not working for some model types
 - Fix ctm models breaking tile entity item renderers (like chests)
