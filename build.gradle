@@ -198,5 +198,6 @@ curseforge {
         mainArtifact(jar) {
             displayName = "CTM - ${version}"
         }
+		addGameVersion '1.16.2'
     }
 }
