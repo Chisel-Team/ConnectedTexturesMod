@@ -1,6 +1,7 @@
 modLoader="javafml"
 loaderVersion="[31,)"
 issueTrackerURL="https://github.com/Chisel-Team/ConnectedTexturesMod/issues/"
+license="GPL-2.0"
 
 [[mods]]
     modId="ctm"
