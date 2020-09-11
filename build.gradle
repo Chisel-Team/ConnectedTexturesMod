@@ -199,5 +199,6 @@ curseforge {
             displayName = "CTM - ${version}"
         }
 		addGameVersion '1.16.2'
+		addGameVersion '1.16.3'
     }
 }
