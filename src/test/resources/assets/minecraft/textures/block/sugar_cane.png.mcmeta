@@ -1,0 +1,10 @@
+{
+  "ctm": {
+    "ctm_version": 1,
+    "type": "ctm_vertical",
+    "extra": {
+      "ignore_states": true,
+      "connect_inside": true
+    }
+  }
+}
