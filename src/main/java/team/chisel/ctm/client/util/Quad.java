@@ -227,6 +227,7 @@ public class Quad {
         this.skylight = skylight;
     }
     
+    @Deprecated
     private Quad(Vector3f[] verts, UVs uvs, Builder builder) {
         this(verts, uvs.vectorize(), builder, uvs.getSprite());
     }
@@ -249,7 +250,7 @@ public class Quad {
         Vector3f[] newverts = new Vector3f[4];
         System.arraycopy(vertPos, 0, newverts, 0, newverts.length);
         newverts[index] = vert;
-        return new Quad(newverts, getUvs(), builder);
+        return new Quad(newverts, getUvs(), builder, blocklight, skylight);
     }
     
     public Vec2f getUv(int index) {
@@ -261,7 +262,7 @@ public class Quad {
         Vec2f[] newuvs = new Vec2f[4];
         System.arraycopy(getUvs().vectorize(), 0, newuvs, 0, newuvs.length);
         newuvs[index] = uv;
-        return new Quad(vertPos, new UVs(newuvs), builder);
+        return new Quad(vertPos, new UVs(newuvs), builder, blocklight, skylight);
     }
 
     public void compute() {
