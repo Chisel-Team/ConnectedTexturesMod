@@ -180,6 +180,8 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
 	            ProfileUtil.start("model_creation");
 	            baked = modelcache.get(new State(state, null, parent), () -> createModel(state, model, parent, null, rand));
 	            ProfileUtil.end();
+	        } else {
+	            throw new IllegalArgumentException("getQuads called without state and without going through overrides, this is not valid!");
 	        }
         } catch (ExecutionException e) {
         	throw new RuntimeException(e);
