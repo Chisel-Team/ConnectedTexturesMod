@@ -181,7 +181,8 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
 	            baked = modelcache.get(new State(state, null, parent), () -> createModel(state, model, parent, null, rand));
 	            ProfileUtil.end();
 	        } else {
-	            throw new IllegalArgumentException("getQuads called without state and without going through overrides, this is not valid!");
+	            // This SHOULD be invalid, but apparently forge doesn't call getModelData when rendering items. Moving this check to be more specific below
+	            // throw new IllegalArgumentException("getQuads called without state and without going through overrides, this is not valid!");
 	        }
         } catch (ExecutionException e) {
         	throw new RuntimeException(e);
@@ -212,6 +213,9 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
         ProfileUtil.end();
 
         ProfileUtil.end();
+        if (ret == null) {
+            throw new IllegalStateException("getQuads called on a model that was not properly initialized - by using getOverrides and/or getModelData");
+        }
         return ret;
     }
     
