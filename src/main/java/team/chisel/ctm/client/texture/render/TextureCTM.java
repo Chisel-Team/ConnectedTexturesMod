@@ -16,6 +16,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+
 import it.unimi.dsi.fastutil.objects.Object2ByteMap;
 import it.unimi.dsi.fastutil.objects.Object2ByteOpenCustomHashMap;
 import lombok.Getter;
@@ -84,6 +85,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
 	}
 
 	private final Cache<CacheKey, Object2ByteMap<BlockState>> connectionCache = CacheBuilder.newBuilder().build();
+
     public TextureCTM(T type, TextureInfo info) {
         super(type, info);
         this.connectInside = info.getInfo().flatMap(obj -> ParseUtils.getBoolean(obj, "connect_inside"));
@@ -92,9 +94,9 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
     }
     
     public boolean connectTo(CTMLogic ctm, BlockState from, BlockState to, Direction dir) {
-		try {
-			Object2ByteMap<BlockState> sidecache = connectionCache.get(new CacheKey(from, dir),
-					() -> {
+        try {
+        	Object2ByteMap<BlockState> sidecache = connectionCache.get(new CacheKey(from, dir), 
+				() -> {
 					Object2ByteMap<BlockState> map = new Object2ByteOpenCustomHashMap<>(new IdentityStrategy<>());
 					map.defaultReturnValue((byte) -1);
 					return map;
@@ -105,9 +107,8 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
                 sidecache.put(to, cached = (byte) ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0));
             }
             return cached == 1;
-
-		} catch (ExecutionException e) {
-			throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
         }
     }
 

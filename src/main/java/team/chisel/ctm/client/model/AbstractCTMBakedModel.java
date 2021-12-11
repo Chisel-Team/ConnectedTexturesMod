@@ -179,9 +179,9 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
 	            baked = modelcache.get(new State(state, null, parent), () -> createModel(state, model, parent, null, rand));
 	            ProfileUtil.end();
 	        } else {
-                // This SHOULD be invalid, but apparently forge doesn't call getModelData when rendering items. Moving this check to be more specific below
-                // throw new IllegalArgumentException("getQuads called without state and without going through overrides, this is not valid!");
-	         }
+	            // This SHOULD be invalid, but apparently forge doesn't call getModelData when rendering items. Moving this check to be more specific below
+	            // throw new IllegalArgumentException("getQuads called without state and without going through overrides, this is not valid!");
+	        }
         } catch (ExecutionException e) {
         	throw new RuntimeException(e);
         }
