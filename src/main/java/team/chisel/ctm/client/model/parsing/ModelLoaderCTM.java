@@ -15,7 +15,7 @@ public enum ModelLoaderCTM implements IModelLoader<IModelCTM> {
 
 	INSTANCE;
 
-	private static final Map<Integer, IModelParser> parserVersions = ImmutableMap.of(1, new ModelParserV1());
+	private static final Map<Integer, IModelParser> parserVersions = Map.of(1, new ModelParserV1());
 
 //    @Override
 //    public boolean accepts(ResourceLocation modelLocation) {        

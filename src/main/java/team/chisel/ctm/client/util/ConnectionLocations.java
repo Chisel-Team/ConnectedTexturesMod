@@ -67,19 +67,15 @@ public enum ConnectionLocations {
     private final @Nullable Dir dir;
     private boolean offset;
 
-    private ConnectionLocations(@Nullable Dir dir) {
+    ConnectionLocations(@Nullable Dir dir) {
         this(Direction.SOUTH, dir);
     }
     
-    private ConnectionLocations(@Nullable Dir dir, boolean offset) {
-        this(Direction.SOUTH, dir, offset);
-    }
-    
-    private ConnectionLocations(Direction normal, @Nullable Dir dir){
+    ConnectionLocations(Direction normal, @Nullable Dir dir){
         this(normal, dir, false);
     }
     
-    private ConnectionLocations(Direction normal, @Nullable Dir dir, boolean offset) {
+    ConnectionLocations(Direction normal, @Nullable Dir dir, boolean offset) {
         this.normal = normal;
         this.dir = dir;
         this.offset = offset;
@@ -114,7 +110,7 @@ public enum ConnectionLocations {
         }
         return pos;
     }
-
+    
     public static ConnectionLocations fromFacing(Direction facing){
         switch (facing){
             case NORTH: return NORTH;

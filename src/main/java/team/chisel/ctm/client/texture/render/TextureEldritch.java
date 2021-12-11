@@ -61,7 +61,7 @@ public class TextureEldritch extends AbstractTexture<TextureTypeEldritch> {
             }
         }
 
-        return Arrays.stream(subdiv).filter(Objects::nonNull).map(Quad::rebake).collect(Collectors.toList());
+        return Arrays.stream(subdiv).filter(Objects::nonNull).map(Quad::rebake).toList();
     }
 
     private float offsetRand() {

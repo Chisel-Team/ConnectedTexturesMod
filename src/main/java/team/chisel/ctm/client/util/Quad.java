@@ -353,13 +353,11 @@ public class Quad {
     }
     
     public static float lerp(float a, float b, float f) {
-        float ret = (a * (1 - f)) + (b * f);
-        return ret;
+        return (a * (1 - f)) + (b * f);
     }
 
     public static float normalize(float min, float max, float x) {
-        float ret = (x - min) / (max - min);
-        return ret;
+        return (x - min) / (max - min);
     }
     
     public Quad rotate(int amount) {
@@ -391,8 +389,7 @@ public class Quad {
             uvs[i] = new Vec2(lerp(s.getU0(), s.getU1(), uvs[i].x), lerp(s.getV0(), s.getV1(), uvs[i].y));
         }
 
-        Quad ret = new Quad(vertPos, uvs, builder, getUvs().getSprite(), blocklight, skylight);
-        return ret;
+        return new Quad(vertPos, uvs, builder, getUvs().getSprite(), blocklight, skylight);
     }
 
     public Quad derotate() {

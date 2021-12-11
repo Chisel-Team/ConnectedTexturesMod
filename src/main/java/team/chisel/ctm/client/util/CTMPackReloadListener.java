@@ -85,7 +85,7 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
                     .map(converter)
                     .filter(m -> m instanceof AbstractCTMBakedModel)
                     .map(m -> (AbstractCTMBakedModel) m)
-                    .collect(Collectors.toList());
+                    .toList();
             return new CachingLayerCheck(state, ctmModels, ctmModels.size() < rawModels.size());
         }
         

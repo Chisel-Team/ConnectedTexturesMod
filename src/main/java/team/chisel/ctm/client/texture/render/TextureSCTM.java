@@ -23,7 +23,7 @@ public class TextureSCTM extends TextureCTM<TextureTypeSCTM> {
     @Override
     public List<BakedQuad> transformQuad(final BakedQuad bakedQuad, final ITextureContext context, final int quads) {
         final Quad quad = this.makeQuad(bakedQuad, context);
-        final CTMLogic ctm = (context instanceof TextureContextCTM) ? ((TextureContextCTM) context).getCTM(bakedQuad.getDirection()) : null;
+        final CTMLogic ctm = (context instanceof TextureContextCTM ctmContext) ? ctmContext.getCTM(bakedQuad.getDirection()) : null;
         return Collections.singletonList(quad.transformUVs(this.sprites[0], this.getQuad(ctm)).rebake());
     }
 

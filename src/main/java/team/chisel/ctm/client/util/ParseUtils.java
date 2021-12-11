@@ -4,7 +4,9 @@ import java.util.Optional;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class ParseUtils {
 
 	public static Optional<Boolean> getBoolean(JsonElement element) {

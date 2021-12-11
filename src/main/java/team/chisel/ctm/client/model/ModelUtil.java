@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemModelShaper;
 import net.minecraft.client.resources.model.ModelResourceLocation;
@@ -16,6 +17,7 @@ import net.minecraftforge.client.ItemModelMesherForge;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.minecraftforge.registries.IRegistryDelegate;
 
+@UtilityClass
 public class ModelUtil {
     
     private static final MethodHandle _locations;

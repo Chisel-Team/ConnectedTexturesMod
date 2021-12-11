@@ -17,7 +17,7 @@ public class TextureTypeCTM implements ITextureType {
 
     @Override
     public ICTMTexture<? extends TextureTypeCTM> makeTexture(TextureInfo info) {
-      return new TextureCTM<TextureTypeCTM>(this, info);
+      return new TextureCTM<>(this, info);
     }
 
     @Override

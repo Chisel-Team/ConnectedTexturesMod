@@ -396,8 +396,8 @@ public class CTMLogic {
 
 	public BlockState getConnectionState(BlockGetter world, BlockPos pos, @Nullable Direction side, BlockPos connection) {
 		BlockState state = world.getBlockState(pos);
-		if (state.getBlock() instanceof IFacade) {
-			return ((IFacade) state.getBlock()).getFacade(world, pos, side, connection);
+		if (state.getBlock() instanceof IFacade facade) {
+			return facade.getFacade(world, pos, side, connection);
 		}
 		return state;
 	}

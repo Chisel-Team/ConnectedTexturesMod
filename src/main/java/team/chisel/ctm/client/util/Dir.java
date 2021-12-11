@@ -58,7 +58,7 @@ public enum Dir {
 	
 	private @NonnullType BlockPos[] offsets = new BlockPos[6];
 
-	private Dir(Direction... dirs) {
+	Dir(Direction... dirs) {
 		this.dirs = dirs;
     }
 	

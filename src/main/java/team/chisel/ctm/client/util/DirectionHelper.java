@@ -7,6 +7,7 @@ import static net.minecraft.core.Direction.SOUTH;
 import static net.minecraft.core.Direction.UP;
 import static net.minecraft.core.Direction.WEST;
 
+import lombok.experimental.UtilityClass;
 import net.minecraft.core.Direction;
 
 /**
@@ -14,6 +15,7 @@ import net.minecraft.core.Direction;
  * 
  * @author Mojang
  */
+@UtilityClass
 public class DirectionHelper {
 
 	public static Direction rotateAround(Direction dir, Direction.Axis axis) {

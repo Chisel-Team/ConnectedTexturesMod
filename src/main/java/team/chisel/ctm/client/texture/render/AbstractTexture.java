@@ -88,7 +88,7 @@ public abstract class AbstractTexture<T extends ITextureType> implements ICTMTex
     
     @Override
     public Collection<ResourceLocation> getTextures() {
-        return Arrays.stream(sprites).map(TextureAtlasSprite::getName).collect(Collectors.toList());
+        return Arrays.stream(sprites).map(TextureAtlasSprite::getName).toList();
     }
 
     protected Quad makeQuad(BakedQuad bq, @Nullable ITextureContext context) {

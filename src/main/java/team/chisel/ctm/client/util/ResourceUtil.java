@@ -9,12 +9,14 @@ import javax.annotation.Nullable;
 
 import com.google.gson.JsonParseException;
 
+import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 
+@UtilityClass
 public class ResourceUtil {
     
     public static Resource getResource(TextureAtlasSprite sprite) throws IOException {

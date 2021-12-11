@@ -75,11 +75,7 @@ public class RegionCache implements BlockGetter {
     @Override
     public BlockState getBlockState(BlockPos pos) {
         long address = pos.asLong();
-        BlockState ret = stateCache.get(address);
-        if (ret == null) {
-            stateCache.put(address, ret = getPassthrough().getBlockState(pos));
-        }
-        return ret;
+        return stateCache.computeIfAbsent(address, a -> getPassthrough().getBlockState(pos));
     }
 
 //    @Override

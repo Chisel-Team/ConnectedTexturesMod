@@ -129,7 +129,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
                 quads[i] = q.grow().transformUVs(sprites[ctm[ctmid] > 15 ? 0 : 1], CTMLogic.uvs[ctm[ctmid]].normalize());
             }
         }
-        return Arrays.stream(quads).filter(Objects::nonNull).map(q -> q.rebake()).collect(Collectors.toList());
+        return Arrays.stream(quads).filter(Objects::nonNull).map(q -> q.rebake()).toList();
     }
     
     @Override

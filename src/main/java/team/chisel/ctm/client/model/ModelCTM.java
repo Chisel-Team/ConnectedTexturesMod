@@ -165,7 +165,7 @@ public class ModelCTM implements IModelCTM {
         if (textureOverrides == null) {
             textureOverrides = new HashMap<>();
             for (Int2ObjectMap.Entry<IMetadataSectionCTM> e : metaOverrides.int2ObjectEntrySet()) {
-                List<BlockElementFace> matches = modelinfo.getElements().stream().flatMap(b -> b.faces.values().stream()).filter(b -> b.tintIndex == e.getIntKey()).collect(Collectors.toList());
+                List<BlockElementFace> matches = modelinfo.getElements().stream().flatMap(b -> b.faces.values().stream()).filter(b -> b.tintIndex == e.getIntKey()).toList();
                 Multimap<Material, BlockElementFace> bySprite = HashMultimap.create();
                 // TODO 1.15 this isn't right
                 matches.forEach(part -> bySprite.put(modelinfo.textureMap.getOrDefault(part.texture.substring(1), Either.right(part.texture)).left().get(), part));

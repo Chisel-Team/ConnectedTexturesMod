@@ -196,7 +196,7 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
                     .stream()
                     .flatMap(List::stream)
                     .distinct()
-                    .collect(Collectors.toList())));
+                    .toList()));
         } else if (layer != null) {
             ret = baked.genQuads.get(layer);
         } else {
@@ -205,7 +205,7 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
                 ret = baked.noSideNoLayerCache = ImmutableList.copyOf(baked.genQuads.values()
                         .stream()
                         .distinct()
-                        .collect(Collectors.toList()));
+                        .toList());
             }
         }
         ProfileUtil.end();

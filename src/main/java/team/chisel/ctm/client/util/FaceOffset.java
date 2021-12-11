@@ -2,12 +2,14 @@ package team.chisel.ctm.client.util;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import lombok.experimental.UtilityClass;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
+@UtilityClass
 public class FaceOffset {
     public static BlockPos getBlockPosOffsetFromFaceOffset(Direction facing, int xOffset, int yOffset) {
         switch (facing) {

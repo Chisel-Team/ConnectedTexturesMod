@@ -89,6 +89,6 @@ public class TextureEdgesFull extends TextureEdges {
         return Lists.newArrayList(quad.subdivide(quadGoal)).stream()
                 .filter(Objects::nonNull)
                 .map(q -> q.transformUVs(sprite, sm).rebake())
-                .collect(Collectors.toList());
+                .toList();
     }
 }

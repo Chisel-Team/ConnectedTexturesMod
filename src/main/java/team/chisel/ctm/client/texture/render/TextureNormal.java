@@ -24,7 +24,7 @@ public class TextureNormal extends AbstractTexture<TextureTypeNormal> {
     @Override
     public List<BakedQuad> transformQuad(BakedQuad quad, ITextureContext context, int quadGoal) {
         if (quadGoal == 4) {
-            return Arrays.stream(makeQuad(quad, context).transformUVs(sprites[0]).subdivide(4)).filter(Objects::nonNull).map(qu -> qu.rebake()).collect(Collectors.toList());
+            return Arrays.stream(makeQuad(quad, context).transformUVs(sprites[0]).subdivide(4)).filter(Objects::nonNull).map(qu -> qu.rebake()).toList();
         }
         return Lists.newArrayList(makeQuad(quad, context).transformUVs(sprites[0]).rebake());
     }

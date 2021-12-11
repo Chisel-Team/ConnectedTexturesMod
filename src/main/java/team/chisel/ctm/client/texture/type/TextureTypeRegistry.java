@@ -13,6 +13,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 
+import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.ModFileScanData;
@@ -23,6 +24,7 @@ import team.chisel.ctm.api.texture.TextureType;
  * Registry for all the different texture types
  */
 @Log4j2
+@UtilityClass
 public class TextureTypeRegistry {
 
     private static Map<String, ITextureType> map = Maps.newHashMap();
@@ -33,7 +35,7 @@ public class TextureTypeRegistry {
                 .map(ModFileScanData::getAnnotations)
                 .flatMap(Collection::stream)
                 .filter(a -> TextureType.class.getName().equals(a.annotationType().getClassName()))
-                .collect(Collectors.toList());
+                .toList();
         log.debug("Found {} @TextureType annotations from scan", annotations.size());
 
         Multimap<ModFileScanData.AnnotationData, String> annots = HashMultimap.create();        

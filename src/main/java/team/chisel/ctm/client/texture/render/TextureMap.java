@@ -55,7 +55,7 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
                             quads[i] = quads[i].transformUVs(tex.sprites[0], uvs);
                         }
                     }
-                    return Arrays.stream(quads).filter(Objects::nonNull).map(Quad::rebake).collect(Collectors.toList());
+                    return Arrays.stream(quads).filter(Objects::nonNull).map(Quad::rebake).toList();
                 }
             }
             
@@ -91,7 +91,7 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
                             quads[i] = quads[i].transformUVs(tex.sprites[0], submap);
                         }
                     }
-                    return Arrays.stream(quads).filter(Objects::nonNull).map(Quad::rebake).collect(Collectors.toList());
+                    return Arrays.stream(quads).filter(Objects::nonNull).map(Quad::rebake).toList();
                 }
             }
             
