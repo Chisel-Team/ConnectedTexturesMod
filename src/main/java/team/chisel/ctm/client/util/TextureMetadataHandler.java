@@ -105,7 +105,7 @@ public enum TextureMetadataHandler {
     @SubscribeEvent(priority = EventPriority.LOWEST) // low priority to capture all event-registered models
     @SneakyThrows
     public void onModelBake(ModelBakeEvent event) {
-        Map<ResourceLocation, UnbakedModel> stateModels = ObfuscationReflectionHelper.getPrivateValue(ModelBakery.class, event.getModelLoader(), "unbakedCache");
+        Map<ResourceLocation, UnbakedModel> stateModels = ObfuscationReflectionHelper.getPrivateValue(ModelBakery.class, event.getModelLoader(), "f_119212_");
         for (ResourceLocation rl : event.getModelRegistry().keySet()) {
             UnbakedModel rootModel = stateModels.get(rl);
             if (rootModel != null) {

@@ -120,7 +120,7 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
     private static final MethodHandle _fancyGraphics;
     static {
         try {
-            _fancyGraphics = MethodHandles.lookup().unreflectGetter(ObfuscationReflectionHelper.findField(ItemBlockRenderTypes.class, "renderCutout"));
+            _fancyGraphics = MethodHandles.lookup().unreflectGetter(ObfuscationReflectionHelper.findField(ItemBlockRenderTypes.class, "f_109277_"));
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
