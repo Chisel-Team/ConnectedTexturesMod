@@ -10,17 +10,17 @@ import com.google.common.base.Preconditions;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import net.minecraft.block.BlockState;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 
 /**
  * Used by render state creation to avoid unnecessary block lookups through the world.
  */
 @ParametersAreNonnullByDefault
-public class RegionCache implements IBlockReader {
+public class RegionCache implements BlockGetter {
 
     /*
      * XXX
@@ -35,22 +35,22 @@ public class RegionCache implements IBlockReader {
     @SuppressWarnings("unused")
     private final int radius;
     
-    private WeakReference<IBlockReader> passthrough;
+    private WeakReference<BlockGetter> passthrough;
     private final Long2ObjectMap<BlockState> stateCache = new Long2ObjectOpenHashMap<>();
 
-    public RegionCache(BlockPos center, int radius, @Nullable IBlockReader passthrough) {
+    public RegionCache(BlockPos center, int radius, @Nullable BlockGetter passthrough) {
         this.center = center;
         this.radius = radius;
         this.passthrough = new WeakReference<>(passthrough);
     }
     
-    private IBlockReader getPassthrough() {
-        IBlockReader ret = passthrough.get();
+    private BlockGetter getPassthrough() {
+        BlockGetter ret = passthrough.get();
         Preconditions.checkNotNull(ret);
         return ret;
     }
     
-    public @Nonnull RegionCache updateWorld(IBlockReader passthrough) {
+    public @Nonnull RegionCache updateWorld(BlockGetter passthrough) {
         // We do NOT use getPassthrough() here so as to skip the null-validation - it's obviously valid to be null here
         if (this.passthrough.get() != passthrough) {
             stateCache.clear();
@@ -61,8 +61,8 @@ public class RegionCache implements IBlockReader {
 
     @Override
     @Nullable
-    public TileEntity getTileEntity(BlockPos pos) {
-        return getPassthrough().getTileEntity(pos);
+    public BlockEntity getBlockEntity(BlockPos pos) {
+        return getPassthrough().getBlockEntity(pos);
     }
 
 //    @Override
@@ -74,7 +74,7 @@ public class RegionCache implements IBlockReader {
 
     @Override
     public BlockState getBlockState(BlockPos pos) {
-        long address = pos.toLong();
+        long address = pos.asLong();
         BlockState ret = stateCache.get(address);
         if (ret == null) {
             stateCache.put(address, ret = getPassthrough().getBlockState(pos));
@@ -112,4 +112,14 @@ public class RegionCache implements IBlockReader {
 	public FluidState getFluidState(BlockPos pos) {
 		return getPassthrough().getFluidState(pos);
 	}
+
+    @Override
+    public int getHeight() {
+        return getPassthrough().getHeight();
+    }
+
+    @Override
+    public int getMinBuildHeight() {
+        return getPassthrough().getMinBuildHeight();
+    }
 }

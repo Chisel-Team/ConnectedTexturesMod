@@ -1,20 +1,20 @@
 package team.chisel.ctm.client.texture.render;
 
-import static net.minecraft.util.Direction.DOWN;
-import static net.minecraft.util.Direction.EAST;
-import static net.minecraft.util.Direction.NORTH;
-import static net.minecraft.util.Direction.SOUTH;
-import static net.minecraft.util.Direction.UP;
-import static net.minecraft.util.Direction.WEST;
+import static net.minecraft.core.Direction.DOWN;
+import static net.minecraft.core.Direction.EAST;
+import static net.minecraft.core.Direction.NORTH;
+import static net.minecraft.core.Direction.SOUTH;
+import static net.minecraft.core.Direction.UP;
+import static net.minecraft.core.Direction.WEST;
 
 import java.util.EnumSet;
 import java.util.List;
 
 import com.google.common.collect.Lists;
 
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Direction.Axis;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Axis;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -35,7 +35,7 @@ public class TexturePillar extends AbstractTexture<TextureTypePillar> {
     @Override
     public List<BakedQuad> transformQuad(BakedQuad quad, ITextureContext context, int quadGoal) {
         if (context == null) {
-            if (quad.getFace() != null && quad.getFace().getAxis().isVertical()) {
+            if (quad.getDirection() != null && quad.getDirection().getAxis().isVertical()) {
                 return Lists.newArrayList(makeQuad(quad, context).transformUVs(sprites[0]).rebake());
             }
             return Lists.newArrayList(makeQuad(quad, context).transformUVs(sprites[1], Submap.X2[0][0]).rebake());
@@ -67,14 +67,14 @@ public class TexturePillar extends AbstractTexture<TextureTypePillar> {
 
         int rotation = 0;
         ISubmap uvs = Submap.X2[0][0];
-        if (in.getFace().getAxis().isHorizontal() && cons.connectedOr(UP, DOWN)) {
+        if (in.getDirection().getAxis().isHorizontal() && cons.connectedOr(UP, DOWN)) {
             uvs = getUVs(UP, DOWN, cons);
         } else if (cons.connectedOr(EAST, WEST)) {
             rotation = 1;
             uvs = getUVs(EAST, WEST, cons);
         } else if (cons.connectedOr(NORTH, SOUTH)) {
             uvs = getUVs(NORTH, SOUTH, cons);
-            if (in.getFace() == DOWN) {
+            if (in.getDirection() == DOWN) {
                 rotation += 2;
             }
         }
@@ -83,23 +83,23 @@ public class TexturePillar extends AbstractTexture<TextureTypePillar> {
 
         // Side textures need to be rotated to look correct
         if (connected && !cons.connectedOr(UP, DOWN)) {
-            if (in.getFace() == EAST) {
+            if (in.getDirection() == EAST) {
                 rotation += 1;
             }
-            if (in.getFace() == NORTH) {
+            if (in.getDirection() == NORTH) {
                 rotation += 2;
             }
-            if (in.getFace() == WEST) {
+            if (in.getDirection() == WEST) {
                 rotation += 3;
             }
         }
 
         // If there is a connection opposite this side, it is an end-cap, so render as unconnected
-        if (cons.connected(in.getFace().getOpposite())) {
+        if (cons.connected(in.getDirection().getOpposite())) {
             connected = false;
         }
         // If there are no connections at all, and this is not the top or bottom, render the "short" column texture
-        if (cons.getConnections().isEmpty() && in.getFace().getAxis().isHorizontal()) {
+        if (cons.getConnections().isEmpty() && in.getDirection().getAxis().isHorizontal()) {
             connected = true;
         }
         
@@ -125,7 +125,7 @@ public class TexturePillar extends AbstractTexture<TextureTypePillar> {
     }
 
     private boolean blockConnectionY(Direction dir, ConnectionData data) {
-        return blockConnection(dir, Axis.Y, data) || blockConnection(dir, dir.rotateY().getAxis(), data);
+        return blockConnection(dir, Axis.Y, data) || blockConnection(dir, dir.getClockWise().getAxis(), data);
     }
 
     private boolean blockConnectionZ(Direction dir, ConnectionData data) {

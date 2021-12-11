@@ -5,6 +5,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 
 @EventBusSubscriber(modid = CTM.MOD_ID, bus = Bus.MOD)
@@ -17,8 +18,8 @@ public class Configurations {
     public static boolean connectInsideCTM = false;
 
     @SubscribeEvent
-    public static void onConfigChange(ModConfig.Reloading event) {
+    public static void onConfigChange(ModConfigEvent.Reloading event) {
         AbstractCTMBakedModel.invalidateCaches();
-        Minecraft.getInstance().worldRenderer.loadRenderers();
+        Minecraft.getInstance().levelRenderer.allChanged();
     }
 }

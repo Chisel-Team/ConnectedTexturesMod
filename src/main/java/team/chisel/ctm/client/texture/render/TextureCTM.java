@@ -7,21 +7,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ByteMap;
 import it.unimi.dsi.fastutil.objects.Object2ByteOpenCustomHashMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.util.Direction;
-import net.minecraft.util.JSONUtils;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.Direction;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.Configurations;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -80,19 +83,18 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
 		}
 	}
 
-	private final Map<CacheKey, Object2ByteMap<BlockState>> connectionCache = new HashMap<>();
-
+	private final Cache<CacheKey, Object2ByteMap<BlockState>> connectionCache = CacheBuilder.newBuilder().build();
     public TextureCTM(T type, TextureInfo info) {
         super(type, info);
         this.connectInside = info.getInfo().flatMap(obj -> ParseUtils.getBoolean(obj, "connect_inside"));
-        this.ignoreStates = info.getInfo().map(obj -> JSONUtils.getBoolean(obj, "ignore_states", false)).orElse(false);
+        this.ignoreStates = info.getInfo().map(obj -> GsonHelper.getAsBoolean(obj, "ignore_states", false)).orElse(false);
         this.connectionChecks = info.getInfo().map(obj -> predicateParser.parse(obj.get("connect_to"))).orElse(null);
     }
     
     public boolean connectTo(CTMLogic ctm, BlockState from, BlockState to, Direction dir) {
-        synchronized (connectionCache) {
-        	Object2ByteMap<BlockState> sidecache = connectionCache.computeIfAbsent(new CacheKey(from, dir), 
-				k -> {
+		try {
+			Object2ByteMap<BlockState> sidecache = connectionCache.get(new CacheKey(from, dir),
+					() -> {
 					Object2ByteMap<BlockState> map = new Object2ByteOpenCustomHashMap<>(new IdentityStrategy<>());
 					map.defaultReturnValue((byte) -1);
 					return map;
@@ -103,6 +105,9 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
                 sidecache.put(to, cached = (byte) ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0));
             }
             return cached == 1;
+
+		} catch (ExecutionException e) {
+			throw new RuntimeException(e);
         }
     }
 
@@ -115,7 +120,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
 
         Quad[] quads = quad.subdivide(4);
         
-        int[] ctm = ((TextureContextCTM)context).getCTM(bq.getFace()).getSubmapIndices();
+        int[] ctm = ((TextureContextCTM)context).getCTM(bq.getDirection()).getSubmapIndices();
         
         for (int i = 0; i < quads.length; i++) {
             Quad q = quads[i];

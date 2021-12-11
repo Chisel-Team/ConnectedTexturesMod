@@ -1,8 +1,13 @@
 package team.chisel.ctm.client.util;
 
-import static net.minecraft.util.Direction.*;
+import static net.minecraft.core.Direction.DOWN;
+import static net.minecraft.core.Direction.EAST;
+import static net.minecraft.core.Direction.NORTH;
+import static net.minecraft.core.Direction.SOUTH;
+import static net.minecraft.core.Direction.UP;
+import static net.minecraft.core.Direction.WEST;
 
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
 
 /**
  * A bunch of methods that got stripped out of Direction in 1.15
@@ -21,7 +26,7 @@ public class DirectionHelper {
 			return dir;
 		case Y:
 			if (dir != UP && dir != DOWN) {
-				return dir.rotateY();
+				return dir.getClockWise();
 			}
 
 			return dir;

@@ -16,17 +16,17 @@ import it.unimi.dsi.fastutil.objects.Object2BooleanLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import lombok.SneakyThrows;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.model.RenderMaterial;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
-import net.minecraftforge.client.model.ModelLoader;
+import net.minecraftforge.client.model.ForgeModelBakery;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import team.chisel.ctm.CTM;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 import team.chisel.ctm.client.model.ModelBakedCTM;
@@ -105,15 +105,15 @@ public enum TextureMetadataHandler {
     @SubscribeEvent(priority = EventPriority.LOWEST) // low priority to capture all event-registered models
     @SneakyThrows
     public void onModelBake(ModelBakeEvent event) {
-        Map<ResourceLocation, IUnbakedModel> stateModels = ObfuscationReflectionHelper.getPrivateValue(ModelBakery.class, event.getModelLoader(), "field_217849_F");
+        Map<ResourceLocation, UnbakedModel> stateModels = ObfuscationReflectionHelper.getPrivateValue(ModelBakery.class, event.getModelLoader(), "unbakedCache");
         for (ResourceLocation rl : event.getModelRegistry().keySet()) {
-            IUnbakedModel rootModel = stateModels.get(rl);
+            UnbakedModel rootModel = stateModels.get(rl);
             if (rootModel != null) {
-            	IBakedModel baked = event.getModelRegistry().get(rl);
+            	BakedModel baked = event.getModelRegistry().get(rl);
             	if (baked instanceof AbstractCTMBakedModel) {
             		continue;
             	}
-            	if (baked.isBuiltInRenderer()) { // Nothing we can add to builtin models
+            	if (baked.isCustomRenderer()) { // Nothing we can add to builtin models
             	    continue;
             	}
                 Deque<ResourceLocation> dependencies = new ArrayDeque<>();
@@ -124,14 +124,14 @@ public enum TextureMetadataHandler {
                 // Breadth-first loop through dependencies, exiting as soon as a CTM texture is found, and skipping duplicates/cycles
                 while (!shouldWrap && !dependencies.isEmpty()) {
                     ResourceLocation dep = dependencies.pop();
-                    IUnbakedModel model;
+                    UnbakedModel model;
                     try {
-                         model = dep == rl ? rootModel : event.getModelLoader().getUnbakedModel(dep);
+                         model = dep == rl ? rootModel : event.getModelLoader().getModel(dep);
                     } catch (Exception e) {
                         continue;
                     }
 
-                    Set<RenderMaterial> textures = Sets.newHashSet(model.getTextures(event.getModelLoader()::getUnbakedModel, Sets.newHashSet()));
+                    Set<Material> textures = Sets.newHashSet(model.getMaterials(event.getModelLoader()::getModel, Sets.newHashSet()));
                     // FORGE WHY
 //                    if (vanillaModelWrapperClass.isAssignableFrom(model.getClass())) {
 //                        BlockModel parent = ((BlockModel) modelWrapperModel.get(model)).parent;
@@ -150,11 +150,11 @@ public enum TextureMetadataHandler {
 //                        newDependencies.addAll(partModels.values().stream().flatMap(m -> m.getDependencies().stream()).collect(Collectors.toList()));
 //                    }
                     
-                    for (RenderMaterial tex : textures) {
+                    for (Material tex : textures) {
                         IMetadataSectionCTM meta = null;
                         // Cache all dependent texture metadata
                         try {
-                            meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex.getTextureLocation()));
+                            meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex.texture()));
                         } catch (IOException e) {} // Fallthrough
                         if (meta != null) {
                         	// At least one texture has CTM metadata, so we should wrap this model
@@ -181,9 +181,9 @@ public enum TextureMetadataHandler {
         }
     }
 
-    private @Nonnull IBakedModel wrap(ResourceLocation loc, IUnbakedModel model, IBakedModel object, ModelLoader loader) throws IOException {
+    private @Nonnull BakedModel wrap(ResourceLocation loc, UnbakedModel model, BakedModel object, ForgeModelBakery loader) throws IOException {
         ModelCTM modelchisel = new ModelCTM(model);
-        modelchisel.initializeTextures(loader, m -> Minecraft.getInstance().getAtlasSpriteGetter(m.getAtlasLocation()).apply(m.getTextureLocation()));
+        modelchisel.initializeTextures(loader, m -> Minecraft.getInstance().getTextureAtlas(m.atlasLocation()).apply(m.texture()));
         return new ModelBakedCTM(modelchisel, object); 	
     }
 

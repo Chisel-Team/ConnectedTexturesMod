@@ -9,11 +9,11 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector2f;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec2;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.ctx.TextureContextPosition;
@@ -35,13 +35,13 @@ public class TextureEldritch extends AbstractTexture<TextureTypeEldritch> {
         Quad q = makeQuad(quad, context);
 
         Quad.UVs uvs = q.getUvs();
-        Vector2f min = new Vector2f(uvs.getMinU(), uvs.getMinV());
-        Vector2f max = new Vector2f(uvs.getMaxU(), uvs.getMaxV());
+        Vec2 min = new Vec2(uvs.getMinU(), uvs.getMinV());
+        Vec2 max = new Vec2(uvs.getMaxU(), uvs.getMaxV());
 
-        Direction facing = quad.getFace();
+        Direction facing = quad.getDirection();
 
         BlockPos pos = context == null ? BlockPos.ZERO : ((TextureContextPosition) context).getPosition();
-        rand.setSeed(MathHelper.getPositionRandom(pos) + facing.ordinal());
+        rand.setSeed(Mth.getSeed(pos) + facing.ordinal());
 
         float offx = offsetRand(), offy = offsetRand();
 
@@ -49,13 +49,13 @@ public class TextureEldritch extends AbstractTexture<TextureTypeEldritch> {
         for (int i = 0; i < subdiv.length; i++) {
             Quad quadrant = subdiv[i];
             for (int j = 0; quadrant != null && j < 4; j++) {
-            	Vector2f uv = quadrant.getUv(j);
+            	Vec2 uv = quadrant.getUv(j);
                 if (uv.x != min.x && uv.x != max.x && uv.y != min.y && uv.y != max.y) {
                     float xinterp = Quad.normalize(min.x, max.x, uv.x);
                     float yinterp = Quad.normalize(min.y, max.y, uv.y);
                     xinterp += offx;
                     yinterp += offy;
-                    uv = new Vector2f(Quad.lerp(min.x, max.x, xinterp), Quad.lerp(min.y, max.y, yinterp));
+                    uv = new Vec2(Quad.lerp(min.x, max.x, xinterp), Quad.lerp(min.y, max.y, yinterp));
                     subdiv[i] = quadrant.withUv(j, uv);
                 }
             }

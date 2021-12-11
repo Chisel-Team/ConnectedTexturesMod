@@ -19,6 +19,10 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import org.apache.commons.lang3.ArrayUtils;
 
 import com.google.common.collect.ObjectArrays;
@@ -26,10 +30,6 @@ import com.google.common.collect.ObjectArrays;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.client.util.ConnectionLocations;
 
@@ -72,7 +72,7 @@ public class TextureContextPillar implements ITextureContext {
             return false;
         }
         
-        public static Connections forPos(IBlockReader world, BlockPos pos) {
+        public static Connections forPos(BlockGetter world, BlockPos pos) {
             BlockState state = world.getBlockState(pos);
             return forPos(world, state, pos);
         }
@@ -98,12 +98,12 @@ public class TextureContextPillar implements ITextureContext {
             return new Connections(connections);
         }
 
-        public static Connections forPos(IBlockReader world, BlockState baseState, BlockPos pos) {
+        public static Connections forPos(BlockGetter world, BlockState baseState, BlockPos pos) {
             EnumSet<Direction> connections = EnumSet.noneOf(Direction.class);
             BlockState state = world.getBlockState(pos);
             if (state == baseState) {
                 for (Direction f : Direction.values()) {
-                    if (world.getBlockState(pos.offset(f)) == baseState) {
+                    if (world.getBlockState(pos.relative(f)) == baseState) {
                         connections.add(f);
                     }
                 }
@@ -119,11 +119,11 @@ public class TextureContextPillar implements ITextureContext {
         private Connections connections;
         private Map<Direction, Connections> connectionConnections = new EnumMap<>(Direction.class);
 
-        public ConnectionData(IBlockReader world, BlockPos pos) {
+        public ConnectionData(BlockGetter world, BlockPos pos) {
             connections = Connections.forPos(world, pos);
             BlockState state = world.getBlockState(pos);
             for (Direction f : Direction.values()) {
-                connectionConnections.put(f, Connections.forPos(world, state, pos.offset(f)));
+                connectionConnections.put(f, Connections.forPos(world, state, pos.relative(f)));
             }
         }
 
@@ -144,7 +144,7 @@ public class TextureContextPillar implements ITextureContext {
 
     private long compressedData;
     
-    public TextureContextPillar(IBlockReader world, BlockPos pos) {
+    public TextureContextPillar(BlockGetter world, BlockPos pos) {
         data = new ConnectionData(world, pos);
 
         BlockState state = world.getBlockState(pos);

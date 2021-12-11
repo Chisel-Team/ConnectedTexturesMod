@@ -11,11 +11,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import lombok.Getter;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
@@ -75,9 +74,9 @@ public abstract class AbstractTexture<T extends ITextureType> implements ICTMTex
         }
     }
     
-    private final int parseLightValue(@Nullable JsonElement data) {
+    private int parseLightValue(@Nullable JsonElement data) {
         if (data != null && data.isJsonPrimitive() && data.getAsJsonPrimitive().isNumber()) {
-            return MathHelper.clamp(data.getAsInt(), 0, 15);
+            return Mth.clamp(data.getAsInt(), 0, 15);
         }
         return 0;
     }

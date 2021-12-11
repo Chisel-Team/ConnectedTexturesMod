@@ -2,7 +2,7 @@ package team.chisel.ctm.client.texture.type;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.TextureType;
 import team.chisel.ctm.api.util.TextureInfo;

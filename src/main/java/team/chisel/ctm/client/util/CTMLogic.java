@@ -18,10 +18,10 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.Configurations;
 import team.chisel.ctm.api.IFacade;
 import team.chisel.ctm.api.texture.ISubmap;
@@ -153,7 +153,7 @@ public class CTMLogic {
 	 * 
 	 *         Indeces are in counter-clockwise order starting at bottom left.
 	 */
-    public int[] createSubmapIndices(@Nullable IBlockReader world, BlockPos pos, Direction side) {
+    public int[] createSubmapIndices(@Nullable BlockGetter world, BlockPos pos, Direction side) {
 		if (world == null) {
             return submapCache;
         }
@@ -208,7 +208,7 @@ public class CTMLogic {
     /**
      * Builds the connection map and stores it in this CTM instance. The {@link #connected(Dir)}, {@link #connectedAnd(Dir...)}, and {@link #connectedOr(Dir...)} methods can be used to access it.
      */
-    public void buildConnectionMap(IBlockReader world, BlockPos pos, Direction side) {
+    public void buildConnectionMap(BlockGetter world, BlockPos pos, Direction side) {
         BlockState state = getConnectionState(world, pos, side, pos);
         // TODO this naive check doesn't work for models that have unculled faces.
         // Perhaps a smarter optimization could be done eventually?
@@ -322,7 +322,7 @@ public class CTMLogic {
      *            The {@link Direction side} of the block to check for connection status. This is <i>not</i> the direction to check in.
      * @return True if the given block can connect to the given location on the given side.
      */
-    public final boolean isConnected(IBlockReader world, BlockPos current, BlockPos connection, Direction dir) {
+    public final boolean isConnected(BlockGetter world, BlockPos current, BlockPos connection, Direction dir) {
 
         BlockState state = getConnectionState(world, current, dir, connection);
         return isConnected(world, current, connection, dir, state);
@@ -343,13 +343,13 @@ public class CTMLogic {
      * @return True if the given block can connect to the given location on the given side.
      */
     @SuppressWarnings({ "unused", "null" })
-    public boolean isConnected(IBlockReader world, BlockPos current, BlockPos connection, Direction dir, BlockState state) {
+    public boolean isConnected(BlockGetter world, BlockPos current, BlockPos connection, Direction dir, BlockState state) {
 
 //      if (CTMLib.chiselLoaded() && connectionBlocked(world, x, y, z, dir.ordinal())) {
 //          return false;
 //      }
       
-        BlockPos obscuringPos = connection.offset(dir);
+        BlockPos obscuringPos = connection.relative(dir);
 
         boolean disableObscured = disableObscuredFaceCheck.orElse(Configurations.connectInsideCTM);
 
@@ -387,14 +387,14 @@ public class CTMLogic {
 //    }
 
     /**
-     * @deprecated Use the instance method {@link CTMLogic#getConnectionState(IBlockReader, BlockPos, Direction, BlockPos)}
+     * @deprecated Use the instance method {@link CTMLogic#getConnectionState(BlockGetter, BlockPos, Direction, BlockPos)}
      */
     @Deprecated
-    public static BlockState getBlockOrFacade(IBlockReader world, BlockPos pos, @Nullable Direction side, BlockPos connection) {
+    public static BlockState getBlockOrFacade(BlockGetter world, BlockPos pos, @Nullable Direction side, BlockPos connection) {
         return CTMLogic.getInstance().getConnectionState(world, pos, side, connection);
     }
 
-	public BlockState getConnectionState(IBlockReader world, BlockPos pos, @Nullable Direction side, BlockPos connection) {
+	public BlockState getConnectionState(BlockGetter world, BlockPos pos, @Nullable Direction side, BlockPos connection) {
 		BlockState state = world.getBlockState(pos);
 		if (state.getBlock() instanceof IFacade) {
 			return ((IFacade) state.getBlock()).getFacade(world, pos, side, connection);

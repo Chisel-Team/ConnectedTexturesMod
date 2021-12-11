@@ -2,9 +2,9 @@ package team.chisel.ctm.client.util;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import mcp.MethodsReturnNonnullByDefault;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.MethodsReturnNonnullByDefault;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault

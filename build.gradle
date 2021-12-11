@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
         maven {
             name = "forge"
-            url = "http://files.minecraftforge.net/maven"
+            url = 'https://maven.minecraftforge.net'
         }
         maven {
             name = "sonatype"
@@ -11,7 +11,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+'
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+'
         classpath 'org.ajoberstar:gradle-git:0.10.1'
     }
 }
@@ -36,12 +36,10 @@ project.buildnumber = System.getenv('BUILD_NUMBER') != null ? System.getenv('BUI
 version = "MC${minecraft_version}-${mod_version}.${buildnumber}"
 group = "team.chisel.ctm" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = dev ? "CTM_DEV" : "CTM"
-
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
-    mappings channel: 'snapshot', version: '20200514-1.16'
+    mappings channel: 'official', version: '1.18'
     
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -87,7 +85,7 @@ processResources {
     // this will ensure that this task is redone when the versions change.
     inputs.property 'version', project.version
     inputs.property 'mcversion', minecraft_version
-
+    duplicatesStrategy = 'include'
     // replace stuff in mcmod.info, nothing else
     from(sourceSets.main.resources.srcDirs) {
         include 'META_INF/mods.toml'
@@ -123,7 +121,7 @@ dependencies {
 }
 
 lombok {
-    version = "1.18.12"
+    version = "1.18.20"
 }
 
 // Create API jar with sources and compiled files

@@ -8,12 +8,12 @@ import javax.annotation.Nullable;
 
 import lombok.SneakyThrows;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ItemModelMesher;
-import net.minecraft.client.renderer.model.ModelResourceLocation;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.client.renderer.ItemModelShaper;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.ItemModelMesherForge;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.minecraftforge.registries.IRegistryDelegate;
 
 public class ModelUtil {
@@ -37,9 +37,9 @@ public class ModelUtil {
     @SuppressWarnings("unchecked")
     @SneakyThrows
     public static @Nullable ModelResourceLocation getMesh(ItemStack stack) {
-        ItemModelMesher mesher = Minecraft.getInstance().getItemRenderer().getItemModelMesher();
+        ItemModelShaper shaper = Minecraft.getInstance().getItemRenderer().getItemModelShaper();
         
-        Object locations = _locations.invoke(mesher);
+        Object locations = _locations.invoke(shaper);
         if (locations != null) {
         	return ((Map<IRegistryDelegate<Item>, ModelResourceLocation>) locations).get(stack.getItem().delegate);
         }

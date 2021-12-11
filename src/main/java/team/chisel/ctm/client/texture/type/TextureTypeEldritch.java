@@ -2,9 +2,9 @@ package team.chisel.ctm.client.texture.type;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
@@ -33,18 +33,18 @@ public class TextureTypeEldritch implements ITextureType {
 
         @Override
         public long getCompressedData() {
-            return getPosition().toLong();
+            return getPosition().asLong();
         }
     }
 
     @Override
-    public ITextureContext getBlockRenderContext(BlockState state, IBlockReader world, BlockPos pos, ICTMTexture<?> tex) {
+    public ITextureContext getBlockRenderContext(BlockState state, BlockGetter world, BlockPos pos, ICTMTexture<?> tex) {
         return new Context(pos);
     }
 
     @Override
     public ITextureContext getContextFromData(long data) {
-        return new Context(BlockPos.fromLong(data));
+        return new Context(BlockPos.of(data));
     }
 
     @Override

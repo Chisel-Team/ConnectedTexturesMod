@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 
-import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.texture.ITextureContext;
@@ -32,7 +32,7 @@ public class TextureEdgesFull extends TextureEdges {
             return Collections.singletonList(quad.transformUVs(sprites[0]).rebake());
         }
         
-        CTMLogicEdges ctm = (CTMLogicEdges) ((TextureContextCTM)context).getCTM(bq.getFace());
+        CTMLogicEdges ctm = (CTMLogicEdges) ((TextureContextCTM)context).getCTM(bq.getDirection());
         TextureAtlasSprite sprite;
         ISubmap submap = null;
         // Short circuit zero connections, as this is almost always the most common case

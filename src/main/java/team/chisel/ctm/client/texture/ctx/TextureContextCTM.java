@@ -4,10 +4,10 @@ import java.util.EnumMap;
 
 import javax.annotation.Nonnull;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.client.texture.render.TextureCTM;
 import team.chisel.ctm.client.util.CTMLogic;
@@ -20,7 +20,7 @@ public class TextureContextCTM implements ITextureContext {
 
     private long data;
 
-    public TextureContextCTM(@Nonnull BlockState state, IBlockReader world, BlockPos pos, TextureCTM<?> tex) {
+    public TextureContextCTM(@Nonnull BlockState state, BlockGetter world, BlockPos pos, TextureCTM<?> tex) {
     	this.tex = tex;
     	
         for (Direction face : Direction.values()) {

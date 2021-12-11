@@ -8,10 +8,9 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import com.google.common.base.Preconditions;
 
 import lombok.Value;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Direction.Axis;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import team.chisel.ctm.client.texture.render.TextureMap;
 import team.chisel.ctm.client.util.FaceOffset;
 
@@ -44,8 +43,8 @@ public abstract class TextureContextGrid extends TextureContextPosition {
             if (side.getAxis().isVertical()) {
                 // DOWN || UP
                 tx = x % w;
-                ty = (side.getYOffset() * z + 1) % h;
-            } else if (side.getAxis() == Axis.Z) {
+                ty = (side.getStepY() * z + 1) % h;
+            } else if (side.getAxis() == Direction.Axis.Z) {
                 // NORTH || SOUTH
                 tx = x % w;
                 ty = -y % h;
@@ -83,7 +82,7 @@ public abstract class TextureContextGrid extends TextureContextPosition {
         @Override
         protected Point2i calculateTextureCoord(BlockPos pos, int w, int h, Direction side) {
 
-            rand.setSeed(MathHelper.getPositionRandom(pos) + side.ordinal());
+            rand.setSeed(Mth.getSeed(pos) + side.ordinal());
             rand.nextBoolean();
 
             int tx = rand.nextInt(w) + 1;
@@ -109,7 +108,7 @@ public abstract class TextureContextGrid extends TextureContextPosition {
         
         long serialized = 0;
         for (@Nonnull Direction side : Direction.values()) {
-            BlockPos modifiedPosition = position.add(FaceOffset.getBlockPosOffsetFromFaceOffset(side, tex.getXOffset(), tex.getYOffset()));
+            BlockPos modifiedPosition = position.offset(FaceOffset.getBlockPosOffsetFromFaceOffset(side, tex.getXOffset(), tex.getYOffset()));
 
             Point2i coords = calculateTextureCoord(modifiedPosition, tex.getXSize(), tex.getYSize(), side);
             textureCoords.put(side, coords);
