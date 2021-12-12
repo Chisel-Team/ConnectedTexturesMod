@@ -110,7 +110,7 @@ public enum ConnectionLocations {
         }
         return pos;
     }
-    
+
     public static ConnectionLocations fromFacing(Direction facing){
         switch (facing){
             case NORTH: return NORTH;

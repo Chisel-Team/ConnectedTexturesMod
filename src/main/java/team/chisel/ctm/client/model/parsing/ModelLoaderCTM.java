@@ -2,7 +2,6 @@ package team.chisel.ctm.client.model.parsing;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 

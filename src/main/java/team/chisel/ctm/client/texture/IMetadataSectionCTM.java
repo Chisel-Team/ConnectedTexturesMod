@@ -63,10 +63,10 @@ public interface IMetadataSectionCTM {
             }
         }
         return meta.getType().makeTexture(new TextureInfo(
-                Arrays.stream(ObjectArrays.concat(new ResourceLocation[]{sprite.getName()}, meta.getAdditionalTextures(), ResourceLocation.class))
-                	  .map(rl -> new Material(TextureAtlas.LOCATION_BLOCKS, rl))
-                	  .map(bakedTextureGetter)
-                	  .toArray(TextureAtlasSprite[]::new), 
+                Arrays.stream(ObjectArrays.concat(sprite.getName(), meta.getAdditionalTextures()))
+                        .map(rl -> new Material(TextureAtlas.LOCATION_BLOCKS, rl))
+                        .map(bakedTextureGetter)
+                        .toArray(TextureAtlasSprite[]::new),
                 Optional.of(meta.getExtraData()), 
                 meta.getLayer()
         ));
@@ -154,8 +154,9 @@ public interface IMetadataSectionCTM {
                 if (obj.has("ctm_version")) {
                     JsonElement version = obj.get("ctm_version");
                     if (version.isJsonPrimitive() && version.getAsJsonPrimitive().isNumber()) {
-                        if (version.getAsInt() == 1) {
-                            return V1.fromJson(obj);
+                        switch (version.getAsInt()) {
+                            case 1:
+                                return V1.fromJson(obj);
                         }
                     }
                 } else {
