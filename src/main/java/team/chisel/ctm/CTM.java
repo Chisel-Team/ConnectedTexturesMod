@@ -2,6 +2,10 @@ package team.chisel.ctm;
 
 import static team.chisel.ctm.CTM.MOD_ID;
 
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.fml.IExtensionPoint;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.network.NetworkConstants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -36,7 +40,7 @@ public class CTM {
     private CTMDefinitionManager definitionManager;
     @Getter
     private CTMPackReloadListener reloadListener;
-    
+
     public CTM() {
     	instance = this;
     	
@@ -46,17 +50,17 @@ public class CTM {
     	    modBus.register(TextureMetadataHandler.INSTANCE);
     	    
             TextureTypeRegistry.scan();
-            
+
             definitionManager = new CTMDefinitionManager();
             ReloadableResourceManager resourceManager = (ReloadableResourceManager) Minecraft.getInstance().getResourceManager();
             resourceManager.registerReloadListener(definitionManager.getReloadListener());
             reloadListener = new CTMPackReloadListener();
             modBus.addListener(this::reloadListenersLate);
     	});
-    	
-    	logger.error("I EXIST");
+        ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class,
+              () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
     }
-    
+
     private void modelRegistry(ModelEvent.RegisterGeometryLoaders event) {
         event.register("ctm", ModelLoaderCTM.INSTANCE);
     }
