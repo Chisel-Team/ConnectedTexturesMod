@@ -3,6 +3,9 @@ package team.chisel.ctm;
 import static team.chisel.ctm.CTM.MOD_ID;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.fml.IExtensionPoint;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.network.NetworkConstants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -41,6 +44,9 @@ public class CTM {
     	    
             TextureTypeRegistry.scan();
     	});
+    	
+        ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class,
+                () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
     }
     
     private void modelRegistry(ModelRegistryEvent event) {
