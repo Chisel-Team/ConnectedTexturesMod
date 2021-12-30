@@ -1,7 +1,7 @@
 package team.chisel.ctm.client.texture.render;
 
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.util.Direction.Plane;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.Direction;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class TexturePlane extends TextureCTM<TextureTypePlane> {
-    private final Plane plane;
+    private final Direction.Plane plane;
 
     public TexturePlane(final TextureTypePlane type, final TextureInfo info) {
         super(type, info);
@@ -26,7 +26,7 @@ public class TexturePlane extends TextureCTM<TextureTypePlane> {
     @Override
     public List<BakedQuad> transformQuad(final BakedQuad bakedQuad, final ITextureContext context, final int quads) {
         final Quad quad = this.makeQuad(bakedQuad, context);
-        final CTMLogic logic = (context instanceof TextureContextCTM) ? ((TextureContextCTM) context).getCTM(bakedQuad.getFace()) : null;
+        final CTMLogic logic = (context instanceof TextureContextCTM ctmContext) ? ctmContext.getCTM(bakedQuad.getDirection()) : null;
         return Collections.singletonList(quad.transformUVs(this.sprites[0], this.getQuad(logic)).rebake());
     }
 
@@ -36,7 +36,7 @@ public class TexturePlane extends TextureCTM<TextureTypePlane> {
         }
         final int u;
         final int v;
-        if (this.plane == Plane.VERTICAL) {
+        if (this.plane == Direction.Plane.VERTICAL) {
             final boolean top = logic.connected(Dir.TOP);
             u = (top == logic.connected(Dir.BOTTOM)) ? 0 : 1;
             v = top ? 1 : 0;

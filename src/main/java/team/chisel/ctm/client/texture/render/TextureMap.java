@@ -13,8 +13,8 @@ import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
 
 import lombok.Getter;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.BlockPos;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -33,7 +33,7 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
             @Override
             protected List<BakedQuad> transformQuad(TextureMap tex, BakedQuad quad, @Nullable ITextureContext context, int quadGoal) {
 
-                Point2i textureCoords = context == null ? new Point2i(1, 1) : ((TextureContextGrid)context).getTextureCoords(quad.getFace());
+                Point2i textureCoords = context == null ? new Point2i(1, 1) : ((TextureContextGrid)context).getTextureCoords(quad.getDirection());
                 
                 float intervalX = 16f / tex.getXSize();
                 float intervalY = 16f / tex.getYSize();
@@ -55,7 +55,7 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
                             quads[i] = quads[i].transformUVs(tex.sprites[0], uvs);
                         }
                     }
-                    return Arrays.stream(quads).filter(Objects::nonNull).map(Quad::rebake).collect(Collectors.toList());
+                    return Arrays.stream(quads).filter(Objects::nonNull).map(Quad::rebake).toList();
                 }
             }
             
@@ -69,7 +69,7 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
             @Override
             protected List<BakedQuad> transformQuad(TextureMap tex, BakedQuad quad, @Nullable ITextureContext context, int quadGoal) {
                 
-                Point2i textureCoords = context == null ? new Point2i(0, 0) : ((TextureContextGrid)context).getTextureCoords(quad.getFace());
+                Point2i textureCoords = context == null ? new Point2i(0, 0) : ((TextureContextGrid)context).getTextureCoords(quad.getDirection());
                 
                 float intervalU = 16f / tex.xSize;
                 float intervalV = 16f / tex.ySize;
@@ -91,7 +91,7 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
                             quads[i] = quads[i].transformUVs(tex.sprites[0], submap);
                         }
                     }
-                    return Arrays.stream(quads).filter(Objects::nonNull).map(Quad::rebake).collect(Collectors.toList());
+                    return Arrays.stream(quads).filter(Objects::nonNull).map(Quad::rebake).toList();
                 }
             }
             

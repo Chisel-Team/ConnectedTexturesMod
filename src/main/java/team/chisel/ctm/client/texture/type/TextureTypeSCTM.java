@@ -1,8 +1,8 @@
 package team.chisel.ctm.client.texture.type;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.TextureType;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -23,7 +23,7 @@ public class TextureTypeSCTM extends TextureTypeCTM {
     }
     
     @Override
-    public TextureContextCTM getBlockRenderContext(final BlockState state, final IBlockReader world, final BlockPos pos, final ICTMTexture<?> tex) {
+    public TextureContextCTM getBlockRenderContext(final BlockState state, final BlockGetter world, final BlockPos pos, final ICTMTexture<?> tex) {
         return new TextureContextCTM(state, world, pos, (TextureCTM<?>) tex) {
         
             @Override

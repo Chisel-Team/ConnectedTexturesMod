@@ -11,11 +11,11 @@ import net.minecraft.client.renderer.RenderType;
 @RequiredArgsConstructor
 public enum BlockRenderLayer {
 	
-	SOLID(RenderType::getSolid),
-	CUTOUT(RenderType::getCutout),
-	CUTOUT_MIPPED(RenderType::getCutoutMipped),
-	TRANSLUCENT(RenderType::getTranslucent),
-    TRIPWIRE(RenderType::func_241715_r_)
+	SOLID(RenderType::solid),
+	CUTOUT(RenderType::cutout),
+	CUTOUT_MIPPED(RenderType::cutoutMipped),
+	TRANSLUCENT(RenderType::translucent),
+    TRIPWIRE(RenderType::tripwire)
 	;
 	
     private static final Map<RenderType, BlockRenderLayer> reverseLookup = new IdentityHashMap<>();

@@ -4,9 +4,9 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import lombok.Getter;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 
@@ -14,13 +14,13 @@ import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 public class CTMContext  {
     
     @Getter
-    private final IBlockReader world;
+    private final BlockGetter world;
     @Getter
     private final BlockPos pos;
     
     private @Nullable RenderContextList ctxCache;
     
-    public CTMContext(IBlockReader world, BlockPos pos) {
+    public CTMContext(BlockGetter world, BlockPos pos) {
         this.world = world;
         this.pos = pos;
     }

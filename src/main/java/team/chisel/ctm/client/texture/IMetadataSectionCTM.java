@@ -17,11 +17,11 @@ import com.google.gson.JsonParseException;
 
 import lombok.Getter;
 import lombok.ToString;
-import net.minecraft.client.renderer.model.RenderMaterial;
-import net.minecraft.client.renderer.texture.AtlasTexture;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.data.IMetadataSectionSerializer;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
 import team.chisel.ctm.CTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureType;
@@ -47,10 +47,10 @@ public interface IMetadataSectionCTM {
 
     JsonObject getExtraData();
     
-    default ICTMTexture<?> makeTexture(TextureAtlasSprite sprite, Function<RenderMaterial, TextureAtlasSprite> bakedTextureGetter) {
+    default ICTMTexture<?> makeTexture(TextureAtlasSprite sprite, Function<Material, TextureAtlasSprite> bakedTextureGetter) {
         IMetadataSectionCTM meta = this;
         if (getProxy() != null) {
-            TextureAtlasSprite proxySprite = bakedTextureGetter.apply(new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, new ResourceLocation(getProxy())));
+            TextureAtlasSprite proxySprite = bakedTextureGetter.apply(new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(getProxy())));
             try {
                 meta = ResourceUtil.getMetadata(proxySprite);
                 if (meta == null) {
@@ -64,9 +64,9 @@ public interface IMetadataSectionCTM {
         }
         return meta.getType().makeTexture(new TextureInfo(
                 Arrays.stream(ObjectArrays.concat(sprite.getName(), meta.getAdditionalTextures()))
-                	  .map(rl -> new RenderMaterial(AtlasTexture.LOCATION_BLOCKS_TEXTURE, rl))
-                	  .map(bakedTextureGetter::apply)
-                	  .toArray(TextureAtlasSprite[]::new), 
+                        .map(rl -> new Material(TextureAtlas.LOCATION_BLOCKS, rl))
+                        .map(bakedTextureGetter)
+                        .toArray(TextureAtlasSprite[]::new),
                 Optional.of(meta.getExtraData()), 
                 meta.getLayer()
         ));
@@ -74,7 +74,7 @@ public interface IMetadataSectionCTM {
     
     @ToString
     @Getter
-    public static class V1 implements IMetadataSectionCTM {
+    class V1 implements IMetadataSectionCTM {
         
         private ITextureType type = TextureTypeRegistry.getType("NORMAL");
         private BlockRenderLayer layer = null;
@@ -145,18 +145,18 @@ public interface IMetadataSectionCTM {
         }
     }
     
-    public static class Serializer implements IMetadataSectionSerializer<IMetadataSectionCTM> {
+    class Serializer implements MetadataSectionSerializer<IMetadataSectionCTM> {
 
         @Override
-        public @Nullable IMetadataSectionCTM deserialize(@Nullable JsonObject json) throws JsonParseException {
+        public @Nullable IMetadataSectionCTM fromJson(@Nullable JsonObject json) throws JsonParseException {
             if (json != null && json.isJsonObject()) {
                 JsonObject obj = json.getAsJsonObject();
                 if (obj.has("ctm_version")) {
                     JsonElement version = obj.get("ctm_version");
                     if (version.isJsonPrimitive() && version.getAsJsonPrimitive().isNumber()) {
                         switch (version.getAsInt()) {
-                        case 1:
-                            return V1.fromJson(obj);
+                            case 1:
+                                return V1.fromJson(obj);
                         }
                     }
                 } else {
@@ -167,7 +167,7 @@ public interface IMetadataSectionCTM {
         }
 
         @Override
-        public @Nonnull String getSectionName() {
+        public @Nonnull String getMetadataSectionName() {
             return SECTION_NAME;
         }
     }

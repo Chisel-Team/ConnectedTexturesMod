@@ -9,15 +9,17 @@ import javax.annotation.Nullable;
 
 import com.google.gson.JsonParseException;
 
+import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.IResource;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
 import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 
+@UtilityClass
 public class ResourceUtil {
     
-    public static IResource getResource(TextureAtlasSprite sprite) throws IOException {
+    public static Resource getResource(TextureAtlasSprite sprite) throws IOException {
         return getResource(spriteToAbsolute(sprite.getName()));
     }
     
@@ -31,11 +33,11 @@ public class ResourceUtil {
         return sprite;
     }
     
-    public static IResource getResource(ResourceLocation res) throws IOException {
+    public static Resource getResource(ResourceLocation res) throws IOException {
         return Minecraft.getInstance().getResourceManager().getResource(res);
     }
     
-    public static IResource getResourceUnsafe(ResourceLocation res) {
+    public static Resource getResourceUnsafe(ResourceLocation res) {
         try {
             return getResource(res);
         } catch (IOException e) {
@@ -52,7 +54,7 @@ public class ResourceUtil {
             return metadataCache.get(res);
         }
         IMetadataSectionCTM ret;
-        try (IResource resource = getResource(res)) {
+        try (Resource resource = getResource(res)) {
             ret = resource.getMetadata(SERIALIZER);
         } catch (FileNotFoundException e) {
             ret = null;  

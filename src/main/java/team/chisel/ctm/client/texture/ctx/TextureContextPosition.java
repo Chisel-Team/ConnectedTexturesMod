@@ -3,12 +3,13 @@ package team.chisel.ctm.client.texture.ctx;
 import javax.annotation.Nonnull;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 import team.chisel.ctm.api.texture.ITextureContext;
 
 public class TextureContextPosition implements ITextureContext {
 
-    protected @Nonnull BlockPos position;
+    protected @Nonnull
+    BlockPos position;
 
     public TextureContextPosition(@Nonnull BlockPos pos) {
         this.position = pos;
@@ -19,7 +20,7 @@ public class TextureContextPosition implements ITextureContext {
     }
     
     public TextureContextPosition applyOffset() {
-        this.position = position.add(OffsetProviderRegistry.INSTANCE.getOffset(Minecraft.getInstance().world, position));
+        this.position = position.offset(OffsetProviderRegistry.INSTANCE.getOffset(Minecraft.getInstance().level, position));
         return this;
     }
 

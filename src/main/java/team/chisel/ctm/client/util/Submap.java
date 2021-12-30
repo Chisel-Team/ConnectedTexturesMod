@@ -38,12 +38,12 @@ public class Submap implements ISubmap {
 
     @Override
     public float getInterpolatedU(TextureAtlasSprite sprite, float u) {
-        return sprite.getInterpolatedU(getXOffset() + u / getWidth());
+        return sprite.getU(getXOffset() + u / getWidth());
     }
 
     @Override
     public float getInterpolatedV(TextureAtlasSprite sprite, float v) {
-        return sprite.getInterpolatedV(getYOffset() + v / getWidth());
+        return sprite.getV(getYOffset() + v / getWidth());
     }
 
     @Override

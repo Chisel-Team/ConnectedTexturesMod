@@ -1,11 +1,12 @@
 package team.chisel.ctm.client.util;
 
-import static net.minecraft.util.Direction.DOWN;
-import static net.minecraft.util.Direction.EAST;
-import static net.minecraft.util.Direction.NORTH;
-import static net.minecraft.util.Direction.SOUTH;
-import static net.minecraft.util.Direction.UP;
-import static net.minecraft.util.Direction.WEST;
+import static net.minecraft.core.Direction.DOWN;
+import static net.minecraft.core.Direction.EAST;
+import static net.minecraft.core.Direction.NORTH;
+import static net.minecraft.core.Direction.SOUTH;
+import static net.minecraft.core.Direction.UP;
+import static net.minecraft.core.Direction.WEST;
+import static net.minecraft.core.Direction.AxisDirection;
 
 import java.util.Arrays;
 
@@ -13,12 +14,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.util.Direction;
-import net.minecraft.util.Direction.Axis;
-import net.minecraft.util.Direction.AxisDirection;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.api.util.NonnullType;
 
 /**
@@ -59,7 +58,7 @@ public enum Dir {
 	
 	private @NonnullType BlockPos[] offsets = new BlockPos[6];
 
-	private Dir(Direction... dirs) {
+	Dir(Direction... dirs) {
 		this.dirs = dirs;
     }
 	
@@ -75,20 +74,20 @@ public enum Dir {
                 // A mirror version does not affect y+ and y- so we ignore those
                 Direction[] ret = new Direction[dirs.length];
                 for (int i = 0; i < ret.length; i++) {
-                    ret[i] = dirs[i].getYOffset() != 0 ? dirs[i] : dirs[i].getOpposite();
+                    ret[i] = dirs[i].getStepY() != 0 ? dirs[i] : dirs[i].getOpposite();
                 }
                 normalized = ret;
             } else {
                 Direction axis;
                 // Next, we need different a different rotation axis depending
                 // on if this is up/down or not
-                if (normal.getYOffset() == 0) {
+                if (normal.getStepY() == 0) {
                     // If it is not up/down, pick either the left or right-hand
                     // rotation
-                    axis = normal == NORMAL.rotateY() ? UP : DOWN;
+                    axis = normal == NORMAL.getClockWise() ? UP : DOWN;
                 } else {
                     // If it is up/down, pick either the up or down rotation.
-                    axis = normal == UP ? NORMAL.rotateYCCW() : NORMAL.rotateY();
+                    axis = normal == UP ? NORMAL.getCounterClockWise() : NORMAL.getClockWise();
                 }
                 Direction[] ret = new Direction[dirs.length];
                 // Finally apply all the rotations
@@ -99,7 +98,7 @@ public enum Dir {
             }
             BlockPos ret = BlockPos.ZERO;
             for (Direction dir : normalized) {
-                ret = ret.offset(dir);
+                ret = ret.relative(dir);
             }
             offsets[normal.ordinal()] = ret;
         }
@@ -118,7 +117,7 @@ public enum Dir {
      *            The side of the current face.
      * @return True if the block is connected in the given Dir, false otherwise.
      */
-    public boolean isConnected(CTMLogic ctm, IBlockReader world, BlockPos pos, Direction side) {
+    public boolean isConnected(CTMLogic ctm, BlockGetter world, BlockPos pos, Direction side) {
         return ctm.isConnected(world, pos, applyConnection(pos, side), side);
     }
 
@@ -137,7 +136,7 @@ public enum Dir {
      *            The state to check for connection with.
      * @return True if the block is connected in the given Dir, false otherwise.
      */
-    public boolean isConnected(CTMLogic ctm, IBlockReader world, BlockPos pos, Direction side, BlockState state) {
+    public boolean isConnected(CTMLogic ctm, BlockGetter world, BlockPos pos, Direction side, BlockState state) {
         return ctm.isConnected(world, pos, applyConnection(pos, side), side, state);
     }
 
@@ -149,7 +148,7 @@ public enum Dir {
     @SuppressWarnings("null")
     @Nonnull
     public BlockPos applyConnection(BlockPos pos, Direction side) {
-        return pos.add(getOffset(side));
+        return pos.offset(getOffset(side));
     }
 
     public Dir relativize(Direction normal) {
@@ -190,7 +189,7 @@ public enum Dir {
 	}
 
 	private Direction rotate(Direction facing, Direction axisFacing) {
-        Axis axis = axisFacing.getAxis();
+        Direction.Axis axis = axisFacing.getAxis();
         AxisDirection axisDir = axisFacing.getAxisDirection();
 
         if (axisDir == AxisDirection.POSITIVE) {
@@ -214,7 +213,7 @@ public enum Dir {
                     return facing; // Invalid but ignored
                 }
             case Y:
-                return facing.rotateYCCW();
+                return facing.getCounterClockWise();
             case Z:
                 // Inverted results from Direction#rotateZ
                 switch (facing) {

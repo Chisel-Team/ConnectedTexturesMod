@@ -32,14 +32,13 @@ import com.google.gson.reflect.TypeToken;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
-import lombok.val;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.state.Property;
-import net.minecraft.util.Direction;
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class BlockstatePredicateParser {
@@ -90,7 +89,7 @@ public class BlockstatePredicateParser {
         
         @Override
         public boolean test(BlockState t) {
-            return t.getBlock() == block && type.compareFunc.test(t.get(prop).compareTo(value));
+            return t.getBlock() == block && type.compareFunc.test(t.getValue(prop).compareTo(value));
         }
     }
     
@@ -102,7 +101,7 @@ public class BlockstatePredicateParser {
         
         @Override
         public boolean test(BlockState t) {
-            return t.getBlock() == block && validValues.contains(t.get(prop));
+            return t.getBlock() == block && validValues.contains(t.getValue(prop));
         }
     }
     
@@ -144,7 +143,7 @@ public class BlockstatePredicateParser {
     
     class PredicateDeserializer implements JsonDeserializer<Predicate<BlockState>> {
         
-        final Predicate<BlockState> EMPTY = p -> false;
+        private static final Predicate<BlockState> EMPTY = p -> false;
         
         // Unlikely that this will be threaded, but I think foamfix tries, so let's be safe
         // A global cache for the default predicate for use in creating deferring predicates
@@ -154,7 +153,7 @@ public class BlockstatePredicateParser {
         public Predicate<BlockState> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (json.isJsonObject()) {
                 JsonObject obj = json.getAsJsonObject();
-                Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(JSONUtils.getString(obj, "block")));
+                Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(GsonHelper.getAsString(obj, "block")));
                 if (block == Blocks.AIR) {
                     return EMPTY;
                 }
@@ -164,9 +163,9 @@ public class BlockstatePredicateParser {
                         throw new JsonParseException("Cannot defer when no default is set!");
                     }
                     try {
-                        composition = Composition.valueOf(JSONUtils.getString(obj, "defer").toUpperCase(Locale.ROOT));
+                        composition = Composition.valueOf(GsonHelper.getAsString(obj, "defer").toUpperCase(Locale.ROOT));
                     } catch (IllegalArgumentException e) {
-                        throw new JsonSyntaxException(JSONUtils.getString(obj, "defer") + " is not a valid defer type.");
+                        throw new JsonSyntaxException(GsonHelper.getAsString(obj, "defer") + " is not a valid defer type.");
                     }
                 }
                 if (!obj.has("predicate")) {
@@ -194,7 +193,7 @@ public class BlockstatePredicateParser {
                         predicates.add(p);
                     }
                 }
-                return predicates.size() == 0 ? EMPTY : predicates.size() == 1 ? predicates.get(0) : new PredicateComposition(Composition.OR, predicates);
+                return predicates.isEmpty() ? EMPTY : predicates.size() == 1 ? predicates.get(0) : new PredicateComposition(Composition.OR, predicates);
             }
             throw new JsonSyntaxException("Predicate deserialization expects an object or an array. Found: " + json);
         }
@@ -208,19 +207,20 @@ public class BlockstatePredicateParser {
 
         @SuppressWarnings({ "rawtypes", "unchecked" })
         private Predicate<BlockState> parsePredicate(@Nonnull Block block, JsonObject obj, JsonDeserializationContext context) {
-            ComparisonType compareFunc = JSONUtils.deserializeClass(obj, "compare_func", ComparisonType.EQUAL, context, ComparisonType.class);
+            ComparisonType compareFunc = GsonHelper.getAsObject(obj, "compare_func", ComparisonType.EQUAL, context, ComparisonType.class);
             obj.remove("compare_func");
             
-            val entryset = obj.entrySet();
-            if (entryset.size() > 1 || entryset.size() == 0) {
+            var entryset = obj.entrySet();
+            if (obj.size() != 1) {
                 throw new JsonSyntaxException("Predicate entry must define exactly one property->value pair. Found: " + entryset.size());
             }
             
             String key = entryset.iterator().next().getKey();
             
-            Optional<Property<?>> prop = block.getStateContainer().getProperties().stream().filter(p -> p.getName().equals(key)).findFirst();
-            if (!prop.isPresent()) {
-                throw new JsonParseException(key + " is not a valid property for blockstate " + block.getDefaultState());
+            Optional<Property<?>> prop = Optional.ofNullable(block.getStateDefinition().getProperty(key));
+
+            if (prop.isEmpty()) {
+                throw new JsonParseException(key + " is not a valid property for blockstate " + block.defaultBlockState());
             }
             JsonElement valueEle = obj.get(key);
             if (valueEle.isJsonArray()) {
@@ -232,9 +232,9 @@ public class BlockstatePredicateParser {
         
         @SuppressWarnings({ "rawtypes", "unchecked" })
         private Comparable parseValue(Property prop, JsonElement ele) {
-            String valstr = JSONUtils.getString(ele, prop.getName());
-            Optional<Comparable> value = (Optional<Comparable>) prop.getAllowedValues().stream().filter(v -> prop.getName((Comparable) v).equalsIgnoreCase(valstr)).findFirst();
-            if (!value.isPresent()) {
+            String valstr = GsonHelper.convertToString(ele, prop.getName());
+            Optional<Comparable> value = prop.getPossibleValues().stream().filter(v -> prop.getName((Comparable) v).equalsIgnoreCase(valstr)).findFirst();
+            if (value.isEmpty()) {
                 throw new JsonParseException(valstr + " is not a valid value for property " + prop);
             }
             return value.get();
@@ -267,7 +267,7 @@ public class BlockstatePredicateParser {
                 for (Direction dir : Direction.values()) {
                     ret.predicates.putIfAbsent(dir, Optional.ofNullable(predicateDeserializer.defaultPredicate.get()).orElse(predicateDeserializer.EMPTY));
                 }
-                predicateDeserializer.defaultPredicate.set(null);
+                predicateDeserializer.defaultPredicate.remove();
                 return ret;
             } else if (json.isJsonArray()) {
                 Predicate<BlockState> predicate = context.deserialize(json, PREDICATE_TYPE);

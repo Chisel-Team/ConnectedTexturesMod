@@ -1,6 +1,6 @@
 package team.chisel.ctm.client.texture.render;
 
-import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -23,7 +23,7 @@ public class TextureSCTM extends TextureCTM<TextureTypeSCTM> {
     @Override
     public List<BakedQuad> transformQuad(final BakedQuad bakedQuad, final ITextureContext context, final int quads) {
         final Quad quad = this.makeQuad(bakedQuad, context);
-        final CTMLogic ctm = (context instanceof TextureContextCTM) ? ((TextureContextCTM) context).getCTM(bakedQuad.getFace()) : null;
+        final CTMLogic ctm = (context instanceof TextureContextCTM ctmContext) ? ctmContext.getCTM(bakedQuad.getDirection()) : null;
         return Collections.singletonList(quad.transformUVs(this.sprites[0], this.getQuad(ctm)).rebake());
     }
 

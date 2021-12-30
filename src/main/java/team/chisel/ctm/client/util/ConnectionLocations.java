@@ -6,8 +6,8 @@ import java.util.List;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 
 /**
  * Represents all the different spot for connection locations for a ctm block
@@ -67,19 +67,15 @@ public enum ConnectionLocations {
     private final @Nullable Dir dir;
     private boolean offset;
 
-    private ConnectionLocations(@Nullable Dir dir) {
+    ConnectionLocations(@Nullable Dir dir) {
         this(Direction.SOUTH, dir);
     }
     
-    private ConnectionLocations(@Nullable Dir dir, boolean offset) {
-        this(Direction.SOUTH, dir, offset);
-    }
-    
-    private ConnectionLocations(Direction normal, @Nullable Dir dir){
+    ConnectionLocations(Direction normal, @Nullable Dir dir){
         this(normal, dir, false);
     }
     
-    private ConnectionLocations(Direction normal, @Nullable Dir dir, boolean offset) {
+    ConnectionLocations(Direction normal, @Nullable Dir dir, boolean offset) {
         this.normal = normal;
         this.dir = dir;
         this.offset = offset;
@@ -104,13 +100,13 @@ public enum ConnectionLocations {
     @SuppressWarnings("null")
     public BlockPos transform(BlockPos pos) {
         if (dir != null) {
-            pos = pos.add(dir.getOffset(normal));
+            pos = pos.offset(dir.getOffset(normal));
         } else {
-            pos = pos.offset(normal);
+            pos = pos.relative(normal);
         }
 
         if (offset) {
-            pos = pos.offset(normal);
+            pos = pos.relative(normal);
         }
         return pos;
     }

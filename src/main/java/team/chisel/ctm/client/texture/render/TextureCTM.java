@@ -22,10 +22,10 @@ import it.unimi.dsi.fastutil.objects.Object2ByteOpenCustomHashMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.util.Direction;
-import net.minecraft.util.JSONUtils;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.Direction;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.Configurations;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -89,7 +89,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
     public TextureCTM(T type, TextureInfo info) {
         super(type, info);
         this.connectInside = info.getInfo().flatMap(obj -> ParseUtils.getBoolean(obj, "connect_inside"));
-        this.ignoreStates = info.getInfo().map(obj -> JSONUtils.getBoolean(obj, "ignore_states", false)).orElse(false);
+        this.ignoreStates = info.getInfo().map(obj -> GsonHelper.getAsBoolean(obj, "ignore_states", false)).orElse(false);
         this.connectionChecks = info.getInfo().map(obj -> predicateParser.parse(obj.get("connect_to"))).orElse(null);
     }
     
@@ -121,7 +121,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
 
         Quad[] quads = quad.subdivide(4);
         
-        int[] ctm = ((TextureContextCTM)context).getCTM(bq.getFace()).getSubmapIndices();
+        int[] ctm = ((TextureContextCTM)context).getCTM(bq.getDirection()).getSubmapIndices();
         
         for (int i = 0; i < quads.length; i++) {
             Quad q = quads[i];
@@ -130,7 +130,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
                 quads[i] = q.grow().transformUVs(sprites[ctm[ctmid] > 15 ? 0 : 1], CTMLogic.uvs[ctm[ctmid]].normalize());
             }
         }
-        return Arrays.stream(quads).filter(Objects::nonNull).map(q -> q.rebake()).collect(Collectors.toList());
+        return Arrays.stream(quads).filter(Objects::nonNull).map(q -> q.rebake()).toList();
     }
     
     @Override
