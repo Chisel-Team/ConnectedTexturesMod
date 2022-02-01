@@ -1,5 +1,6 @@
 package team.chisel.ctm.client.texture.render;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
 import it.unimi.dsi.fastutil.objects.Object2ByteMap;
+import it.unimi.dsi.fastutil.objects.Object2ByteMaps;
 import it.unimi.dsi.fastutil.objects.Object2ByteOpenCustomHashMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -97,7 +99,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
         try {
         	Object2ByteMap<BlockState> sidecache = connectionCache.get(new CacheKey(from, dir), 
 				() -> {
-					Object2ByteMap<BlockState> map = new Object2ByteOpenCustomHashMap<>(new IdentityStrategy<>());
+					Object2ByteMap<BlockState> map = Object2ByteMaps.synchronize(new Object2ByteOpenCustomHashMap<>(new IdentityStrategy<>()));
 					map.defaultReturnValue((byte) -1);
 					return map;
 				});
