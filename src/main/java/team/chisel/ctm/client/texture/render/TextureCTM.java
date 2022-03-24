@@ -2,23 +2,14 @@ package team.chisel.ctm.client.texture.render;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.function.BiPredicate;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-
-import it.unimi.dsi.fastutil.objects.Object2ByteMap;
-import it.unimi.dsi.fastutil.objects.Object2ByteOpenCustomHashMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
@@ -34,7 +25,6 @@ import team.chisel.ctm.client.texture.type.TextureTypeCTM;
 import team.chisel.ctm.client.util.BlockstatePredicateParser;
 import team.chisel.ctm.client.util.CTMLogic;
 import team.chisel.ctm.client.util.CTMLogic.StateComparisonCallback;
-import team.chisel.ctm.client.util.IdentityStrategy;
 import team.chisel.ctm.client.util.ParseUtils;
 import team.chisel.ctm.client.util.Quad;
 
@@ -52,41 +42,8 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
 	
 	@Nullable
 	private final BiPredicate<Direction, BlockState> connectionChecks;
-	
-	@RequiredArgsConstructor
-	private static final class CacheKey {
-		private final BlockState from;
-		private final Direction dir;
-		
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + dir.hashCode();
-			result = prime * result + System.identityHashCode(from);
-			return result;
-		}
 
-		@Override
-		public boolean equals(@Nullable Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			CacheKey other = (CacheKey) obj;
-			if (dir != other.dir)
-				return false;
-			if (from != other.from)
-				return false;
-			return true;
-		}
-	}
-
-	private final Cache<CacheKey, Object2ByteMap<BlockState>> connectionCache = CacheBuilder.newBuilder().build();
-
-    public TextureCTM(T type, TextureInfo info) {
+	public TextureCTM(T type, TextureInfo info) {
         super(type, info);
         this.connectInside = info.getInfo().flatMap(obj -> ParseUtils.getBoolean(obj, "connect_inside"));
         this.ignoreStates = info.getInfo().map(obj -> GsonHelper.getAsBoolean(obj, "ignore_states", false)).orElse(false);
@@ -94,22 +51,9 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
     }
     
     public boolean connectTo(CTMLogic ctm, BlockState from, BlockState to, Direction dir) {
-        try {
-        	Object2ByteMap<BlockState> sidecache = connectionCache.get(new CacheKey(from, dir), 
-				() -> {
-					Object2ByteMap<BlockState> map = new Object2ByteOpenCustomHashMap<>(new IdentityStrategy<>());
-					map.defaultReturnValue((byte) -1);
-					return map;
-				});
-
-        	byte cached = sidecache.getByte(to);
-            if (cached == -1) {
-                sidecache.put(to, cached = (byte) ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0));
-            }
-            return cached == 1;
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+		return connectionChecks == null
+				? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir)
+				: connectionChecks.test(dir, to);
     }
 
     @Override
