@@ -5,6 +5,7 @@ buildscript {
             name = "forge"
             url = 'https://maven.minecraftforge.net'
         }
+        maven { url = 'https://maven.parchmentmc.org' }
         maven {
             name = "sonatype"
             url = "https://oss.sonatype.org/content/repositories/snapshots/"
@@ -12,6 +13,7 @@ buildscript {
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+'
+        classpath 'org.parchmentmc:librarian:1.+'
         classpath 'org.ajoberstar:gradle-git:0.10.1'
     }
 }
@@ -21,6 +23,7 @@ plugins {
 }
 apply plugin: 'eclipse'
 apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'org.parchmentmc.librarian.forgegradle'
 apply plugin: 'maven-publish'
 
 import org.ajoberstar.grgit.Grgit
@@ -39,7 +42,7 @@ archivesBaseName = dev ? "CTM_DEV" : "CTM"
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
-    mappings channel: 'official', version: '1.18'
+    mappings channel: 'parchment', version: '2022.03.13-1.18.2'
     
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 

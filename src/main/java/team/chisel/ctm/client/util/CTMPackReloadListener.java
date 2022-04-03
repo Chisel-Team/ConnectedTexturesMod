@@ -8,20 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.MultiPartBakedModel;
-import net.minecraft.client.resources.model.WeightedBakedModel;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
-import net.minecraft.server.packs.resources.SimpleReloadableResourceManager;
-import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.LeavesBlock;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.collect.Maps;
@@ -31,9 +20,21 @@ import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.MultiPartBakedModel;
+import net.minecraft.client.resources.model.WeightedBakedModel;
+import net.minecraft.server.packs.resources.ReloadableResourceManager;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.event.ParticleFactoryRegisterEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IRegistryDelegate;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
@@ -44,7 +45,7 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
     public void onParticleFactoryRegister(ParticleFactoryRegisterEvent event) {
         // Apparently this is the only event that is posted after other resource loaders are registered, but before
         // the reload begins. We must register here to be AFTER model baking.
-        ((SimpleReloadableResourceManager)Minecraft.getInstance().getResourceManager()).registerReloadListener(this);
+        ((ReloadableResourceManager)Minecraft.getInstance().getResourceManager()).registerReloadListener(this);
     }
     
     @Override
@@ -96,14 +97,14 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
         private final Object2BooleanMap<RenderType> cache = new Object2BooleanOpenHashMap<>();
         
         @Override
-        public boolean test(RenderType layer) {
-            return cache.computeBooleanIfAbsent(layer, type -> 
+        public boolean test(@Nullable RenderType layer) {
+            return cache.computeIfAbsent(layer, (RenderType type) -> 
                 models.stream().anyMatch(m -> m.getModel().canRenderInLayer(state, type)) ||
-                (useFallback && canRenderInLayerFallback(state, layer)));
+                (useFallback && canRenderInLayerFallback(state, type)));
         }
     }
     
-    private Predicate<RenderType> getLayerCheck(BlockState state, BakedModel model) {
+    private @Nullable Predicate<RenderType> getLayerCheck(BlockState state, BakedModel model) {
         if (model instanceof AbstractCTMBakedModel ctmModel) {
             return layer -> ctmModel.getModel().canRenderInLayer(state, layer);
         }
