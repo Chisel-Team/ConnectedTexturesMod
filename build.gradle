@@ -180,7 +180,5 @@ curseforge {
         mainArtifact(jar) {
             displayName = "CTM - ${version}"
         }
-		addGameVersion '1.18'
-		addGameVersion '1.18.1'
     }
 }
