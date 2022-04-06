@@ -10,6 +10,8 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
+import org.apache.logging.log4j.message.ParameterizedMessage;
+
 import com.google.common.collect.Sets;
 
 import it.unimi.dsi.fastutil.objects.Object2BooleanLinkedOpenHashMap;
@@ -131,7 +133,8 @@ public enum TextureMetadataHandler {
                         continue;
                     }
 
-                    Set<Material> textures = Sets.newHashSet(model.getMaterials(event.getModelLoader()::getModel, Sets.newHashSet()));
+                    try {
+                        Set<Material> textures = Sets.newHashSet(model.getMaterials(event.getModelLoader()::getModel, Sets.newHashSet()));
                     // FORGE WHY
 //                    if (vanillaModelWrapperClass.isAssignableFrom(model.getClass())) {
 //                        BlockModel parent = ((BlockModel) modelWrapperModel.get(model)).parent;
@@ -141,31 +144,34 @@ public enum TextureMetadataHandler {
 //                        }
 //                    }
                     
-                    Set<ResourceLocation> newDependencies = Sets.newHashSet(model.getDependencies());
-
+                        Set<ResourceLocation> newDependencies = Sets.newHashSet(model.getDependencies());
+                        
                     // FORGE WHYYYYY
 //                    if (multipartModelClass.isAssignableFrom(model.getClass())) {
 //                        Map<?, IUnbakedModel> partModels = (Map<?, IUnbakedModel>) multipartPartModels.get(model);
 //                        textures = partModels.values().stream().map(m -> m.getTextures(event.getModelLoader()::getUnbakedModel, Sets.newHashSet())).flatMap(Collection::stream).collect(Collectors.toSet());
 //                        newDependencies.addAll(partModels.values().stream().flatMap(m -> m.getDependencies().stream()).collect(Collectors.toList()));
 //                    }
-                    
-                    for (Material tex : textures) {
-                        IMetadataSectionCTM meta = null;
-                        // Cache all dependent texture metadata
-                        try {
-                            meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex.texture()));
-                        } catch (IOException e) {} // Fallthrough
-                        if (meta != null) {
-                        	// At least one texture has CTM metadata, so we should wrap this model
-                            shouldWrap = true;
+
+                        for (Material tex : textures) {
+                            IMetadataSectionCTM meta = null;
+                            // Cache all dependent texture metadata
+                            try {
+                                meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex.texture()));
+                            } catch (IOException e) {} // Fallthrough
+                            if (meta != null) {
+                                // At least one texture has CTM metadata, so we should wrap this model
+                                shouldWrap = true;
+                            }
                         }
-                    }
-                    
-                    for (ResourceLocation newDep : newDependencies) {
-                        if (seenModels.add(newDep)) {
-                            dependencies.push(newDep);
+                        
+                        for (ResourceLocation newDep : newDependencies) {
+                            if (seenModels.add(newDep)) {
+                                dependencies.push(newDep);
+                            }
                         }
+                    } catch (Exception e) {
+                        CTM.logger.error(new ParameterizedMessage("Error loading model dependency {} for model {}. Skipping...", dep, rl), e);
                     }
                 }
                 wrappedModels.put(rl, shouldWrap);
