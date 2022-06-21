@@ -1,0 +1,10 @@
+{
+    "ctm":{
+        "ctm_version": 1,
+        "type":"CTM_FULL",
+        "textures":[
+            "block/jungle_log_top_ctm_a",
+            "block/jungle_log_top_ctm_b"
+        ]
+    }
+}
