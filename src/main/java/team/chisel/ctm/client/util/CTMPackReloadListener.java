@@ -68,12 +68,21 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
         blockRenderChecks.clear();
 
         for (Block block : ForgeRegistries.BLOCKS.getValues()) {
-            BlockState state = block.defaultBlockState();
-            Predicate<RenderType> predicate = getLayerCheck(state, Minecraft.getInstance().getModelManager().getBlockModelShaper().getBlockModel(state));
+            Predicate<RenderType> predicateAll = null;
+            for (BlockState state : block.getStateDefinition().getPossibleStates()) {
+                Predicate<RenderType> predicate = getLayerCheck(state, Minecraft.getInstance().getModelManager().getBlockModelShaper().getBlockModel(state));
+                if (predicate != null){
+                    if (predicateAll != null){
+                        predicateAll = predicateAll.or(predicate);
+                    }else {
+                        predicateAll = predicate;
+                    }
+                }
+            }
 
-            if (predicate != null) {
+            if (predicateAll != null) {
                 blockRenderChecks.put(block.delegate, getExistingRenderCheck(block));
-                ItemBlockRenderTypes.setRenderLayer(block, predicate);
+                ItemBlockRenderTypes.setRenderLayer(block, predicateAll);
             }
         }
     }
