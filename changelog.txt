@@ -1,3 +1,7 @@
+1.1.5:
+Fixes
+- #174 Occasional array index out of bounds exceptions during connection check
+
 1.1.4:
 New
 - Port to 1.18.2
