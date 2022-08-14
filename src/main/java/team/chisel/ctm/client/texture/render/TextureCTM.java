@@ -92,22 +92,11 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
         this.ignoreStates = info.getInfo().map(obj -> GsonHelper.getAsBoolean(obj, "ignore_states", false)).orElse(false);
         this.connectionChecks = info.getInfo().map(obj -> predicateParser.parse(obj.get("connect_to"))).orElse(null);
     }
-    
+
     public boolean connectTo(CTMLogic ctm, BlockState from, BlockState to, Direction dir) {
         try {
-        	Object2ByteMap<BlockState> sidecache = connectionCache.get(new CacheKey(from, dir), 
-				() -> {
-					Object2ByteMap<BlockState> map = new Object2ByteOpenCustomHashMap<>(new IdentityStrategy<>());
-					map.defaultReturnValue((byte) -1);
-					return map;
-				});
-
-        	byte cached = sidecache.getByte(to);
-            if (cached == -1) {
-                sidecache.put(to, cached = (byte) ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0));
-            }
-            return cached == 1;
-        } catch (ExecutionException e) {
+            return ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0) == 1;
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
