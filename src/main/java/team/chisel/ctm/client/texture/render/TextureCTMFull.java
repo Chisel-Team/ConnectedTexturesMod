@@ -54,33 +54,33 @@ public class TextureCTMFull extends TextureCTM<TextureTypeCTMFull> {
 				sprite = sprites[0];
 				submap = Submap.X4[2][2];
 			} else if (topLeft && topRight && bottomLeft) {
-				submap = Submap.X4[1][0];
-			} else if (topLeft && topRight && bottomRight) {
-				submap = Submap.X4[1][1];
-			} else if (topLeft && bottomLeft && bottomRight) {
-				submap = Submap.X4[1][2];
-			} else if (topRight && bottomLeft && bottomRight) {
-				submap = Submap.X4[1][3];
-			} else if (bottomLeft && bottomRight) {
 				submap = Submap.X4[0][0];
-			} else if (topLeft && bottomLeft) {
+			} else if (topLeft && topRight && bottomRight) {
 				submap = Submap.X4[0][1];
+			} else if (topLeft && bottomLeft && bottomRight) {
+				submap = Submap.X4[1][0];
+			} else if (topRight && bottomLeft && bottomRight) {
+				submap = Submap.X4[1][1];
 			} else if (topLeft && topRight) {
-				submap = Submap.X4[0][2];
-			} else if (topRight && bottomRight) {
-				submap = Submap.X4[0][3];
-			} else if (topLeft && bottomRight) {
-				submap = Submap.X4[3][0];
-			} else if (topRight && bottomLeft) {
-				submap = Submap.X4[3][1];
-			} else if (bottomLeft) {
 				submap = Submap.X4[2][0];
-			} else if (bottomRight) {
+			} else if (bottomLeft && bottomRight) {
+				submap = Submap.X4[3][1];
+			} else if (topLeft && bottomLeft) {
+				submap = Submap.X4[3][0];
+			} else if (topRight && bottomRight) {
 				submap = Submap.X4[2][1];
-			} else if (topLeft) {
+			} else if (topLeft && bottomRight) {
 				submap = Submap.X4[2][2];
-			} else if (topRight) {
+			} else if (topRight && bottomLeft) {
 				submap = Submap.X4[2][3];
+			} else if (topLeft) {
+				submap = Submap.X4[0][2];
+			} else if (topRight) {
+				submap = Submap.X4[0][3];
+			} else if (bottomLeft) {
+				submap = Submap.X4[1][2];
+			} else if (bottomRight) {
+				submap = Submap.X4[1][3];
 			} else {
 				submap = Submap.X4[3][2];
 			}
@@ -90,11 +90,11 @@ public class TextureCTMFull extends TextureCTM<TextureTypeCTMFull> {
 				sprite = sprites[0];
 				submap = Submap.X4[3][2];
 			} else if (topLeft) {
-				submap = Submap.X4[0][0];
+				submap = Submap.X4[1][3];
 			} else if (topRight) {
-				submap = Submap.X4[1][0];
+				submap = Submap.X4[3][1];
 			} else {
-				submap = Submap.X4[2][0];
+				submap = Submap.X4[3][3];
 			}
 		} else if (top && bottom && right) {
 			sprite = sprites[1];
@@ -102,11 +102,11 @@ public class TextureCTMFull extends TextureCTM<TextureTypeCTMFull> {
 				sprite = sprites[0];
 				submap = Submap.X4[2][1];
 			} else if (topRight) {
-				submap = Submap.X4[0][1];
+				submap = Submap.X4[1][2];
 			} else if (bottomRight) {
-				submap = Submap.X4[1][1];
+				submap = Submap.X4[3][0];
 			} else {
-				submap = Submap.X4[2][1];
+				submap = Submap.X4[3][2];
 			}
 		} else if (bottom && left && right) {
 			sprite = sprites[1];
@@ -114,7 +114,7 @@ public class TextureCTMFull extends TextureCTM<TextureTypeCTMFull> {
 				sprite = sprites[0];
 				submap = Submap.X4[1][2];
 			} else if (bottomLeft) {
-				submap = Submap.X4[1][2];
+				submap = Submap.X4[2][0];
 			} else if (bottomRight) {
 				submap = Submap.X4[0][2];
 			} else {
@@ -126,7 +126,7 @@ public class TextureCTMFull extends TextureCTM<TextureTypeCTMFull> {
 				sprite = sprites[0];
 				submap = Submap.X4[2][3];
 			} else if (topLeft) {
-				submap = Submap.X4[1][3];
+				submap = Submap.X4[2][1];
 			} else if (bottomLeft) {
 				submap = Submap.X4[0][3];
 			} else {
@@ -138,7 +138,7 @@ public class TextureCTMFull extends TextureCTM<TextureTypeCTMFull> {
 				submap = Submap.X4[1][1];
 			} else {
 				sprite = sprites[1];
-				submap = Submap.X4[3][0];
+				submap = Submap.X4[0][0];
 			}
 		} else if (bottom && left) {
 			if (bottomLeft) {
@@ -146,7 +146,7 @@ public class TextureCTMFull extends TextureCTM<TextureTypeCTMFull> {
 				submap = Submap.X4[1][3];
 			} else {
 				sprite = sprites[1];
-				submap = Submap.X4[3][1];
+				submap = Submap.X4[0][1];
 			}
 		} else if (top && right) {
 			if (topRight) {
@@ -154,7 +154,7 @@ public class TextureCTMFull extends TextureCTM<TextureTypeCTMFull> {
 				submap = Submap.X4[3][1];
 			} else {
 				sprite = sprites[1];
-				submap = Submap.X4[3][2];
+				submap = Submap.X4[1][0];
 			}
 		} else if (top && left) {
 			if (topLeft) {
@@ -162,7 +162,7 @@ public class TextureCTMFull extends TextureCTM<TextureTypeCTMFull> {
 				submap = Submap.X4[3][3];
 			} else {
 				sprite = sprites[1];
-				submap = Submap.X4[3][3];
+				submap = Submap.X4[1][1];
 			}
 		} else if (top && bottom) {
 			sprite = sprites[0];
