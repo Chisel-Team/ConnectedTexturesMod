@@ -40,14 +40,14 @@ import net.minecraftforge.registries.IRegistryDelegate;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 
 public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> {
-    
+
     @SubscribeEvent
     public void onParticleFactoryRegister(ParticleFactoryRegisterEvent event) {
         // Apparently this is the only event that is posted after other resource loaders are registered, but before
         // the reload begins. We must register here to be AFTER model baking.
         ((ReloadableResourceManager)Minecraft.getInstance().getResourceManager()).registerReloadListener(this);
     }
-    
+
     @Override
     protected Unit prepare(ResourceManager resourceManagerIn, ProfilerFiller profilerIn) {
         return Unit.INSTANCE;
@@ -77,10 +77,10 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
             }
         }
     }
-    
+
     @RequiredArgsConstructor
     private static class CachingLayerCheck implements Predicate<RenderType> {
-        
+
         static <T> CachingLayerCheck of(BlockState state, Collection<T> rawModels, Function<T, BakedModel> converter) {
             List<AbstractCTMBakedModel> ctmModels = rawModels.stream()
                     .map(converter)
@@ -89,21 +89,21 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
                     .toList();
             return new CachingLayerCheck(state, ctmModels, ctmModels.size() < rawModels.size());
         }
-        
+
         private final BlockState state;
         private final List<AbstractCTMBakedModel> models;
         private final boolean useFallback;
-        
+
         private final Object2BooleanMap<RenderType> cache = new Object2BooleanOpenHashMap<>();
-        
+
         @Override
-        public boolean test(@Nullable RenderType layer) {
-            return cache.computeIfAbsent(layer, (RenderType type) -> 
+        public synchronized boolean test(@Nullable RenderType layer) {
+            return cache.computeIfAbsent(layer, (RenderType type) ->
                 models.stream().anyMatch(m -> m.getModel().canRenderInLayer(state, type)) ||
                 (useFallback && canRenderInLayerFallback(state, type)));
         }
     }
-    
+
     private @Nullable Predicate<RenderType> getLayerCheck(BlockState state, BakedModel model) {
         if (model instanceof AbstractCTMBakedModel ctmModel) {
             return layer -> ctmModel.getModel().canRenderInLayer(state, layer);
