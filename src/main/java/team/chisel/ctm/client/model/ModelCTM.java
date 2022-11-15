@@ -1,5 +1,19 @@
 package team.chisel.ctm.client.model;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
@@ -8,15 +22,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
+
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import java.io.IOException;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BlockElementFace;
 import net.minecraft.client.renderer.block.model.BlockModel;
@@ -24,10 +34,14 @@ import net.minecraft.client.renderer.block.model.ItemModelGenerator;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.*;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.ModelState;
+import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.model.IModelConfiguration;
+import net.minecraftforge.client.model.geometry.IGeometryBakingContext;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -73,7 +87,7 @@ public class ModelCTM implements IModelCTM {
             IMetadataSectionCTM meta = null;
             if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
                 ResourceLocation rl = new ResourceLocation(e.getValue().getAsString());
-                meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(rl));
+                meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(rl)).orElse(null); // TODO lazy null
                 textureDependencies.add(rl);
             } else if (e.getValue().isJsonObject()) {
                 JsonObject obj = e.getValue().getAsJsonObject();
@@ -93,7 +107,7 @@ public class ModelCTM implements IModelCTM {
 	}
 
 	@Override
-	public Collection<Material> getTextures(IModelConfiguration owner, Function<ResourceLocation, UnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors) {
+	public Collection<Material> getMaterials(IGeometryBakingContext context, Function<ResourceLocation, UnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors) {
 		List<Material> ret = textureDependencies.stream()
 				.map(rl -> new Material(TextureAtlas.LOCATION_BLOCKS, rl))
     			.collect(Collectors.toList());
@@ -102,7 +116,7 @@ public class ModelCTM implements IModelCTM {
     	for (Material tex : ret) {
             IMetadataSectionCTM meta;
 			try {
-				meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex.texture()));
+				meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex.texture())).orElse(null); // TODO lazy null
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -116,10 +130,10 @@ public class ModelCTM implements IModelCTM {
     }
 	
 	@Override
-	public BakedModel bake(IModelConfiguration owner, ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelTransform, ItemOverrides itemOverrides, ResourceLocation modelLocation) {
-		return bake(bakery, spriteGetter, modelTransform, modelLocation);
+    public BakedModel bake(IGeometryBakingContext context, ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState, ItemOverrides overrides, ResourceLocation modelLocation) {
+		return bake(bakery, spriteGetter, modelState, modelLocation);
 	}
-	
+
 	private static final ItemModelGenerator ITEM_MODEL_GENERATOR = new ItemModelGenerator();
 
 	public BakedModel bake(ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelTransform, ResourceLocation modelLocation) {
@@ -130,23 +144,23 @@ public class ModelCTM implements IModelCTM {
             parent = vanillamodel.bake(bakery, spriteGetter, modelTransform, modelLocation);
         }
         initializeTextures(bakery, spriteGetter);
-        return new ModelBakedCTM(this, parent);
+        return new ModelBakedCTM(this, parent, null);
     }
 	
 	public void initializeTextures(ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter) {
-		for (Material m : getTextures(null, bakery::getModel, new HashSet<>())) {
+		for (Material m : getMaterials(null, bakery::getModel, new HashSet<>())) {
 		    TextureAtlasSprite sprite = spriteGetter.apply(m);
-		    IMetadataSectionCTM chiselmeta = null;
+		    Optional<IMetadataSectionCTM> chiselmeta = Optional.empty();
 		    try {
 		        chiselmeta = ResourceUtil.getMetadata(sprite);
 		    } catch (IOException e) {}
-		    final IMetadataSectionCTM meta = chiselmeta;
+		    final Optional<IMetadataSectionCTM> meta = chiselmeta;
 		    textures.computeIfAbsent(sprite.getName(), s -> {
 		        ICTMTexture<?> tex;
-		        if (meta == null) {
+		        if (meta.isEmpty()) {
 		            tex = new TextureNormal(TextureTypeNormal.INSTANCE, new TextureInfo(new TextureAtlasSprite[] { sprite }, Optional.empty(), null));
 		        } else {
-		            tex = meta.makeTexture(sprite, spriteGetter);
+		            tex = meta.get().makeTexture(sprite, spriteGetter);
 		        }
 		        layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
 		        return tex;

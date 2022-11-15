@@ -1,23 +1,32 @@
 package team.chisel.ctm.client.util;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.MultimapBuilder;
+import static net.minecraftforge.client.model.IQuadTransformer.COLOR;
+import static net.minecraftforge.client.model.IQuadTransformer.POSITION;
+import static net.minecraftforge.client.model.IQuadTransformer.STRIDE;
+import static net.minecraftforge.client.model.IQuadTransformer.UV0;
+
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
-import javax.annotation.Nonnull;
+import java.util.Map;
+
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import org.apache.commons.lang3.tuple.Pair;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.math.Vector3f;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.Value;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
@@ -25,9 +34,7 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec2;
-import net.minecraftforge.client.model.pipeline.BakedQuadBuilder;
-import net.minecraftforge.client.model.pipeline.IVertexConsumer;
-import org.apache.commons.lang3.tuple.Pair;
+import net.minecraftforge.client.model.pipeline.QuadBakingVertexConsumer;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.util.NonnullType;
 
@@ -413,22 +420,22 @@ public class Quad {
     }
     
     @SuppressWarnings("null")
-    public BakedQuad rebake() {
-        @Nonnull VertexFormat format = this.builder.vertexFormat;
+    public BakedQuad rebake() {        
+        var quad = new BakedQuad[1];
+        var builder = new QuadBakingVertexConsumer(q -> quad[0] = q);
+        builder.setDirection(this.builder.quadOrientation);
+        builder.setTintIndex(this.builder.quadTint);
+        builder.setShade(this.builder.applyDiffuseLighting);
+        builder.setSprite(this.uvs.getSprite());
+        var format = DefaultVertexFormat.BLOCK;
         
-        BakedQuadBuilder builder = new BakedQuadBuilder();
-        builder.setQuadOrientation(this.builder.quadOrientation);
-        builder.setQuadTint(this.builder.quadTint);
-        builder.setApplyDiffuseLighting(this.builder.applyDiffuseLighting);
-        builder.setTexture(this.uvs.getSprite());
-
         for (int v = 0; v < 4; v++) {
             for (int i = 0; i < format.getElements().size(); i++) {
                 VertexFormatElement ele = format.getElements().get(i);
                 switch (ele.getUsage()) {
                 case POSITION:
                     Vector3f p = vertPos[v];
-                    builder.put(i, p.x(), p.y(), p.z(), 1);
+                    builder.vertex(p.x(), p.y(), p.z());
                     break;
                 /*case COLOR:
                     builder.put(i, 35, 162, 204); Pretty things
@@ -436,21 +443,22 @@ public class Quad {
                 case UV:
                     if (ele.getIndex() == 2) {
                         //Stuff for fullbright
-                        builder.put(i, ((float) blocklight * 0x20) / 0xFFFF, ((float) skylight * 0x20) / 0xFFFF);
+                        builder.uv2(blocklight * 0x20, skylight * 0x20);
                         break;
                     } else if (ele.getIndex() == 0) {
                         Vec2 uv = vertUv[v];
-                        builder.put(i, uv.x, uv.y);
+                        builder.uv(uv.x, uv.y);
                         break;
                     }
                     // fallthrough
                 default:
-                    builder.put(i, this.builder.data.get(ele).get(v));
+                    builder.misc(ele, this.builder.packedByElement.get(ele)[v]);
                 }
             }
+            builder.endVertex();
         }
 
-        return builder.build();
+        return quad[0];
     }
     
     public Quad transformUVs(TextureAtlasSprite sprite) {
@@ -475,16 +483,20 @@ public class Quad {
     }
     
     public static Quad from(BakedQuad baked) {
-        Builder b = new Builder(DefaultVertexFormat.BLOCK, baked.getSprite());
-        baked.pipe(b);
+        Builder b = new Builder(baked.getSprite());
+        b.copyFrom(baked);
         return b.build();
     }
     
     @RequiredArgsConstructor
-    public static class Builder implements IVertexConsumer {
-
-        @Getter
-        private final VertexFormat vertexFormat;
+    public static class Builder {
+        
+        private final Map<VertexFormatElement, Integer> ELEMENT_OFFSETS = Util.make(new IdentityHashMap<>(), map -> {
+            int i = 0;
+            for (var element : DefaultVertexFormat.BLOCK.getElements())
+                map.put(element, DefaultVertexFormat.BLOCK.getOffset(i++) / 4); // Int offset
+        });
+        
         @Getter
         private final TextureAtlasSprite sprite;
 
@@ -497,20 +509,56 @@ public class Quad {
         @Setter
         private boolean applyDiffuseLighting;
         
-        private ListMultimap<VertexFormatElement, float[]> data = MultimapBuilder.hashKeys().arrayListValues().build();
+        private final float[][] positions = new float[4][];
+        private final float[][] uvs = new float[4][];
+        private final int[][] colors = new int[4][];
         
-        @Override
-        public void put(int element, @Nullable float... data) {
-            if (data == null) return;
-            float[] copy = new float[data.length];
-            System.arraycopy(data, 0, copy, 0, data.length);
-            VertexFormatElement ele = vertexFormat.getElements().get(element);
-            this.data.put(ele, copy);
+        private Map<VertexFormatElement, int[][]> packedByElement = new HashMap<>();
+                
+        public void copyFrom(BakedQuad baked) {
+            setQuadTint(baked.getTintIndex());
+            setQuadOrientation(baked.getDirection());
+            setApplyDiffuseLighting(baked.isShade());
+            var vertices = baked.getVertices();
+            for (int i = 0; i < 4; i++) {
+                int offset = i * STRIDE;
+                this.positions[i] = new float[] {
+                    Float.intBitsToFloat(vertices[offset + POSITION]),
+                    Float.intBitsToFloat(vertices[offset + POSITION + 1]),
+                    Float.intBitsToFloat(vertices[offset + POSITION + 2]),
+                    0
+                };
+                int packedColor = vertices[offset + COLOR];
+                this.colors[i] = new int[] {
+                    packedColor & 0xFF,
+                    (packedColor << 8) & 0xFF,
+                    (packedColor << 16) & 0xFF,
+                    (packedColor << 24) & 0xFF
+                };
+                this.uvs[i] = new float[] {
+                   Float.intBitsToFloat(vertices[offset + UV0]),
+                   Float.intBitsToFloat(vertices[offset + UV0 + 1])
+                };
+            }
+            for (var e : ELEMENT_OFFSETS.entrySet()) {
+                var offset = e.getValue();
+                int[][] data = new int[4][e.getKey().getByteSize() / 4];
+                for (int v = 0; v < 4; v++) {
+                    for (int i = 0; i < data[v].length; i++) {
+                        data[v][i] = vertices[v * STRIDE + offset + i];
+                    }
+                }
+                this.packedByElement.put(e.getKey(), data);//new int[] { vertices[0 * STRIDE + offset], vertices[1 * STRIDE + offset], vertices[2 * STRIDE + offset], vertices[3 * STRIDE + offset]});
+            }
         }
-        
+
         public Quad build() {
-            Vector3f[] verts = fromData(data.get(DefaultVertexFormat.ELEMENT_POSITION), 3);
-            Vec2[] uvs = fromData(data.get(DefaultVertexFormat.ELEMENT_UV0), 2);
+            Vector3f[] verts = new Vector3f[4];
+            Vec2[] uvs = new Vec2[4];
+            for (int i = 0; i < verts.length; i++) {
+                verts[i] = new Vector3f(this.positions[i][0], this.positions[i][1], this.positions[i][2]);
+                uvs[i] = new Vec2(this.uvs[i][0], this.uvs[i][1]);
+            }
             // TODO need to extract light data here
             return new Quad(verts, uvs, this, getSprite());
         }

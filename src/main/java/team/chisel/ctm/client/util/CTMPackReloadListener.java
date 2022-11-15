@@ -25,6 +25,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.MultiPartBakedModel;
 import net.minecraft.client.resources.model.WeightedBakedModel;
+import net.minecraft.core.Holder;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
@@ -32,17 +33,17 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.event.ParticleFactoryRegisterEvent;
+import net.minecraftforge.client.ChunkRenderTypeSet;
+import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.IRegistryDelegate;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 
 public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> {
     
     @SubscribeEvent
-    public void onParticleFactoryRegister(ParticleFactoryRegisterEvent event) {
+    public void onParticleFactoryRegister(RegisterParticleProvidersEvent event) {
         // Apparently this is the only event that is posted after other resource loaders are registered, but before
         // the reload begins. We must register here to be AFTER model baking.
         ((ReloadableResourceManager)Minecraft.getInstance().getResourceManager()).registerReloadListener(this);
@@ -58,10 +59,10 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
         ResourceUtil.invalidateCaches();
         TextureMetadataHandler.INSTANCE.invalidateCaches();
         AbstractCTMBakedModel.invalidateCaches();
-        refreshLayerHacks();
+//        refreshLayerHacks();
     }
 
-    private static final Map<IRegistryDelegate<Block>, Predicate<RenderType>> blockRenderChecks = Maps.newHashMap();
+    private static final Map<Holder.Reference<Block>, Predicate<RenderType>> blockRenderChecks = Maps.newHashMap();
 
     private void refreshLayerHacks() {
         blockRenderChecks.forEach((b, p) -> ItemBlockRenderTypes.setRenderLayer(b.get(), p));
@@ -72,7 +73,7 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
             Predicate<RenderType> predicate = getLayerCheck(state, Minecraft.getInstance().getModelManager().getBlockModelShaper().getBlockModel(state));
 
             if (predicate != null) {
-                blockRenderChecks.put(block.delegate, getExistingRenderCheck(block));
+                blockRenderChecks.put(ForgeRegistries.BLOCKS.getDelegateOrThrow(block), getExistingRenderCheck(block)::contains);
                 ItemBlockRenderTypes.setRenderLayer(block, predicate);
             }
         }
@@ -117,7 +118,7 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
         return null;
     }
 
-    private static final Field _blockRenderChecks = ObfuscationReflectionHelper.findField(ItemBlockRenderTypes.class, "blockRenderChecks");
+    private static final Field _blockRenderChecks = ObfuscationReflectionHelper.findField(ItemBlockRenderTypes.class, "BLOCK_RENDER_TYPES");
     private static final MethodHandle _fancyGraphics;
     static {
         try {
@@ -127,9 +128,9 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
         }
     }
 
-    private Predicate<RenderType> getExistingRenderCheck(Block block) {
+    private ChunkRenderTypeSet getExistingRenderCheck(Block block) {
         try {
-            return ((Map<IRegistryDelegate<Block>, Predicate<RenderType>>) _blockRenderChecks.get(null)).get(block.delegate);
+            return ((Map<Holder.Reference<Block>, ChunkRenderTypeSet>) _blockRenderChecks.get(null)).get(ForgeRegistries.BLOCKS.getDelegateOrThrow(block));
         } catch (IllegalArgumentException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
@@ -146,7 +147,7 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
         } else {
             java.util.function.Predicate<RenderType> rendertype;
             synchronized (ItemBlockRenderTypes.class) {
-                rendertype = blockRenderChecks.get(block.delegate);
+                rendertype = blockRenderChecks.get(ForgeRegistries.BLOCKS.getDelegateOrThrow(block));
             }
             return rendertype != null ? rendertype.test(type) : type == RenderType.solid();
         }

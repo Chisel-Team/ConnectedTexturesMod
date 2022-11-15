@@ -42,7 +42,7 @@ archivesBaseName = dev ? "CTM_DEV" : "CTM"
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
-    mappings channel: 'parchment', version: '2022.03.13-1.18.2'
+    mappings channel: 'parchment', version: '2022.08.28-1.19.2'
     
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 

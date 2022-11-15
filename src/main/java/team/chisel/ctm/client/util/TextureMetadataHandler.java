@@ -6,6 +6,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -23,9 +24,8 @@ import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.event.ModelBakeEvent;
+import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
-import net.minecraftforge.client.model.ForgeModelBakery;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
@@ -51,30 +51,32 @@ public enum TextureMetadataHandler {
         for (ResourceLocation rel : sprites) {
             try {
                 rel = new ResourceLocation(rel.getNamespace(), "textures/" + rel.getPath() + ".png");
-                IMetadataSectionCTM metadata = ResourceUtil.getMetadata(rel);
-                if (metadata != null) {
-                    // Load proxy data
-                    if (metadata.getProxy() != null) {
-                        ResourceLocation proxysprite = new ResourceLocation(metadata.getProxy());
-                        IMetadataSectionCTM proxymeta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(proxysprite));
-                        // Load proxy's base sprite
-                        event.addSprite(proxysprite);
-                        if (proxymeta != null) {
-                            // Load proxy's additional textures
-                            for (ResourceLocation r : proxymeta.getAdditionalTextures()) {
-                            	if (registeredTextures.add(r)) {
-                            		event.addSprite(r);
-                            	}
+                Optional<IMetadataSectionCTM> metadata = ResourceUtil.getMetadata(rel);
+                var proxy = metadata.map(IMetadataSectionCTM::getProxy);
+                if (proxy.isPresent()) {
+                    ResourceLocation proxysprite = new ResourceLocation(proxy.get());
+                    Optional<IMetadataSectionCTM> proxymeta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(proxysprite));
+                    // Load proxy's base sprite
+                    event.addSprite(proxysprite);
+                    proxymeta.ifPresent(m -> {
+                        // Load proxy's additional textures
+                        for (ResourceLocation r : m.getAdditionalTextures()) {
+                        	if (registeredTextures.add(r)) {
+                        		event.addSprite(r);
+                        	}
+                        }
+                    });
+                }
+                
+                metadata.map(IMetadataSectionCTM::getAdditionalTextures)
+                    .ifPresent(textures -> {
+                    // Load additional textures
+                        for (ResourceLocation r : textures) {
+                            if (registeredTextures.add(r)) {
+                                event.addSprite(r);
                             }
                         }
-                    }
-                    // Load additional textures
-                    for (ResourceLocation r : metadata.getAdditionalTextures()) {
-                        if (registeredTextures.add(r)) {
-                            event.addSprite(r);
-                        }
-                    }
-                }
+                    });
             }
             catch (FileNotFoundException e) {} // Ignore these, they are reported by vanilla
             catch (IOException e) {
@@ -106,12 +108,12 @@ public enum TextureMetadataHandler {
     @SuppressWarnings("unchecked")
     @SubscribeEvent(priority = EventPriority.LOWEST) // low priority to capture all event-registered models
     @SneakyThrows
-    public void onModelBake(ModelBakeEvent event) {
-        Map<ResourceLocation, UnbakedModel> stateModels = ObfuscationReflectionHelper.getPrivateValue(ModelBakery.class, event.getModelLoader(), "f_119212_");
-        for (ResourceLocation rl : event.getModelRegistry().keySet()) {
+    public void onModelBake(ModelEvent.BakingCompleted event) {
+        Map<ResourceLocation, UnbakedModel> stateModels = ObfuscationReflectionHelper.getPrivateValue(ModelBakery.class, event.getModelBakery(), "f_119212_");
+        for (ResourceLocation rl : event.getModels().keySet()) {
             UnbakedModel rootModel = stateModels.get(rl);
             if (rootModel != null) {
-            	BakedModel baked = event.getModelRegistry().get(rl);
+            	BakedModel baked = event.getModels().get(rl);
             	if (baked instanceof AbstractCTMBakedModel) {
             		continue;
             	}
@@ -128,13 +130,13 @@ public enum TextureMetadataHandler {
                     ResourceLocation dep = dependencies.pop();
                     UnbakedModel model;
                     try {
-                         model = dep == rl ? rootModel : event.getModelLoader().getModel(dep);
+                         model = dep == rl ? rootModel : event.getModelBakery().getModel(dep);
                     } catch (Exception e) {
                         continue;
                     }
 
                     try {
-                        Set<Material> textures = Sets.newHashSet(model.getMaterials(event.getModelLoader()::getModel, Sets.newHashSet()));
+                        Set<Material> textures = Sets.newHashSet(model.getMaterials(event.getModelBakery()::getModel, Sets.newHashSet()));
                     // FORGE WHY
 //                    if (vanillaModelWrapperClass.isAssignableFrom(model.getClass())) {
 //                        BlockModel parent = ((BlockModel) modelWrapperModel.get(model)).parent;
@@ -157,7 +159,7 @@ public enum TextureMetadataHandler {
                             IMetadataSectionCTM meta = null;
                             // Cache all dependent texture metadata
                             try {
-                                meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex.texture()));
+                                meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex.texture())).orElse(null); // TODO lazy
                             } catch (IOException e) {} // Fallthrough
                             if (meta != null) {
                                 // At least one texture has CTM metadata, so we should wrap this model
@@ -177,7 +179,7 @@ public enum TextureMetadataHandler {
                 wrappedModels.put(rl, shouldWrap);
                 if (shouldWrap) {
                     try {
-                        event.getModelRegistry().put(rl, wrap(rl, rootModel, baked, event.getModelLoader()));
+                        event.getModels().put(rl, wrap(rl, rootModel, baked, event.getModelBakery()));
                         dependencies.clear();
                     } catch (IOException e) {
                         CTM.logger.error("Could not wrap model " + rl + ". Aborting...", e);
@@ -187,10 +189,10 @@ public enum TextureMetadataHandler {
         }
     }
 
-    private @Nonnull BakedModel wrap(ResourceLocation loc, UnbakedModel model, BakedModel object, ForgeModelBakery loader) throws IOException {
+    private @Nonnull BakedModel wrap(ResourceLocation loc, UnbakedModel model, BakedModel object, ModelBakery loader) throws IOException {
         ModelCTM modelchisel = new ModelCTM(model);
         modelchisel.initializeTextures(loader, m -> Minecraft.getInstance().getTextureAtlas(m.atlasLocation()).apply(m.texture()));
-        return new ModelBakedCTM(modelchisel, object); 	
+        return new ModelBakedCTM(modelchisel, object, null); 	
     }
 
     public void invalidateCaches() {

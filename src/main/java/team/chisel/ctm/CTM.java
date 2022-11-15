@@ -2,13 +2,11 @@ package team.chisel.ctm;
 
 import static team.chisel.ctm.CTM.MOD_ID;
 
-import net.minecraft.resources.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ModelRegistryEvent;
-import net.minecraftforge.client.model.ModelLoaderRegistry;
+import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
@@ -43,7 +41,7 @@ public class CTM {
     	});
     }
     
-    private void modelRegistry(ModelRegistryEvent event) {
-        ModelLoaderRegistry.registerLoader(new ResourceLocation(MOD_ID, "ctm"), ModelLoaderCTM.INSTANCE);
+    private void modelRegistry(ModelEvent.RegisterGeometryLoaders event) {
+        event.register("ctm", ModelLoaderCTM.INSTANCE);
     }
 }

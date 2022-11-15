@@ -52,10 +52,7 @@ public interface IMetadataSectionCTM {
         if (getProxy() != null) {
             TextureAtlasSprite proxySprite = bakedTextureGetter.apply(new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(getProxy())));
             try {
-                meta = ResourceUtil.getMetadata(proxySprite);
-                if (meta == null) {
-                    meta = new V1();
-                }
+                meta = ResourceUtil.getMetadata(proxySprite).orElse(new V1());
                 sprite = proxySprite;
             } catch (IOException e) {
                 CTM.logger.error("Could not parse metadata of proxy, ignoring proxy and using base texture." + getProxy(), e);
