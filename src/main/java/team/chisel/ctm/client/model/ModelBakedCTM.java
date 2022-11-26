@@ -48,7 +48,7 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
             List<BakedQuad> parentQuads = parent.getQuads(state, facing, rand, data, layer);
             List<BakedQuad> quads;
             if (facing != null) {
-                ret.faceQuads.putAll(facing, quads = new ArrayList<>());
+                quads = ret.faceQuads.get(facing);
             } else {
                 quads = ret.genQuads;
             }

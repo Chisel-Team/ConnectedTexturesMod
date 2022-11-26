@@ -50,7 +50,7 @@ public class ResourceUtil {
     public static Optional<IMetadataSectionCTM> getMetadata(ResourceLocation res) throws IOException {
         // Note, semantically different from computeIfAbsent, as we DO care about keys mapped to null values
         if (metadataCache.containsKey(res)) {
-            return Optional.of(metadataCache.get(res));
+            return Optional.ofNullable(metadataCache.get(res));
         }
         Optional<IMetadataSectionCTM> ret;
         try {
@@ -61,7 +61,7 @@ public class ResourceUtil {
         } catch (JsonParseException e) {
             throw new IOException("Error loading metadata for location " + res, e);
         }
-        ret.ifPresent(r -> metadataCache.put(res, r));
+        ret.ifPresentOrElse(r -> metadataCache.put(res, r), () -> metadataCache.put(res, null));
         return ret;
     }
     

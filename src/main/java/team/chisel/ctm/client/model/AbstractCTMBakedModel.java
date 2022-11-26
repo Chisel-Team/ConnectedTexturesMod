@@ -162,13 +162,29 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
     
     @Override
     public final List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType layer) {
-        if (layer != null && layer != this.layer) {
-            return Collections.emptyList();
-        }
-        BakedModel parent = getParent(rand);
-
         ProfileUtil.start("ctm_models");
         
+        if (this.layer != null || state == null) {
+            ProfileUtil.start("quad_lookup");
+            List<BakedQuad> ret = Collections.emptyList();
+            if (layer == this.layer) {
+                if (side != null) {
+                    ret = this.faceQuads.get(side);
+                } else {
+                    ret = this.genQuads;
+                }
+            }
+            ProfileUtil.end(); // quad_lookup
+            
+            if (ret == null) {
+                throw new IllegalStateException("getQuads called on a model that was not properly initialized - by using getOverrides and/or getModelData");
+            }
+            
+            ProfileUtil.end(); // ctm_models
+            return ret;
+        }
+
+        BakedModel parent = getParent(rand);
         AbstractCTMBakedModel baked = this;
 
         try {
@@ -177,35 +193,21 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
 	            RenderContextList ctxList = extraData.get(CTM_CONTEXT).getContextList(state, baked);
 	
 	            Object2LongMap<ICTMTexture<?>> serialized = ctxList.serialized();
-	            ProfileUtil.endAndStart("model_creation");
+	            ProfileUtil.endAndStart("model_creation"); // state_creation
 	            baked = modelcache.get(new State(state, serialized, parent), () -> createModel(state, model, parent, ctxList, rand, extraData, layer));
-	            ProfileUtil.end();
+	            ProfileUtil.end(); // model_creation
 	        } else if (state != null)  {
 	            ProfileUtil.start("model_creation");
 	            baked = modelcache.get(new State(state, null, parent), () -> createModel(state, model, parent, null, rand, extraData, layer));
-	            ProfileUtil.end();
-	        } else {
-	            // This SHOULD be invalid, but apparently forge doesn't call getModelData when rendering items. Moving this check to be more specific below
-	            // throw new IllegalArgumentException("getQuads called without state and without going through overrides, this is not valid!");
+	            ProfileUtil.end(); // model_creation
 	        }
         } catch (ExecutionException e) {
         	throw new RuntimeException(e);
         }
-
-        ProfileUtil.start("quad_lookup");
-        List<BakedQuad> ret;
-        if (side != null) {
-            ret = baked.faceQuads.get(side);
-        } else {
-            ret = baked.genQuads;
-        }
-        ProfileUtil.end();
-
-        ProfileUtil.end();
-        if (ret == null) {
-            throw new IllegalStateException("getQuads called on a model that was not properly initialized - by using getOverrides and/or getModelData");
-        }
-        return ret;
+        
+        ProfileUtil.end(); // ctm_models
+        
+        return baked.getQuads(state, side, rand, extraData, layer);
     }
 
     @Override
@@ -239,6 +241,11 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
         }
         
         return ret;
+    }
+
+    @Override
+    public List<BakedModel> getRenderPasses(ItemStack itemStack, boolean fabulous) {
+        return IDynamicBakedModel.super.getRenderPasses(itemStack, fabulous);
     }
 
     @Override
@@ -291,7 +298,7 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
 
     @Override
     public @Nonnull ItemTransforms getTransforms() {
-        return ItemTransforms.NO_TRANSFORMS;
+        return this.parent.getTransforms();
     }
     
     protected static final RenderType[] LAYERS = RenderType.chunkBufferLayers().toArray(new RenderType[0]);
