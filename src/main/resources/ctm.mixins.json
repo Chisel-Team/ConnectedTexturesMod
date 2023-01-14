@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "team.chisel.ctm.mixins",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "ctm.refmap.json",
+  "client": [
+    "WeightedBakedModelMixin",
+    "MultiPartBakedModelMixin"
+  ],
+  "minVersion": "0.8"
+}

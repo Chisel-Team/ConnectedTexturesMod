@@ -41,14 +41,14 @@ import net.minecraftforge.registries.ForgeRegistries;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 
 public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> {
-    
+
     @SubscribeEvent
     public void onParticleFactoryRegister(RegisterParticleProvidersEvent event) {
         // Apparently this is the only event that is posted after other resource loaders are registered, but before
         // the reload begins. We must register here to be AFTER model baking.
         ((ReloadableResourceManager)Minecraft.getInstance().getResourceManager()).registerReloadListener(this);
     }
-    
+
     @Override
     protected Unit prepare(ResourceManager resourceManagerIn, ProfilerFiller profilerIn) {
         return Unit.INSTANCE;
@@ -59,30 +59,23 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
         ResourceUtil.invalidateCaches();
         TextureMetadataHandler.INSTANCE.invalidateCaches();
         AbstractCTMBakedModel.invalidateCaches();
-//        refreshLayerHacks();
     }
 
     private static final Map<Holder.Reference<Block>, Predicate<RenderType>> blockRenderChecks = Maps.newHashMap();
 
-    private void refreshLayerHacks() {
-        blockRenderChecks.forEach((b, p) -> ItemBlockRenderTypes.setRenderLayer(b.get(), p));
-        blockRenderChecks.clear();
-
-        for (Block block : ForgeRegistries.BLOCKS.getValues()) {
-            BlockState state = block.defaultBlockState();
-            Predicate<RenderType> predicate = getLayerCheck(state, Minecraft.getInstance().getModelManager().getBlockModelShaper().getBlockModel(state));
-
-            if (predicate != null) {
-                blockRenderChecks.put(ForgeRegistries.BLOCKS.getDelegateOrThrow(block), getExistingRenderCheck(block)::contains);
-                ItemBlockRenderTypes.setRenderLayer(block, predicate);
-            }
-        }
-    }
-    
     @RequiredArgsConstructor
-    private static class CachingLayerCheck implements Predicate<RenderType> {
-        
-        static <T> CachingLayerCheck of(BlockState state, Collection<T> rawModels, Function<T, BakedModel> converter) {
+    public static class CachingLayerCheck implements Predicate<RenderType> {
+
+        public static <T> ChunkRenderTypeSet renderTypeSet(BlockState state, Collection<T> rawModels, Function<T, BakedModel> converter) {
+            return ChunkRenderTypeSet.of(
+                    RenderType.chunkBufferLayers()
+                            .stream()
+                            .filter(of(state, rawModels, converter))
+                            .toArray(RenderType[]::new)
+            );
+        }
+
+        public static <T> CachingLayerCheck of(BlockState state, Collection<T> rawModels, Function<T, BakedModel> converter) {
             List<AbstractCTMBakedModel> ctmModels = rawModels.stream()
                     .map(converter)
                     .filter(m -> m instanceof AbstractCTMBakedModel)
@@ -103,19 +96,6 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
                 models.stream().anyMatch(m -> m.getModel().canRenderInLayer(state, type)) ||
                 (useFallback && canRenderInLayerFallback(state, type)));
         }
-    }
-    
-    private @Nullable Predicate<RenderType> getLayerCheck(BlockState state, BakedModel model) {
-        if (model instanceof AbstractCTMBakedModel ctmModel) {
-            return layer -> ctmModel.getModel().canRenderInLayer(state, layer);
-        }
-        if (model instanceof WeightedBakedModel weightedModel) {
-            return CachingLayerCheck.of(state, weightedModel.list, wm -> wm.getData());
-        }
-        if (model instanceof MultiPartBakedModel multiPartModel) {
-            return CachingLayerCheck.of(state, multiPartModel.selectors, Pair::getRight);
-        }
-        return null;
     }
 
     private static final Field _blockRenderChecks = ObfuscationReflectionHelper.findField(ItemBlockRenderTypes.class, "BLOCK_RENDER_TYPES");
