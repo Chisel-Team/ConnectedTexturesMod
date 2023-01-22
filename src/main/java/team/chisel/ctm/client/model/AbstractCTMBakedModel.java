@@ -214,7 +214,7 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
         ProfileUtil.end(); // ctm_models
         
         var quads = baked.getQuads(state, side, rand, extraData, layer);
-        System.out.println(Objects.toString(state) + "/" + Objects.toString(side) + "/" + Objects.toString(layer == null ? layer : layer.toString().substring(11, 17)) + "/" + (baked.layer == null ? "null" : baked.layer.toString().substring(11, 17)) + ": " + quads.size());
+//        System.out.println(Objects.toString(state) + "/" + Objects.toString(side) + "/" + Objects.toString(layer == null ? layer : layer.toString().substring(11, 17)) + "/" + (baked.layer == null ? "null" : baked.layer.toString().substring(11, 17)) + ": " + quads.size());
         return quads;
     }
 
