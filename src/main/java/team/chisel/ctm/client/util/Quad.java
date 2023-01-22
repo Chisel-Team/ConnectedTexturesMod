@@ -443,7 +443,7 @@ public class Quad {
                 case UV:
                     if (ele.getIndex() == 2) {
                         //Stuff for fullbright
-                        builder.uv2(blocklight * 0x20, skylight * 0x20);
+                        builder.uv2(blocklight * 0x10, skylight * 0x10);
                         break;
                     } else if (ele.getIndex() == 0) {
                         Vec2 uv = vertUv[v];
