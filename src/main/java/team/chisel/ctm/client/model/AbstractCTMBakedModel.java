@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -105,6 +106,7 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
         private final @Nonnull BlockState cleanState;
         private final @Nullable Object2LongMap<ICTMTexture<?>> serializedContext;
         private final @Nonnull BakedModel parent;
+        private final @Nullable RenderType layer;
         
         @Override
         public boolean equals(Object obj) {
@@ -120,6 +122,9 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
                 return false;
             }
             if (parent != other.parent) {
+                return false;
+            }
+            if (layer != other.layer) {
                 return false;
             }
 
@@ -141,6 +146,7 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
             result = prime * result + System.identityHashCode(cleanState);
             result = prime * result + (parent == null ? 0 : parent.hashCode());
             result = prime * result + (serializedContext == null ? 0 : serializedContext.hashCode());
+            result = prime * result + (layer == null ? 0 : layer.hashCode());
             return result;
         }
     }
@@ -194,11 +200,11 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
 	
 	            Object2LongMap<ICTMTexture<?>> serialized = ctxList.serialized();
 	            ProfileUtil.endAndStart("model_creation"); // state_creation
-	            baked = modelcache.get(new State(state, serialized, parent), () -> createModel(state, model, parent, ctxList, rand, extraData, layer));
+	            baked = modelcache.get(new State(state, serialized, parent, layer), () -> createModel(state, model, parent, ctxList, rand, extraData, layer));
 	            ProfileUtil.end(); // model_creation
 	        } else if (state != null)  {
 	            ProfileUtil.start("model_creation");
-	            baked = modelcache.get(new State(state, null, parent), () -> createModel(state, model, parent, null, rand, extraData, layer));
+	            baked = modelcache.get(new State(state, null, parent, layer), () -> createModel(state, model, parent, null, rand, extraData, layer));
 	            ProfileUtil.end(); // model_creation
 	        }
         } catch (ExecutionException e) {
@@ -207,7 +213,9 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
         
         ProfileUtil.end(); // ctm_models
         
-        return baked.getQuads(state, side, rand, extraData, layer);
+        var quads = baked.getQuads(state, side, rand, extraData, layer);
+        System.out.println(Objects.toString(state) + "/" + Objects.toString(side) + "/" + Objects.toString(layer == null ? layer : layer.toString().substring(11, 17)) + "/" + (baked.layer == null ? "null" : baked.layer.toString().substring(11, 17)) + ": " + quads.size());
+        return quads;
     }
 
     @Override
