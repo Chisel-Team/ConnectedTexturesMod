@@ -17,6 +17,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.jetbrains.annotations.NotNull;
 
+import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ArrayListMultimap;
@@ -209,7 +210,8 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
 	        } else {
 	            throw new IllegalStateException("Unreachable? Block: " + Objects.toString(state) + "   layer: " + layer);
 	        }
-        } catch (ExecutionException e) {
+        } catch (Exception e) {
+            Throwables.throwIfUnchecked(e);
         	throw new RuntimeException(e);
         }
         
