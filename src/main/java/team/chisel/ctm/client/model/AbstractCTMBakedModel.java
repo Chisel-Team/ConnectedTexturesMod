@@ -206,6 +206,8 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
 	            ProfileUtil.start("model_creation");
 	            baked = modelcache.get(new State(state, null, parent, layer), () -> createModel(state, model, parent, null, rand, extraData, layer));
 	            ProfileUtil.end(); // model_creation
+	        } else {
+	            throw new IllegalStateException("Unreachable? Block: " + Objects.toString(state) + "   layer: " + layer);
 	        }
         } catch (ExecutionException e) {
         	throw new RuntimeException(e);
