@@ -11,6 +11,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.google.common.collect.ObjectArrays;
 
 import net.minecraft.client.renderer.RenderType;
@@ -43,7 +45,14 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
             parent = castParent.getParent(rand);
         }
 
-        AbstractCTMBakedModel ret = new ModelBakedCTM(model, parent, layer);
+        AbstractCTMBakedModel ret = new ModelBakedCTM(model, parent, layer)
+                {
+            @Override
+            public @NotNull List<BakedQuad> getQuads(@org.jetbrains.annotations.Nullable BlockState state, @org.jetbrains.annotations.Nullable Direction side, @NotNull RandomSource rand) {
+                // TODO Auto-generated method stub
+                return super.getQuads(state, side, rand);
+            }
+                };
         for (Direction facing : FACINGS) {
             List<BakedQuad> parentQuads = parent.getQuads(state, facing, rand, data, layer);
             List<BakedQuad> quads;

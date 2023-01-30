@@ -170,34 +170,16 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
     @Override
     public final List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType layer) {
         ProfileUtil.start("ctm_models");
-        
-        if (this.layer != null || state == null) {
-            ProfileUtil.start("quad_lookup");
-            List<BakedQuad> ret = Collections.emptyList();
-            if (layer == this.layer) {
-                if (side != null) {
-                    ret = this.faceQuads.get(side);
-                } else {
-                    ret = this.genQuads;
-                }
-            }
-            ProfileUtil.end(); // quad_lookup
-            
-            if (ret == null) {
-                throw new IllegalStateException("getQuads called on a model that was not properly initialized - by using getOverrides and/or getModelData");
-            }
-            
-            ProfileUtil.end(); // ctm_models
-            return ret;
-        }
 
         BakedModel parent = getParent(rand);
-        AbstractCTMBakedModel baked = this;
+        AbstractCTMBakedModel baked;
 
         try {
-	        if (Minecraft.getInstance().level != null && extraData.has(CTM_CONTEXT)) {
+            if (state == null) {
+                return quadLookup(side, layer);
+            } else if (Minecraft.getInstance().level != null && extraData.has(CTM_CONTEXT)) {
 	            ProfileUtil.start("state_creation");
-	            RenderContextList ctxList = extraData.get(CTM_CONTEXT).getContextList(state, baked);
+	            RenderContextList ctxList = extraData.get(CTM_CONTEXT).getContextList(state, this);
 	
 	            Object2LongMap<ICTMTexture<?>> serialized = ctxList.serialized();
 	            ProfileUtil.endAndStart("model_creation"); // state_creation
@@ -217,9 +199,29 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
         
         ProfileUtil.end(); // ctm_models
         
-        var quads = baked.getQuads(state, side, rand, extraData, layer);
+        var quads = baked.quadLookup(side, layer);
 //        System.out.println(Objects.toString(state) + "/" + Objects.toString(side) + "/" + Objects.toString(layer == null ? layer : layer.toString().substring(11, 17)) + "/" + (baked.layer == null ? "null" : baked.layer.toString().substring(11, 17)) + ": " + quads.size());
         return quads;
+    }
+
+    protected final List<BakedQuad> quadLookup(@Nullable Direction side, @Nullable RenderType layer) {
+        ProfileUtil.start("quad_lookup");
+        List<BakedQuad> ret = Collections.emptyList();
+        if (layer == this.layer) {
+            if (side != null) {
+                ret = this.faceQuads.get(side);
+            } else {
+                ret = this.genQuads;
+            }
+        }
+        ProfileUtil.end(); // quad_lookup
+        
+        if (ret == null) {
+            throw new IllegalStateException("getQuads called on a model that was not properly initialized - by using getOverrides and/or getModelData");
+        }
+        
+        ProfileUtil.end(); // ctm_models
+        return ret;
     }
 
     @Override
