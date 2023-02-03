@@ -1,3 +1,9 @@
+1.1.6:
+New
+- Port to 1.19.2
+Changes
+- Model instances are now unique per render layer to support forge's built in multi-layer model system
+
 1.1.5:
 Fixes
 - #174 Occasional array index out of bounds exceptions during connection check
