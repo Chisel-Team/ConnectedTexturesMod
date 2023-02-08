@@ -1,6 +1,5 @@
 package team.chisel.ctm.client.model;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,8 +9,6 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import org.jetbrains.annotations.NotNull;
 
 import com.google.common.collect.ObjectArrays;
 
@@ -45,16 +42,9 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
             parent = castParent.getParent(rand);
         }
 
-        AbstractCTMBakedModel ret = new ModelBakedCTM(model, parent, layer)
-                {
-            @Override
-            public @NotNull List<BakedQuad> getQuads(@org.jetbrains.annotations.Nullable BlockState state, @org.jetbrains.annotations.Nullable Direction side, @NotNull RandomSource rand) {
-                // TODO Auto-generated method stub
-                return super.getQuads(state, side, rand);
-            }
-                };
+        AbstractCTMBakedModel ret = new ModelBakedCTM(model, parent, layer);
         for (Direction facing : FACINGS) {
-            List<BakedQuad> parentQuads = parent.getQuads(state, facing, rand, data, layer);
+            List<BakedQuad> parentQuads = parent.getQuads(state, facing, rand, data, null); // NOTE: We pass null here so that all quads are always returned, layer filtering is done below
             List<BakedQuad> quads;
             if (facing != null) {
                 quads = ret.faceQuads.get(facing);
