@@ -1,3 +1,7 @@
+1.1.7:
+Fixes
+- Various cases where model elements would render on incorrect layers
+
 1.1.6:
 New
 - Port to 1.19.2
