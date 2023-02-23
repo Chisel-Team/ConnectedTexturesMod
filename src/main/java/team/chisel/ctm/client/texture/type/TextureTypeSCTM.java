@@ -30,7 +30,7 @@ public class TextureTypeSCTM extends TextureTypeCTM {
             protected CTMLogic createCTM(BlockState state) {
                 CTMLogic ctm = super.createCTM(state);
             
-                ctm.disableObscuredFaceCheck = Optional.of(true);
+                ctm.connectionCheck.disableObscuredFaceCheck = Optional.of(true);
             
                 return ctm;
             }

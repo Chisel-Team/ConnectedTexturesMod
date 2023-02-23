@@ -32,10 +32,11 @@ public class TextureContextCTM implements ITextureContext {
     }
     
     protected CTMLogic createCTM(@Nonnull BlockState state) {
-        CTMLogic ret = CTMLogic.getInstance()
+        CTMLogic ret = CTMLogic.getInstance();
+        ret.connectionCheck
                 .ignoreStates(tex.ignoreStates())
                 .stateComparator(tex::connectTo);
-        ret.disableObscuredFaceCheck = tex.connectInside();
+        ret.connectionCheck.disableObscuredFaceCheck = tex.connectInside();
         return ret;
     }
 

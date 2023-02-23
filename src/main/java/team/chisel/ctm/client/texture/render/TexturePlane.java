@@ -7,8 +7,8 @@ import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTM;
 import team.chisel.ctm.client.texture.type.TextureTypePlane;
-import team.chisel.ctm.client.util.CTMLogic;
 import team.chisel.ctm.client.util.Dir;
+import team.chisel.ctm.client.util.ICTMLogic;
 import team.chisel.ctm.client.util.Quad;
 import team.chisel.ctm.client.util.Submap;
 
@@ -26,11 +26,11 @@ public class TexturePlane extends TextureCTM<TextureTypePlane> {
     @Override
     public List<BakedQuad> transformQuad(final BakedQuad bakedQuad, final ITextureContext context, final int quads) {
         final Quad quad = this.makeQuad(bakedQuad, context);
-        final CTMLogic logic = (context instanceof TextureContextCTM ctmContext) ? ctmContext.getCTM(bakedQuad.getDirection()) : null;
+        final ICTMLogic logic = (context instanceof TextureContextCTM ctmContext) ? ctmContext.getCTM(bakedQuad.getDirection()) : null;
         return Collections.singletonList(quad.transformUVs(this.sprites[0], this.getQuad(logic)).rebake());
     }
 
-    private ISubmap getQuad(final CTMLogic logic) {
+    private ISubmap getQuad(final ICTMLogic logic) {
         if (logic == null) {
             return Submap.X2[0][0];
         }

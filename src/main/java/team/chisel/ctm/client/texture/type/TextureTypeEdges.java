@@ -2,9 +2,7 @@ package team.chisel.ctm.client.texture.type;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.mojang.math.Vector3d;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,6 +15,7 @@ import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTM;
 import team.chisel.ctm.client.texture.render.TextureEdges;
 import team.chisel.ctm.client.util.CTMLogic;
+import team.chisel.ctm.client.util.ConnectionCheck;
 import team.chisel.ctm.client.util.Dir;
 
 @TextureType("edges")
@@ -27,9 +26,34 @@ public class TextureTypeEdges extends TextureTypeCTM {
         return new TextureEdges(this, info);
     }
     
-    @RequiredArgsConstructor
     @ParametersAreNonnullByDefault
     public static class CTMLogicEdges extends CTMLogic {
+        
+        public CTMLogicEdges() {
+            this.connectionCheck = new ConnectionCheckEdges();
+        }
+
+        @Override
+        protected void fillSubmaps(int idx) {
+            Dir[] dirs = submapMap[idx];
+            if (!connectedOr(dirs[0], dirs[1]) && connected(dirs[2])) {
+                submapCache[idx] = submapOffsets[idx];
+            } else {
+                super.fillSubmaps(idx);
+            }
+        }
+        
+        @Override
+        public long serialized() {
+            return isObscured() ? (super.serialized() | (1 << 8)) : super.serialized();
+        }
+
+        public boolean isObscured() {
+            return ((ConnectionCheckEdges)connectionCheck).isObscured();
+        }
+    }
+    
+    public static class ConnectionCheckEdges extends ConnectionCheck {
         
         @Setter
         @Getter
@@ -75,21 +99,6 @@ public class TextureTypeEdges extends TextureTypeCTM {
             }
             return false;
         }
-        
-        @Override
-        protected void fillSubmaps(int idx) {
-            Dir[] dirs = submapMap[idx];
-            if (!connectedOr(dirs[0], dirs[1]) && connected(dirs[2])) {
-                submapCache[idx] = submapOffsets[idx];
-            } else {
-                super.fillSubmaps(idx);
-            }
-        }
-        
-        @Override
-        public long serialized() {
-            return isObscured() ? (super.serialized() | (1 << 8)) : super.serialized();
-        }
     }
     
     @Override
@@ -101,8 +110,8 @@ public class TextureTypeEdges extends TextureTypeCTM {
                 CTMLogic parent = super.createCTM(state);
                 // FIXME
                 CTMLogic ret = new CTMLogicEdges();
-                ret.ignoreStates(parent.ignoreStates()).stateComparator(parent.stateComparator());
-                ret.disableObscuredFaceCheck = parent.disableObscuredFaceCheck;
+                ret.connectionCheck.ignoreStates(parent.connectionCheck.ignoreStates()).stateComparator(parent.connectionCheck.stateComparator());
+                ret.connectionCheck.disableObscuredFaceCheck = parent.connectionCheck.disableObscuredFaceCheck;
                 return ret;
             }
         };

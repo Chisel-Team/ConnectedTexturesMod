@@ -102,6 +102,15 @@ repositories {
 
 dependencies {
     minecraft 'net.minecraftforge:forge:' + minecraft_version + '-' + forge_version
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+}
+
+test {
+	useJUnitPlatform()
+	maxHeapSize = '1G'
+	testLogging {
+		events "passed"
+	}
 }
 
 lombok {
@@ -180,5 +189,6 @@ curseforge {
         mainArtifact(jar) {
             displayName = "CTM - ${version}"
         }
+        addGameVersion project.minecraft_version
     }
 }

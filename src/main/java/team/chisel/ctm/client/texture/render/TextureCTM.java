@@ -33,6 +33,7 @@ import team.chisel.ctm.client.texture.ctx.TextureContextCTM;
 import team.chisel.ctm.client.texture.type.TextureTypeCTM;
 import team.chisel.ctm.client.util.BlockstatePredicateParser;
 import team.chisel.ctm.client.util.CTMLogic;
+import team.chisel.ctm.client.util.ConnectionCheck;
 import team.chisel.ctm.client.util.CTMLogic.StateComparisonCallback;
 import team.chisel.ctm.client.util.IdentityStrategy;
 import team.chisel.ctm.client.util.ParseUtils;
@@ -93,7 +94,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
         this.connectionChecks = info.getInfo().map(obj -> predicateParser.parse(obj.get("connect_to"))).orElse(null);
     }
 
-    public boolean connectTo(CTMLogic ctm, BlockState from, BlockState to, Direction dir) {
+    public boolean connectTo(ConnectionCheck ctm, BlockState from, BlockState to, Direction dir) {
         try {
             return ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0) == 1;
         } catch (Exception e) {

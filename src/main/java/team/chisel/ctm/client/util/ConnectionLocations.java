@@ -64,24 +64,24 @@ public enum ConnectionLocations {
      * The enum facing directions needed to get to this connection location
      */
     private final Direction normal;
-    private final @Nullable Dir dir;
+    private final @Nullable LocalDirection dir;
     private boolean offset;
 
-    ConnectionLocations(@Nullable Dir dir) {
+    ConnectionLocations(@Nullable LocalDirection dir) {
         this(Direction.SOUTH, dir);
     }
     
-    ConnectionLocations(Direction normal, @Nullable Dir dir){
+    ConnectionLocations(Direction normal, @Nullable LocalDirection dir){
         this(normal, dir, false);
     }
     
-    ConnectionLocations(Direction normal, @Nullable Dir dir, boolean offset) {
+    ConnectionLocations(Direction normal, @Nullable LocalDirection dir, boolean offset) {
         this.normal = normal;
         this.dir = dir;
         this.offset = offset;
     }
 
-    public @Nullable Dir getDirForSide(Direction facing){
+    public @Nullable LocalDirection getDirForSide(Direction facing){
         return dir == null ? null : dir.relativize(facing);
     }
 
@@ -145,7 +145,7 @@ public enum ConnectionLocations {
         return list;
     }
 
-    public long getMask(){
+    public long getMask() {
         return 1 << ordinal();
     }
 }
