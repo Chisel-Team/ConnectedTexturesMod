@@ -1,13 +1,17 @@
 package team.chisel.ctm.client.util;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import team.chisel.ctm.api.texture.ISubmap;
 
 @Getter
 @AllArgsConstructor
+@ToString
+@EqualsAndHashCode
 public class Submap implements ISubmap {
     
     public static final ISubmap X1 = new Submap(16, 16, 0, 0);
@@ -30,10 +34,24 @@ public class Submap implements ISubmap {
         { new Submap(4, 4, 0, 8),   new Submap(4, 4, 4, 8),     new Submap(4, 4, 8, 8),     new Submap(4, 4, 12, 8) },
         { new Submap(4, 4, 0, 12),  new Submap(4, 4, 4, 12),    new Submap(4, 4, 8, 12),    new Submap(4, 4, 12, 12) },
     };
-
+    
+    public static final ISubmap[][] grid(int w, int h) {
+        float xDiv = 16f / w;
+        float yDiv = 16f / h;
+        ISubmap[][] ret = new ISubmap[h][w];
+        for (int x = 0; x < w; x++) {
+            for (int y = 0; y < h; y++) {
+                ret[y][x] = new Submap(xDiv, yDiv, xDiv * x, yDiv * y);
+            }
+        }
+        return ret;
+    }
+    
     private final float width, height;
     private final float xOffset, yOffset;
 
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     private final SubmapNormalized normalized = new SubmapNormalized(this);
 
     @Override
