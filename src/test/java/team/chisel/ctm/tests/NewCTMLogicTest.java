@@ -2,12 +2,25 @@ package team.chisel.ctm.tests;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import net.minecraft.SharedConstants;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.Bootstrap;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import team.chisel.ctm.api.texture.ISubmap;
+import team.chisel.ctm.client.util.CTMLogicBakery;
 import team.chisel.ctm.client.util.ConnectionCheck;
 import team.chisel.ctm.client.util.Dir;
 import team.chisel.ctm.client.util.NewCTMLogic;
@@ -282,27 +295,53 @@ public class NewCTMLogicTest {
             + "11111101    26\r\n"
             + "11111110    46\r\n"
             + "11111111    27";
+    
+    @BeforeAll
+    static void bootstrap() {
+        SharedConstants.CHECK_DATA_FIXER_SCHEMA = false;
+        Bootstrap.bootStrap();
+    }
+
     @Test
     void connection() {
         var test = createTest();
+        
+        assertArrayEquals(new int[] { 0 }, test.lookups[0]);
+        assertArrayEquals(new int[] { 7 }, test.lookups[42]);
+        assertArrayEquals(new int[] { 26 }, test.lookups[255]);
+        assertArrayEquals(new int[] { 46 }, test.lookups[170]);
+        
+        // Reference tile IDs for test: https://optifine.readthedocs.io/_images/ctm.webp
         ISubmap[] reference = Arrays.stream(Submap.grid(12, 4)).flatMap(Arrays::stream).toArray(ISubmap[]::new);
+
+        // Make sure generated tiles match expected values
+        assertEquals(new Submap(16f / 12, 16f / 4, 0, 0), reference[0]);
+        assertEquals(new Submap(16f / 12, 16f / 4, (16f / 12) * 10, (16f / 4) * 2), reference[34]);
         
-        assertArrayEquals(test.lookups[0], new int[] { 0 });
-        assertArrayEquals(test.lookups[42], new int[] { 7 });
-        assertArrayEquals(test.lookups[255], new int[] { 26 });
-        assertArrayEquals(test.lookups[170], new int[] { 46 });
-        
-        assertEquals(reference[0], new Submap(16f / 12, 16f / 4, 0, 0));
-        assertEquals(reference[34], new Submap(16f / 12, 16f / 4, (16f / 12) * 10, (16f / 4) * 2));
+        var world = new TestBlockGetter();
+        world.addBlock(BlockPos.ZERO, Blocks.STONE.defaultBlockState());
+        // Simple case of one connection upwards
+        world.addBlock(BlockPos.ZERO.above(), Blocks.STONE.defaultBlockState());
+        assertArrayEquals(new ISubmap[] { reference[36] }, test.getSubmaps(world, BlockPos.ZERO, Direction.EAST));
+        // Add a diagonal connection that should not affect the result
+        world.addBlock(BlockPos.ZERO.above().north(), Blocks.STONE.defaultBlockState());
+        assertArrayEquals(new ISubmap[] { reference[36] }, test.getSubmaps(world, BlockPos.ZERO, Direction.EAST));
+        // Add a sideways connection to make it a L shape with no inner corner
+        world.addBlock(BlockPos.ZERO.north(), Blocks.STONE.defaultBlockState());
+        assertArrayEquals(new ISubmap[] { reference[37] }, test.getSubmaps(world, BlockPos.ZERO, Direction.EAST));
+        // Remove the diagonal connection to test inner corner
+        world.removeBlock(BlockPos.ZERO.above().north());
+        assertArrayEquals(new ISubmap[] { reference[16] }, test.getSubmaps(world, BlockPos.ZERO, Direction.EAST));
     }
 
     private static NewCTMLogic createTest() {
-        String[] lines = TEST_INPUT.split("\r\n");
-        int[][] lookups = new int[256][];
-        for (int i = 0; i < lines.length; i++) {
-            lookups[i] = new int[] { Integer.parseInt(lines[i].substring(lines[i].length() - 2).trim()) - 1 };
-        }
-
-        return new NewCTMLogic(lookups, Arrays.stream(Submap.grid(12, 4)).flatMap(Arrays::stream).toArray(ISubmap[]::new), Dir.values(), new ConnectionCheck());
+        return CTMLogicBakery.TEST.bake();
+//        String[] lines = TEST_INPUT.split("\r\n");
+//        int[][] lookups = new int[256][];
+//        for (int i = 0; i < lines.length; i++) {
+//            lookups[i] = new int[] { Integer.parseInt(lines[i].substring(lines[i].length() - 2).trim()) - 1 };
+//        }
+//
+//        return new NewCTMLogic(lookups, Arrays.stream(Submap.grid(12, 4)).flatMap(Arrays::stream).toArray(ISubmap[]::new), Dir.values(), new ConnectionCheck());
     }
 }

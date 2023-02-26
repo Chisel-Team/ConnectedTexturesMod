@@ -1,8 +1,12 @@
 package team.chisel.ctm.client.util;
 
 import java.util.Arrays;
+import java.util.Map.Entry;
+import java.util.function.IntFunction;
 
-import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.ArrayUtils;
+
+import com.google.common.base.Preconditions;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -44,7 +48,7 @@ public class CTMLogicBakery {
             for (int i = 0; i < input.length; i++) {
                 Trinary req = input[i];
                 boolean bit = ((state >> i) & 1) == 1;
-                if (bit != (req == Trinary.TRUE)) {
+                if (req != Trinary.DONT_CARE && bit != (req == Trinary.TRUE)) {
                     return false;
                 }
             }
@@ -73,25 +77,102 @@ public class CTMLogicBakery {
     }
     
     public CTMLogicBakery when(int bit, boolean is) {
+        Preconditions.checkArgument(bit < size, "bit out of range");
         rules.putIfAbsent(curRule, new DesiredState(size, curRule));
         rules.compute(curRule, (i, s) -> s.with(bit, is ? Trinary.TRUE : Trinary.FALSE));
         return this;
     }
     
-    public NewCTMLogic bake() {
-        throw new NotImplementedException();
+    public CTMLogicBakery when(String pattern) {
+        Preconditions.checkArgument(pattern.length() == size, "pattern length");
+        for (int i = pattern.length() - 1; i >= 0; i--) {
+            char bit = pattern.charAt(i);
+            if (bit == '0' || bit == '1') {
+                when(pattern.length() - 1 - i, bit == '1');
+            }
+        }
+        return this;
     }
     
+    public NewCTMLogic bake() {
+        int max = 1 << size;
+        int[][] lookups = new int[max][];
+        for (int state = 0; state < max; state++) {
+            for (var e : rules.int2ObjectEntrySet()) {
+                if (e.getValue().test(state)) {
+                    if (lookups[state] == null) {
+                        lookups[state] = new int[] { e.getIntKey() };
+                    } else {
+                        lookups[state] = ArrayUtils.add(lookups[state], e.getIntKey());
+                    }
+                }
+            }
+        }
+        return new NewCTMLogic(lookups, asSortedArray(outputs, ISubmap[]::new), asSortedArray(bitmap, LocalDirection[]::new), new ConnectionCheck());
+    }
+    
+    private <T> T[] asSortedArray(Int2ObjectMap<T> indexedMap, IntFunction<T[]> ctor) {
+        return indexedMap.int2ObjectEntrySet().stream()
+            .sorted((e1, e2) -> Integer.compare(e1.getIntKey(), e2.getIntKey()))
+            .map(Entry::getValue)
+            .toArray(ctor);
+    }
+    
+    private static final ISubmap[][] OF_FORMAT = Submap.grid(12, 4);
     public static CTMLogicBakery TEST = new CTMLogicBakery()
-            .input(0, Dir.TOP)
+            .input(0, Dir.TOP) // LSB
             .input(1, Dir.TOP_RIGHT)
             .input(2, Dir.RIGHT)
             .input(3, Dir.BOTTOM_RIGHT)
             .input(4, Dir.BOTTOM)
             .input(5, Dir.BOTTOM_LEFT)
             .input(6, Dir.LEFT)
-            .input(7, Dir.TOP_LEFT)
-            .output(0, Submap.X1)
-                .when(0, false).when(2, false).when(4, false).when(6, false);
-                
+            .input(7, Dir.TOP_LEFT) // MSB
+            .output(0, OF_FORMAT[0][0]).when("0X0X0X0X")
+            .output(1, OF_FORMAT[0][1]).when("0X1X0X0X")
+            .output(2, OF_FORMAT[0][2]).when("0X1X0X1X")
+            .output(3, OF_FORMAT[0][3]).when("0X0X0X1X")
+            .output(4, OF_FORMAT[0][4]).when("0X101X0X")
+            .output(5, OF_FORMAT[0][5]).when("0X0X101X")
+            .output(6, OF_FORMAT[0][6]).when("10101X0X")
+            .output(7, OF_FORMAT[0][7]).when("0X10101X")
+            .output(8, OF_FORMAT[0][8]).when("11101010")
+            .output(9, OF_FORMAT[0][9]).when("10111010")
+            .output(10, OF_FORMAT[0][10]).when("10101111")
+            .output(11, OF_FORMAT[0][11]).when("11101011")
+            .output(12, OF_FORMAT[1][0]).when("0X0X1X0X")
+            .output(13, OF_FORMAT[1][1]).when("0X111X0X")
+            .output(14, OF_FORMAT[1][2]).when("0X11111X")
+            .output(15, OF_FORMAT[1][3]).when("0X0X111X")
+            .output(16, OF_FORMAT[1][4]).when("101X0X0X")
+            .output(17, OF_FORMAT[1][5]).when("1X0X0X10")
+            .output(18, OF_FORMAT[1][6]).when("101X0X10")
+            .output(19, OF_FORMAT[1][7]).when("1X0X1010")
+            .output(20, OF_FORMAT[1][8]).when("10101011")
+            .output(21, OF_FORMAT[1][9]).when("10101110")
+            .output(22, OF_FORMAT[1][10]).when("10111110")
+            .output(23, OF_FORMAT[1][11]).when("11111010")
+            .output(24, OF_FORMAT[2][0]).when("1X0X1X0X")
+            .output(25, OF_FORMAT[2][1]).when("11111X0X")
+            .output(26, OF_FORMAT[2][2]).when("11111111")
+            .output(27, OF_FORMAT[2][3]).when("1X0X1111")
+            .output(28, OF_FORMAT[2][4]).when("10111X0X")
+            .output(29, OF_FORMAT[2][5]).when("0X10111X")
+            .output(30, OF_FORMAT[2][6]).when("11101X0X")
+            .output(31, OF_FORMAT[2][7]).when("0X11101X")
+            .output(32, OF_FORMAT[2][8]).when("11101111")
+            .output(33, OF_FORMAT[2][9]).when("11111011")
+            .output(34, OF_FORMAT[2][10]).when("11101110")
+            .output(35, OF_FORMAT[2][11]).when("10111011")
+            .output(36, OF_FORMAT[3][0]).when("1X0X0X0X")
+            .output(37, OF_FORMAT[3][1]).when("111X0X0X")
+            .output(38, OF_FORMAT[3][2]).when("111X0X11")
+            .output(39, OF_FORMAT[3][3]).when("1X0X0X11")
+            .output(40, OF_FORMAT[3][4]).when("111X0X10")
+            .output(41, OF_FORMAT[3][5]).when("1X0X1011")
+            .output(42, OF_FORMAT[3][6]).when("101X0X11")
+            .output(43, OF_FORMAT[3][7]).when("1X0X1110")
+            .output(44, OF_FORMAT[3][8]).when("10111111")
+            .output(45, OF_FORMAT[3][9]).when("11111110")
+            .output(46, OF_FORMAT[3][10]).when("10101010");     
 }
