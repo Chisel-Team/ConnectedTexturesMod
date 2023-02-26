@@ -180,5 +180,6 @@ curseforge {
         mainArtifact(jar) {
             displayName = "CTM - ${version}"
         }
+        addGameVersion project.minecraft_version
     }
 }
