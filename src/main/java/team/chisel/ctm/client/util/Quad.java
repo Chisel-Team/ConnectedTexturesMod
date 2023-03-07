@@ -32,8 +32,11 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.model.pipeline.QuadBakingVertexConsumer;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.util.NonnullType;
@@ -60,7 +63,7 @@ public class Quad {
     private static final TextureAtlasSprite BASE = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(MissingTextureAtlasSprite.getLocation());
     
     @ToString
-    public class UVs {
+    public class UVs implements ISubmap {
         
         @Getter
         private float minU, minV, maxU, maxV;
@@ -102,9 +105,13 @@ public class Quad {
             this.data = vectorize();
         }
 
+        public UVs(ISubmap submap, TextureAtlasSprite sprite) {
+            this(submap.getXOffset(), submap.getYOffset(), submap.getXOffset() + submap.getWidth(), submap.getYOffset() + submap.getHeight(), sprite);
+        }
+
         public UVs transform(TextureAtlasSprite other, ISubmap submap) {
             UVs normal = normalize();
-            submap = submap.normalize();
+            submap = submap.unitScale();
 
             float width = normal.maxU - normal.minU;
             float height = normal.maxV - normal.minV;
@@ -187,17 +194,47 @@ public class Quad {
         public int getQuadrant() {
             if (maxU <= 0.5f) {
                 if (maxV <= 0.5f) {
-                    return 3;
+                    return 1;
                 } else {
-                    return 0;
+                    return 1;
                 }
             } else {
                 if (maxV <= 0.5f) {
-                    return 2;
+                    return 1;
                 } else {
                     return 1;
                 }
             }
+        }
+
+        @Override
+        public float getYOffset() {
+            return minV;
+        }
+
+        @Override
+        public float getXOffset() {
+            return minU;
+        }
+
+        @Override
+        public float getWidth() {
+            return maxU - minU;
+        }
+
+        @Override
+        public float getHeight() {
+            return maxV - minV;
+        }
+        
+        @Override
+        public ISubmap unitScale() {
+            return this;
+        }
+        
+        @Override
+        public ISubmap pixelScale() {
+             return new SubmapRescaled(this, PIXELS_PER_UNIT, true);
         }
     }
 
@@ -281,21 +318,23 @@ public class Quad {
         
         List<Quad> rects = Lists.newArrayList();
 
-        Pair<Quad, Quad> firstDivide = divide(false);
-        Pair<Quad, Quad> secondDivide = firstDivide.getLeft().divide(true);
-        rects.add(secondDivide.getLeft());
+        Pair<Quad, Quad> firstDivide = derotate().divide(false);
+//        Pair<Quad, Quad> secondDivide = firstDivide.getLeft().divide(true);
+//        rects.add(secondDivide.getLeft());
+//
+//        if (firstDivide.getRight() != null) {
+//            Pair<Quad, Quad> thirdDivide = firstDivide.getRight().divide(true);
+//            rects.add(thirdDivide.getLeft());
+//            rects.add(thirdDivide.getRight());
+//        } else {
+//            rects.add(null);
+//            rects.add(null);
+//        }
+//
+//        rects.add(secondDivide.getRight());
 
-        if (firstDivide.getRight() != null) {
-            Pair<Quad, Quad> thirdDivide = firstDivide.getRight().divide(true);
-            rects.add(thirdDivide.getLeft());
-            rects.add(thirdDivide.getRight());
-        } else {
-            rects.add(null);
-            rects.add(null);
-        }
-
-        rects.add(secondDivide.getRight());
-
+        rects.add(firstDivide.getLeft());
+        rects.add(firstDivide.getRight());
         return rects.toArray(new Quad[rects.size()]);
     }
     
@@ -311,54 +350,229 @@ public class Quad {
             max = uvs.maxU;
         }
         if (min < 0.5 && max > 0.5) {
-            UVs first = new UVs(vertical ? uvs.minU : 0.5f, vertical ? 0.5f : uvs.minV, uvs.maxU, uvs.maxV, uvs.getSprite());
-            UVs second = new UVs(uvs.minU, uvs.minV, vertical ? uvs.maxU : 0.5f, vertical ? 0.5f : uvs.maxV, uvs.getSprite());
-                        
-            int firstIndex = 0;
-            for (int i = 0; i < vertUv.length; i++) {
-                if (vertUv[i].y == getUvs().minV && vertUv[i].x == getUvs().minU) {
-                    firstIndex = i;
-                    break;
-                }
-            }
-            
-            float f = (0.5f - min) / (max - min);
+            UVs first = new UVs(vertical ? 0 : 0.5f, vertical ? 0.5f : 0, 1, 1, uvs.getSprite());
+            UVs second = new UVs(0, 0, vertical ? 1 : 0.5f, vertical ? 0.5f : 1, uvs.getSprite());
 
-            Vector3f[] firstQuad = new Vector3f[4];
-            Vector3f[] secondQuad = new Vector3f[4];
-            for (int i = 0; i < 4; i++) {
-                int idx = (firstIndex + i) % 4;
-                firstQuad[i] = vertPos[idx].copy();
-                secondQuad[i] = vertPos[idx].copy();
-            }
-            
-            int i1 = 0;
-            int i2 = vertical ? 1 : 3;
-            int j1 = vertical ? 3 : 1;
-            int j2 = 2;
-            
-            firstQuad[i1].setX(lerp(firstQuad[i1].x(), firstQuad[i2].x(), f));
-            firstQuad[i1].setY(lerp(firstQuad[i1].y(), firstQuad[i2].y(), f));
-            firstQuad[i1].setZ(lerp(firstQuad[i1].z(), firstQuad[i2].z(), f));
-            firstQuad[j1].setX(lerp(firstQuad[j1].x(), firstQuad[j2].x(), f));
-            firstQuad[j1].setY(lerp(firstQuad[j1].y(), firstQuad[j2].y(), f));
-            firstQuad[j1].setZ(lerp(firstQuad[j1].z(), firstQuad[j2].z(), f));
-            
-            secondQuad[i2].setX(lerp(secondQuad[i1].x(), secondQuad[i2].x(), f));
-            secondQuad[i2].setY(lerp(secondQuad[i1].y(), secondQuad[i2].y(), f));
-            secondQuad[i2].setZ(lerp(secondQuad[i1].z(), secondQuad[i2].z(), f));
-            secondQuad[j2].setX(lerp(secondQuad[j1].x(), secondQuad[j2].x(), f));
-            secondQuad[j2].setY(lerp(secondQuad[j1].y(), secondQuad[j2].y(), f));
-            secondQuad[j2].setZ(lerp(secondQuad[j1].z(), secondQuad[j2].z(), f));
-
-            Quad q1 = new Quad(firstQuad, first.relativize(), builder, blocklight, skylight);
-            Quad q2 = new Quad(secondQuad, second.relativize(), builder, blocklight, skylight);
-            return Pair.of(q1, q2);
+            return Pair.of(this.subsect(first), this.subsect(second));
         } else {
             return Pair.of(this, null);
         }
     }
     
+    public Quad subsect(ISubmap submap) {
+        submap = submap.unitScale();
+        int firstIndex = 0;
+        for (int i = 0; i < vertUv.length; i++) {
+            if (vertUv[i].y == getUvs().minV && vertUv[i].x == getUvs().minU) {
+                firstIndex = i;
+                break;
+            }
+        }
+
+        Vector3f[] positions = new Vector3f[4];
+        for (int i = 0; i < 4; i++) {
+            int idx = (firstIndex + i) % 4;
+            positions[i] = vertPos[idx].copy();
+        }
+        
+        var origin = new Vec3(positions[0]);
+        var n1 = new Vec3(positions[1]).subtract(origin);
+        var n2 = new Vec3(positions[2]).subtract(origin);
+        var n3 = new Vec3(positions[3]).subtract(origin);
+        var normalVec = n1.cross(n2).normalize();
+        
+        Direction normal = Direction.fromNormal(new BlockPos(normalVec));
+        Direction x = Direction.fromNormal(new BlockPos(n3.subtract(n2).normalize()));
+        Direction y = Direction.fromNormal(new BlockPos(n2.subtract(n1).normalize()));
+        if (normal == Direction.UP) return null;
+//        
+//        var xDir = x.getAxisDirection();
+//        var yDir = y.getAxisDirection();
+//        Vector3f minimum, maximum;
+        
+//        if (xDir == yDir) {
+//            if (xDir == AxisDirection.POSITIVE) {
+//                minimum = positions[1];
+//                maximum = positions[3];
+//            } else {
+//                minimum = positions[3];
+//                maximum = positions[1];
+//            }
+//        } else {
+//            if (xDir == AxisDirection.POSITIVE) {
+//                minimum = positions[2];
+//                maximum = positions[0];
+//            } else {
+//                minimum = positions[0];
+//                maximum = positions[2];
+//            }
+//        }
+//
+//        float x1 = getComponent(minimum, x);
+//        float y1 = getComponent(minimum, y);
+//        float x2 = getComponent(maximum, x);
+//        float y2 = getComponent(maximum, y);
+//        
+        TextureAtlasSprite sprite = getUvs().getSprite();
+//        float xMin = Math.max(x1, submap.getXOffset());
+//        float xMax = Math.min(x2, submap.getXOffset() + submap.getWidth());
+//        float yMin = Math.max(y1, submap.getYOffset());
+//        float yMax = Math.min(y2, submap.getYOffset() + submap.getHeight());
+//        
+//        setComponent(positions[0], x, xMin);
+//        setComponent(positions[0], y, yMin);
+//        setComponent(positions[1], x, xMax);
+//        setComponent(positions[1], y, yMin);
+//        setComponent(positions[2], x, xMax);
+//        setComponent(positions[2], y, yMax);
+//        setComponent(positions[3], x, xMin);
+//        setComponent(positions[3], y, yMax);
+        
+        Vector3f projMin = new Vector3f();
+        Vector3f projMax = new Vector3f();
+
+        float zDepth = getComponent(positions[0], normal);
+        setComponent(projMin, normal, zDepth);
+        setComponent(projMax, normal, zDepth);
+        
+        float x1 = getComponent(positions[0], x);
+        float x2 = getComponent(positions[2], x);
+        float y1 = getComponent(positions[0], y);
+        float y2 = getComponent(positions[2], y);
+        
+        if (x.getAxisDirection() == AxisDirection.POSITIVE && y.getAxisDirection() == AxisDirection.POSITIVE) {
+            
+            setComponent(projMin, x, submap.getXOffset());
+            setComponent(projMax, x, submap.getXOffset() + submap.getWidth());
+            setComponent(projMin, y, submap.getYOffset());
+            setComponent(projMax, y, submap.getYOffset() + submap.getHeight());
+            
+            ISubmap quadProj = Submap.fromUnitScale(
+                Math.max(x1, x2) - Math.min(x1, x2), Math.max(y1, y2) - Math.min(y1, y2),
+                Math.min(x1, x2), Math.min(y1, y2)).unitScale();
+        
+            for (int i = 0; i < positions.length; i++) {
+                float xComp = getComponent(positions[i], x);
+                if (xComp == quadProj.getXOffset()) {
+                    setComponent(positions[i], x, Math.max(xComp, getComponent(projMin, x)));
+                } else {
+                    setComponent(positions[i], x, Math.min(xComp, getComponent(projMax, x)));
+                }
+                
+                float yComp = getComponent(positions[i], y);
+                if (yComp == quadProj.getYOffset()) {
+                    setComponent(positions[i], y, Math.max(yComp, getComponent(projMin, y)));
+                } else {
+                    setComponent(positions[i], y, Math.min(yComp, getComponent(projMax, y)));
+                }
+            }
+        } else if (x.getAxisDirection() == AxisDirection.POSITIVE && y.getAxisDirection() == AxisDirection.NEGATIVE) {
+            setComponent(projMin, x, submap.getXOffset());
+            setComponent(projMax, x, submap.getXOffset() + submap.getWidth());
+            setComponent(projMin, y, submap.getYOffset());
+            setComponent(projMax, y, submap.getYOffset() + submap.getHeight());
+            
+            ISubmap quadProj = Submap.fromUnitScale(
+                    Math.max(x1, x2) - Math.min(x1, x2), Math.max(y1, y2) - Math.min(y1, y2),
+                    Math.min(x1, x2), Math.min(y1, y2)).unitScale();
+            
+            for (int i = 0; i < positions.length; i++) {
+                float xComp = getComponent(positions[i], x);
+                if (xComp == quadProj.getXOffset()) {
+                    setComponent(positions[i], x, Math.max(xComp, getComponent(projMin, x)));
+                } else {
+                    setComponent(positions[i], x, Math.min(xComp, getComponent(projMax, x)));
+                }
+                
+                float yComp = getComponent(positions[i], y);
+                if (yComp == quadProj.getYOffset()) {
+                    setComponent(positions[i], y, Math.max(yComp, getComponent(projMin, y)));
+                } else {
+                    setComponent(positions[i], y, Math.min(yComp, getComponent(projMax, y)));
+                }
+            }
+        } else if (x.getAxisDirection() == AxisDirection.NEGATIVE && y.getAxisDirection() == AxisDirection.POSITIVE) {
+            setComponent(projMin, x, submap.getXOffset());
+            setComponent(projMax, x, submap.getXOffset() + submap.getWidth());
+            setComponent(projMin, y, submap.getYOffset());
+            setComponent(projMax, y, submap.getYOffset() + submap.getHeight());
+            
+            ISubmap quadProj = Submap.fromUnitScale(
+                Math.max(x1, x2) - Math.min(x1, x2), Math.max(y1, y2) - Math.min(y1, y2),
+                Math.min(x1, x2), Math.min(y1, y2)).unitScale();
+        
+            for (int i = 0; i < positions.length; i++) {
+                float xComp = getComponent(positions[i], x);
+                if (xComp == quadProj.getXOffset()) {
+                    setComponent(positions[i], x, Math.max(xComp, getComponent(projMin, x)));
+                } else {
+                    setComponent(positions[i], x, Math.min(xComp, getComponent(projMax, x)));
+                }
+                
+                float yComp = getComponent(positions[i], y);
+                if (yComp == quadProj.getYOffset()) {
+                    setComponent(positions[i], y, Math.max(yComp, getComponent(projMin, y)));
+                } else {
+                    setComponent(positions[i], y, Math.min(yComp, getComponent(projMax, y)));
+                }
+            }
+        } else if (x.getAxisDirection() == AxisDirection.NEGATIVE && y.getAxisDirection() == AxisDirection.NEGATIVE) {
+            setComponent(projMin, x, submap.getXOffset());
+            setComponent(projMax, x, submap.getXOffset() + submap.getWidth());
+            setComponent(projMin, y, submap.getYOffset());
+            setComponent(projMax, y, submap.getYOffset() + submap.getHeight());
+            
+            ISubmap quadProj = Submap.fromUnitScale(
+                    Math.max(x1, x2) - Math.min(x1, x2), Math.max(y1, y2) - Math.min(y1, y2),
+                    Math.min(x1, x2), Math.min(y1, y2)).unitScale();
+            
+            for (int i = 0; i < positions.length; i++) {
+                float xComp = getComponent(positions[i], x);
+                if (xComp == quadProj.getXOffset()) {
+                    setComponent(positions[i], x, Math.max(xComp, getComponent(projMin, x)));
+                } else {
+                    setComponent(positions[i], x, Math.min(xComp, getComponent(projMax, x)));
+                }
+                
+                float yComp = getComponent(positions[i], y);
+                if (yComp == quadProj.getYOffset()) {
+                    setComponent(positions[i], y, Math.max(yComp, getComponent(projMin, y)));
+                } else {
+                    setComponent(positions[i], y, Math.min(yComp, getComponent(projMax, y)));
+                }
+            }
+        }
+        
+        var uvs = getUvs().normalize();
+//        var newUvs = new UVs(
+//                Math.max(uvs.minV, submap.getYOffset()),
+//                Math.max(uvs.minU, submap.getXOffset()),
+//                Math.min(uvs.maxV, submap.getYOffset() + submap.getHeight()),
+//                Math.min(uvs.maxU, submap.getXOffset() + submap.getWidth()),
+//                sprite);
+        
+          var newUvs = new UVs(
+                  submap.getYOffset(),                   submap.getXOffset(),
+
+                  submap.getYOffset() + submap.getHeight(),                  submap.getXOffset() + submap.getWidth(),
+
+                  sprite);
+
+        return new Quad(positions, newUvs.relativize(), builder, blocklight, skylight);
+    }
+    
+    private float getComponent(Vector3f point, Direction component) {
+        return (float) component.getAxis().choose(point.x(), point.y(), point.z());
+    }
+    
+    private void setComponent(Vector3f point, Direction component, float value) {
+        switch (component.getAxis()) {
+            case X -> point.setX(value);
+            case Y -> point.setY(value);
+            case Z -> point.setZ(value);
+        }
+    }
+
     public static float lerp(float a, float b, float f) {
         return (a * (1 - f)) + (b * f);
     }
@@ -462,7 +676,7 @@ public class Quad {
     }
     
     public Quad transformUVs(TextureAtlasSprite sprite) {
-        return transformUVs(sprite, CTMLogic.FULL_TEXTURE.normalize());
+        return transformUVs(sprite, CTMLogic.FULL_TEXTURE.pixelScale());
     }
     
     public Quad transformUVs(TextureAtlasSprite sprite, ISubmap submap) {

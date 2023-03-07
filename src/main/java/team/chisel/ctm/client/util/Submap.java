@@ -1,38 +1,34 @@
 package team.chisel.ctm.client.util;
 
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import team.chisel.ctm.api.texture.ISubmap;
 
 @Getter
-@AllArgsConstructor
 @ToString
 @EqualsAndHashCode
 public class Submap implements ISubmap {
     
-    public static final ISubmap X1 = new Submap(16, 16, 0, 0);
+    public static final ISubmap X1 = fromPixelScale(16, 16, 0, 0);
     
     public static final ISubmap[][] X2 = new ISubmap[][] {
-        { new Submap(8, 8, 0, 0), new Submap(8, 8, 8, 0) },
-        { new Submap(8, 8, 0, 8), new Submap(8, 8, 8, 8) }
+        { fromPixelScale(8, 8, 0, 0), fromPixelScale(8, 8, 8, 0) },
+        { fromPixelScale(8, 8, 0, 8), fromPixelScale(8, 8, 8, 8) }
     };
     
     private static final float DIV3 = 16 / 3f;
     public static final ISubmap[][] X3 = new ISubmap[][] {
-        { new Submap(DIV3, DIV3, 0, 0),         new Submap(DIV3, DIV3, DIV3, 0),        new Submap(DIV3, DIV3, DIV3 * 2, 0) },
-        { new Submap(DIV3, DIV3, 0, DIV3),      new Submap(DIV3, DIV3, DIV3, DIV3),     new Submap(DIV3, DIV3, DIV3 * 2, DIV3) },
-        { new Submap(DIV3, DIV3, 0, DIV3 * 2),  new Submap(DIV3, DIV3, DIV3, DIV3 * 2), new Submap(DIV3, DIV3, DIV3 * 2, DIV3 * 2) },
+        { fromPixelScale(DIV3, DIV3, 0, 0),         fromPixelScale(DIV3, DIV3, DIV3, 0),        fromPixelScale(DIV3, DIV3, DIV3 * 2, 0) },
+        { fromPixelScale(DIV3, DIV3, 0, DIV3),      fromPixelScale(DIV3, DIV3, DIV3, DIV3),     fromPixelScale(DIV3, DIV3, DIV3 * 2, DIV3) },
+        { fromPixelScale(DIV3, DIV3, 0, DIV3 * 2),  fromPixelScale(DIV3, DIV3, DIV3, DIV3 * 2), fromPixelScale(DIV3, DIV3, DIV3 * 2, DIV3 * 2) },
     };
     
     public static final ISubmap[][] X4 = new ISubmap[][] {
-        { new Submap(4, 4, 0, 0),   new Submap(4, 4, 4, 0),     new Submap(4, 4, 8, 0),     new Submap(4, 4, 12, 0) },
-        { new Submap(4, 4, 0, 4),   new Submap(4, 4, 4, 4),     new Submap(4, 4, 8, 4),     new Submap(4, 4, 12, 4) },
-        { new Submap(4, 4, 0, 8),   new Submap(4, 4, 4, 8),     new Submap(4, 4, 8, 8),     new Submap(4, 4, 12, 8) },
-        { new Submap(4, 4, 0, 12),  new Submap(4, 4, 4, 12),    new Submap(4, 4, 8, 12),    new Submap(4, 4, 12, 12) },
+        { fromPixelScale(4, 4, 0, 0),   fromPixelScale(4, 4, 4, 0),     fromPixelScale(4, 4, 8, 0),     fromPixelScale(4, 4, 12, 0) },
+        { fromPixelScale(4, 4, 0, 4),   fromPixelScale(4, 4, 4, 4),     fromPixelScale(4, 4, 8, 4),     fromPixelScale(4, 4, 12, 4) },
+        { fromPixelScale(4, 4, 0, 8),   fromPixelScale(4, 4, 4, 8),     fromPixelScale(4, 4, 8, 8),     fromPixelScale(4, 4, 12, 8) },
+        { fromPixelScale(4, 4, 0, 12),  fromPixelScale(4, 4, 4, 12),    fromPixelScale(4, 4, 8, 12),    fromPixelScale(4, 4, 12, 12) },
     };
     
     public static final ISubmap[][] grid(int w, int h) {
@@ -41,94 +37,37 @@ public class Submap implements ISubmap {
         ISubmap[][] ret = new ISubmap[h][w];
         for (int x = 0; x < w; x++) {
             for (int y = 0; y < h; y++) {
-                ret[y][x] = new Submap(xDiv, yDiv, xDiv * x, yDiv * y);
+                ret[y][x] = fromPixelScale(xDiv, yDiv, xDiv * x, yDiv * y);
             }
         }
         return ret;
     }
-    
+
+    public static ISubmap fromUnitScale(float width, float height, float xOffset, float yOffset) {
+        return fromPixelScale(width * PIXELS_PER_UNIT, height * PIXELS_PER_UNIT, xOffset * PIXELS_PER_UNIT, yOffset * PIXELS_PER_UNIT);
+    }
+
+    public static ISubmap fromPixelScale(float width, float height, float xOffset, float yOffset) {
+        return new Submap(width, height, xOffset, yOffset, UNITS_PER_PIXEL);
+    }
+
     private final float width, height;
     private final float xOffset, yOffset;
-
+    
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
-    private final SubmapNormalized normalized = new SubmapNormalized(this);
-
-    @Override
-    public float getInterpolatedU(TextureAtlasSprite sprite, float u) {
-        return sprite.getU(getXOffset() + u / getWidth());
+    final SubmapRescaled rescaled;
+    
+    private Submap(float width, float height, float xOffset, float yOffset, float rescale) {
+        this.width = width;
+        this.height = height;
+        this.xOffset = xOffset;
+        this.yOffset = yOffset;
+        this.rescaled = new SubmapRescaled(this, rescale, false);
     }
 
     @Override
-    public float getInterpolatedV(TextureAtlasSprite sprite, float v) {
-        return sprite.getV(getYOffset() + v / getWidth());
-    }
-
-    @Override
-    public float[] toArray() {
-        return new float[] { getXOffset(), getYOffset(), getXOffset() + getWidth(), getYOffset() + getHeight() };
-    }
-
-    @Override
-    public SubmapNormalized normalize() {
-        return normalized;
-    }
-
-    @Override
-    public ISubmap relativize() {
-        return this;
-    }
-
-    private static final float FACTOR = 16f;
-
-    @RequiredArgsConstructor
-    private static class SubmapNormalized implements ISubmap {
-
-        private final ISubmap parent;
-
-        @Override
-        public float getXOffset() {
-            return parent.getXOffset() / FACTOR;
-        }
-
-        @Override
-        public float getYOffset() {
-            return parent.getYOffset() / FACTOR;
-        }
-
-        @Override
-        public float getWidth() {
-            return parent.getWidth() / FACTOR;
-        }
-
-        @Override
-        public float getHeight() {
-            return parent.getHeight() / FACTOR;
-        }
-
-        @Override
-        public ISubmap relativize() {
-            return parent;
-        }
-
-        @Override
-        public ISubmap normalize() {
-            return this;
-        }
-
-        @Override
-        public float getInterpolatedU(TextureAtlasSprite sprite, float u) {
-            return parent.getInterpolatedU(sprite, u);
-        }
-
-        @Override
-        public float getInterpolatedV(TextureAtlasSprite sprite, float v) {
-            return parent.getInterpolatedV(sprite, v);
-        }
-
-        @Override
-        public float[] toArray() {
-            return parent.toArray();
-        }
+    public SubmapRescaled pixelScale() {
+        return this.rescaled;
     }
 }

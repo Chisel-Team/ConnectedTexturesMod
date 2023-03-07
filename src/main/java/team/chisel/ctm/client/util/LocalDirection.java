@@ -44,5 +44,8 @@ public interface LocalDirection {
     BlockPos getOffset(Direction normal);
 
     int ordinal();
+    
+    String name();
 
+    String asJson();
 }

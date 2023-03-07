@@ -2,7 +2,6 @@ package team.chisel.ctm.tests;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 
@@ -13,16 +12,9 @@ import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.Bootstrap;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.Material;
-import net.minecraft.world.level.material.MaterialColor;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.client.util.CTMLogicBakery;
-import team.chisel.ctm.client.util.ConnectionCheck;
-import team.chisel.ctm.client.util.Dir;
 import team.chisel.ctm.client.util.NewCTMLogic;
 import team.chisel.ctm.client.util.Submap;
 
@@ -315,8 +307,8 @@ public class NewCTMLogicTest {
         ISubmap[] reference = Arrays.stream(Submap.grid(12, 4)).flatMap(Arrays::stream).toArray(ISubmap[]::new);
 
         // Make sure generated tiles match expected values
-        assertEquals(new Submap(16f / 12, 16f / 4, 0, 0), reference[0]);
-        assertEquals(new Submap(16f / 12, 16f / 4, (16f / 12) * 10, (16f / 4) * 2), reference[34]);
+        assertEquals(Submap.fromPixelScale(16f / 12, 16f / 4, 0, 0), reference[0]);
+        assertEquals(Submap.fromPixelScale(16f / 12, 16f / 4, (16f / 12) * 10, (16f / 4) * 2), reference[34]);
         
         var world = new TestBlockGetter();
         world.addBlock(BlockPos.ZERO, Blocks.STONE.defaultBlockState());
@@ -332,10 +324,12 @@ public class NewCTMLogicTest {
         // Remove the diagonal connection to test inner corner
         world.removeBlock(BlockPos.ZERO.above().north());
         assertArrayEquals(new ISubmap[] { reference[16] }, test.getSubmaps(world, BlockPos.ZERO, Direction.EAST));
+        
+        System.out.println(CTMLogicBakery.TEST_OF.asJsonExample());
     }
 
     private static NewCTMLogic createTest() {
-        return CTMLogicBakery.TEST.bake();
+        return CTMLogicBakery.TEST_OF.bake();
 //        String[] lines = TEST_INPUT.split("\r\n");
 //        int[][] lookups = new int[256][];
 //        for (int i = 0; i < lines.length; i++) {

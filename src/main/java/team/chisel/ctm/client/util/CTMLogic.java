@@ -10,20 +10,15 @@ import static team.chisel.ctm.client.util.Dir.TOP_LEFT;
 import static team.chisel.ctm.client.util.Dir.TOP_RIGHT;
 
 import java.util.List;
-import java.util.Optional;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import lombok.Getter;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import team.chisel.ctm.Configurations;
-import team.chisel.ctm.api.IFacade;
 import team.chisel.ctm.api.texture.ISubmap;
 
 // @formatter:off
@@ -93,30 +88,30 @@ public class CTMLogic implements ICTMLogic {
      */
     public static final ISubmap[] uvs = new ISubmap[]{
             //Ctm texture
-            new Submap(4, 4, 0, 0),   // 0
-            new Submap(4, 4, 4, 0),   // 1
-            new Submap(4, 4, 8, 0),   // 2
-            new Submap(4, 4, 12, 0),  // 3
-            new Submap(4, 4, 0, 4),   // 4
-            new Submap(4, 4, 4, 4),   // 5
-            new Submap(4, 4, 8, 4),   // 6
-            new Submap(4, 4, 12, 4),  // 7
-            new Submap(4, 4, 0, 8),   // 8
-            new Submap(4, 4, 4, 8),   // 9
-            new Submap(4, 4, 8, 8),   // 10
-            new Submap(4, 4, 12, 8),  // 11
-            new Submap(4, 4, 0, 12),  // 12
-            new Submap(4, 4, 4, 12),  // 13
-            new Submap(4, 4, 8, 12),  // 14
-            new Submap(4, 4, 12, 12), // 15
+            Submap.fromPixelScale(4, 4, 0, 0),   // 0
+            Submap.fromPixelScale(4, 4, 4, 0),   // 1
+            Submap.fromPixelScale(4, 4, 8, 0),   // 2
+            Submap.fromPixelScale(4, 4, 12, 0),  // 3
+            Submap.fromPixelScale(4, 4, 0, 4),   // 4
+            Submap.fromPixelScale(4, 4, 4, 4),   // 5
+            Submap.fromPixelScale(4, 4, 8, 4),   // 6
+            Submap.fromPixelScale(4, 4, 12, 4),  // 7
+            Submap.fromPixelScale(4, 4, 0, 8),   // 8
+            Submap.fromPixelScale(4, 4, 4, 8),   // 9
+            Submap.fromPixelScale(4, 4, 8, 8),   // 10
+            Submap.fromPixelScale(4, 4, 12, 8),  // 11
+            Submap.fromPixelScale(4, 4, 0, 12),  // 12
+            Submap.fromPixelScale(4, 4, 4, 12),  // 13
+            Submap.fromPixelScale(4, 4, 8, 12),  // 14
+            Submap.fromPixelScale(4, 4, 12, 12), // 15
             // Default texture
-            new Submap(8, 8, 0, 0),   // 16
-            new Submap(8, 8, 8, 0),   // 17
-            new Submap(8, 8, 0, 8),   // 18
-            new Submap(8, 8, 8, 8)    // 19
+            Submap.fromPixelScale(8, 8, 0, 0),   // 16
+            Submap.fromPixelScale(8, 8, 8, 0),   // 17
+            Submap.fromPixelScale(8, 8, 0, 8),   // 18
+            Submap.fromPixelScale(8, 8, 8, 8)    // 19
     };
     
-    public static final ISubmap FULL_TEXTURE = new Submap(16, 16, 0, 0);
+    public static final ISubmap FULL_TEXTURE = Submap.X1;
     
     // @formatter:on
 

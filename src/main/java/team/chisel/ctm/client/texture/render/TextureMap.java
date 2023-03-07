@@ -35,12 +35,12 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
 
                 Point2i textureCoords = context == null ? new Point2i(1, 1) : ((TextureContextGrid)context).getTextureCoords(quad.getDirection());
                 
-                float intervalX = 16f / tex.getXSize();
-                float intervalY = 16f / tex.getYSize();
+                float intervalX = 1f / tex.getXSize();
+                float intervalY = 1f / tex.getYSize();
                 
                 float maxU = textureCoords.getX() * intervalX;
                 float maxV = textureCoords.getY() * intervalY;
-                ISubmap uvs = new Submap(intervalX, intervalY, maxU - intervalX, maxV - intervalY);
+                ISubmap uvs = Submap.fromUnitScale(intervalX, intervalY, maxU - intervalX, maxV - intervalY);
 
                 Quad q = tex.makeQuad(quad, context).setFullbright(tex.fullbright);
                 
@@ -71,14 +71,14 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
                 
                 Point2i textureCoords = context == null ? new Point2i(0, 0) : ((TextureContextGrid)context).getTextureCoords(quad.getDirection());
                 
-                float intervalU = 16f / tex.xSize;
-                float intervalV = 16f / tex.ySize;
+                float intervalU = 1f / tex.xSize;
+                float intervalV = 1f / tex.ySize;
 
                 // throw new RuntimeException(index % variationSize+" and "+index/variationSize);
                 float minU = intervalU * textureCoords.getX();
                 float minV = intervalV * textureCoords.getY();
 
-                ISubmap submap = new Submap(intervalU, intervalV, minU, minV);
+                ISubmap submap = Submap.fromUnitScale(intervalU, intervalV, minU, minV);
 
                 Quad q = tex.makeQuad(quad, context).setFullbright(tex.fullbright);
                 if (quadGoal != 4) {

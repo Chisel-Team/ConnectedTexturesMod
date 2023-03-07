@@ -14,6 +14,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import com.google.gson.Gson;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
@@ -237,4 +239,9 @@ public enum Dir implements LocalDirection {
 
         return facing;
 	}
+
+    @Override
+    public String asJson() {
+        return "{\"id\": \"" + name() + "\", \"directions\": " + new Gson().toJson(dirs) + "}";
+    }
 }

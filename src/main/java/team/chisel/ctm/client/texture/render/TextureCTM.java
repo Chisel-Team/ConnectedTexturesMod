@@ -2,14 +2,10 @@ package team.chisel.ctm.client.texture.render;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.function.BiPredicate;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -18,7 +14,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
 import it.unimi.dsi.fastutil.objects.Object2ByteMap;
-import it.unimi.dsi.fastutil.objects.Object2ByteOpenCustomHashMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
@@ -33,9 +28,8 @@ import team.chisel.ctm.client.texture.ctx.TextureContextCTM;
 import team.chisel.ctm.client.texture.type.TextureTypeCTM;
 import team.chisel.ctm.client.util.BlockstatePredicateParser;
 import team.chisel.ctm.client.util.CTMLogic;
-import team.chisel.ctm.client.util.ConnectionCheck;
 import team.chisel.ctm.client.util.CTMLogic.StateComparisonCallback;
-import team.chisel.ctm.client.util.IdentityStrategy;
+import team.chisel.ctm.client.util.ConnectionCheck;
 import team.chisel.ctm.client.util.ParseUtils;
 import team.chisel.ctm.client.util.Quad;
 
@@ -117,7 +111,9 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
             Quad q = quads[i];
             if (q != null) {
                 int ctmid = q.getUvs().normalize().getQuadrant();
-                quads[i] = q.grow().transformUVs(sprites[ctm[ctmid] > 15 ? 0 : 1], CTMLogic.uvs[ctm[ctmid]].normalize());
+//              quads[i] = q.grow().transformUVs(sprites[1], CTMLogic.uvs[2]);
+
+//                quads[i] = q.grow().transformUVs(sprites[ctm[1] > 15 ? 0 : 1], CTMLogic.uvs[ctm[ctmid]]);
             }
         }
         return Arrays.stream(quads).filter(Objects::nonNull).map(q -> q.rebake()).toList();

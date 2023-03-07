@@ -1,5 +1,6 @@
 package team.chisel.ctm.client.texture.render;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -20,13 +21,13 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.Configurations;
-import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.texture.ctx.TextureContextNewCTM;
 import team.chisel.ctm.client.texture.type.TextureTypeOptifineFullctm;
 import team.chisel.ctm.client.util.BlockstatePredicateParser;
 import team.chisel.ctm.client.util.CTMLogic.StateComparisonCallback;
+import team.chisel.ctm.client.util.CTMLogicBakery.OutputFace;
 import team.chisel.ctm.client.util.ConnectionCheck;
 import team.chisel.ctm.client.util.ParseUtils;
 import team.chisel.ctm.client.util.Quad;
@@ -99,12 +100,18 @@ public class TextureNewCTM<T extends TextureTypeOptifineFullctm> extends Abstrac
     public List<BakedQuad> transformQuad(BakedQuad bq, ITextureContext context, int quadGoal) {
         Quad quad = makeQuad(bq, context);
         if (context == null || Configurations.disableCTM) {
-            return Collections.singletonList(quad.transformUVs(sprites[0], new Submap(16f / 12, 16f / 4, 0, 0)).rebake());
+            return Collections.singletonList(quad.transformUVs(sprites[0], Submap.fromPixelScale(16f / 12, 16f / 4, 0, 0)).rebake());
         }
 
-        ISubmap[] ctm = ((TextureContextNewCTM)context).getCTM(bq.getDirection()).getCachedSubmaps();
-        quad = quad.transformUVs(sprites[0], ctm[0]);
-        return Collections.singletonList(quad.rebake());
+        OutputFace[] ctm = ((TextureContextNewCTM)context).getCTM(bq.getDirection()).getCachedSubmaps();
+        List<BakedQuad> ret = new ArrayList<>();
+        for (var face : ctm) {
+            Quad sub = quad.subsect(face.getFace());
+            if (sub != null) {
+                ret.add(sub.transformUVs(sprites[0], face.getUvs()).rebake());
+            }
+        }
+        return ret;
     }
     
     @Override

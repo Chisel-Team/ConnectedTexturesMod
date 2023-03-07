@@ -1,16 +1,21 @@
 package team.chisel.ctm.client.util;
 
+import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.IntFunction;
 
 import org.apache.commons.lang3.ArrayUtils;
 
 import com.google.common.base.Preconditions;
+import com.google.gson.stream.JsonWriter;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.Value;
 import team.chisel.ctm.api.texture.ISubmap;
 
@@ -54,11 +59,54 @@ public class CTMLogicBakery {
             }
             return true;
         }
+
+        @SneakyThrows
+        public String asJson(LocalDirection[] values) {
+            var buf = new StringWriter();
+            JsonWriter writer = new JsonWriter(buf);
+            writer.beginObject();
+            {
+                writer.name("output").value(output);
+                List<LocalDirection> connected = new ArrayList<>();
+                List<LocalDirection> unconnected = new ArrayList<>();
+                for (int i = 0; i < input.length; i++) {
+                    if (input[i] == Trinary.TRUE) {
+                        connected.add(values[input.length - 1 - i]);
+                    } else if (input[i] == Trinary.FALSE) {
+                        unconnected.add(values[input.length - 1 - i]);
+                    }
+                }
+                writer.name("connected");
+                writer.beginArray();
+                for (var d : connected) {
+                    writer.value(d.name());
+                }
+                writer.endArray();
+                
+                writer.name("unconnected");
+                writer.beginArray();
+                for (var d : unconnected) {
+                    writer.value(d.name());
+                }
+                writer.endArray();
+            }
+            writer.endObject();
+            writer.flush();
+            writer.close();
+            return buf.toString();
+        }
+    }
+    
+    @Value
+    public class OutputFace {
+        
+        ISubmap uvs;
+        ISubmap face;
     }
     
     private int size;
     private final Int2ObjectMap<LocalDirection> bitmap = new Int2ObjectOpenHashMap<>();
-    private final Int2ObjectMap<ISubmap> outputs = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectMap<OutputFace> outputs = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectMap<DesiredState> rules = new Int2ObjectOpenHashMap<>();
 
     public CTMLogicBakery input(int bit, LocalDirection dir) {
@@ -71,8 +119,12 @@ public class CTMLogicBakery {
     
     private int curRule = -1;
     public CTMLogicBakery output(int submap, ISubmap texture) {
+        return output(submap, texture, Submap.X1);
+    }
+    
+    public CTMLogicBakery output(int submap, ISubmap texture, ISubmap at) {
         this.curRule = submap;
-        this.outputs.put(submap, texture);
+        this.outputs.put(submap, new OutputFace(texture, at));
         return this;
     }
     
@@ -108,7 +160,7 @@ public class CTMLogicBakery {
                 }
             }
         }
-        return new NewCTMLogic(lookups, asSortedArray(outputs, ISubmap[]::new), asSortedArray(bitmap, LocalDirection[]::new), new ConnectionCheck());
+        return new NewCTMLogic(lookups, asSortedArray(outputs, OutputFace[]::new), asSortedArray(bitmap, LocalDirection[]::new), new ConnectionCheck());
     }
     
     private <T> T[] asSortedArray(Int2ObjectMap<T> indexedMap, IntFunction<T[]> ctor) {
@@ -118,8 +170,47 @@ public class CTMLogicBakery {
             .toArray(ctor);
     }
     
+    @SneakyThrows
+    public String asJsonExample() {
+        var buf = new StringWriter();
+        JsonWriter writer = new JsonWriter(buf);
+        writer.setIndent("  ");
+        writer.beginObject();
+        {
+            LocalDirection[] orderedPositions = asSortedArray(bitmap, LocalDirection[]::new);
+            writer.name("positions");
+            writer.beginArray();
+            {
+                for (LocalDirection dir : orderedPositions) {
+                    writer.jsonValue(dir.asJson());
+                }
+            }
+            writer.endArray();
+            writer.name("submaps");
+            writer.beginObject();
+            {
+                writer.name("type").value("grid");
+                writer.name("width").value(12);
+                writer.name("height").value(4);
+            }
+            writer.endObject();
+            writer.name("rules");
+            writer.beginArray();
+            {
+                for (var e : rules.int2ObjectEntrySet().stream().sorted((e1, e2) -> Integer.compare(e1.getIntKey(), e2.getIntKey())).toList()) {
+                    writer.jsonValue(e.getValue().asJson(orderedPositions));
+                }
+            }
+            writer.endArray();
+        }
+        writer.endObject();
+        writer.flush();
+        writer.close();
+        return buf.toString();
+    }
+    
     private static final ISubmap[][] OF_FORMAT = Submap.grid(12, 4);
-    public static CTMLogicBakery TEST = new CTMLogicBakery()
+    public static CTMLogicBakery TEST_OF = new CTMLogicBakery()
             .input(0, Dir.TOP) // LSB
             .input(1, Dir.TOP_RIGHT)
             .input(2, Dir.RIGHT)
@@ -174,5 +265,33 @@ public class CTMLogicBakery {
             .output(43, OF_FORMAT[3][7]).when("1X0X1110")
             .output(44, OF_FORMAT[3][8]).when("10111111")
             .output(45, OF_FORMAT[3][9]).when("11111110")
-            .output(46, OF_FORMAT[3][10]).when("10101010");     
+            .output(46, OF_FORMAT[3][10]).when("10101010");
+    
+    private static final ISubmap[][] CTM_FORMAT = Submap.X4;
+    private static final ISubmap[][] CTM_QUADS = Submap.X2;
+    public static final CTMLogicBakery TEST_CTM = new CTMLogicBakery()
+            .input(0, Dir.TOP) // LSB
+            .input(1, Dir.TOP_RIGHT)
+            .input(2, Dir.RIGHT)
+            .input(3, Dir.BOTTOM_RIGHT)
+            .input(4, Dir.BOTTOM)
+            .input(5, Dir.BOTTOM_LEFT)
+            .input(6, Dir.LEFT)
+            .input(7, Dir.TOP_LEFT) // MSB
+            .output(0, CTM_FORMAT[0][0], CTM_QUADS[0][0])
+            .output(1, CTM_FORMAT[0][1], CTM_QUADS[0][1])
+            .output(2, CTM_FORMAT[0][2], CTM_QUADS[0][0])
+            .output(3, CTM_FORMAT[0][3], CTM_QUADS[0][1])
+            .output(4, CTM_FORMAT[1][0], CTM_QUADS[1][0])
+            .output(5, CTM_FORMAT[1][1], CTM_QUADS[1][1])
+            .output(6, CTM_FORMAT[1][2], CTM_QUADS[1][0])
+            .output(7, CTM_FORMAT[1][3], CTM_QUADS[1][1])
+            .output(8, CTM_FORMAT[2][0], CTM_QUADS[0][0])
+            .output(9, CTM_FORMAT[2][1], CTM_QUADS[0][1])
+            .output(10,CTM_FORMAT[2][2], CTM_QUADS[0][0])
+            .output(11,CTM_FORMAT[2][3], CTM_QUADS[0][1])
+            .output(12,CTM_FORMAT[3][0], CTM_QUADS[1][0])
+            .output(13,CTM_FORMAT[3][1], CTM_QUADS[1][1])
+            .output(14,CTM_FORMAT[3][2], CTM_QUADS[1][0])
+            .output(15,CTM_FORMAT[3][3], CTM_QUADS[1][1]);
 }
