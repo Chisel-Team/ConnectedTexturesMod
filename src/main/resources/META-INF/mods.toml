@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[38,)"
+loaderVersion="[43,)"
 issueTrackerURL="https://github.com/Chisel-Team/ConnectedTexturesMod/issues/"
 license="GPL-2.0"
 
@@ -17,6 +17,6 @@ license="GPL-2.0"
 [[dependencies.ctm]]
     modId="forge"
     mandatory=true
-    versionRange="[38.0.17,)"
+    versionRange="[43.1.24,)"
     ordering="NONE"
     side="BOTH"

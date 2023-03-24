@@ -426,6 +426,7 @@ public class Quad {
         builder.setDirection(this.builder.quadOrientation);
         builder.setTintIndex(this.builder.quadTint);
         builder.setShade(this.builder.applyDiffuseLighting);
+        builder.setHasAmbientOcclusion(this.builder.applyAmbientOcclusion);
         builder.setSprite(this.uvs.getSprite());
         var format = DefaultVertexFormat.BLOCK;
         
@@ -508,6 +509,8 @@ public class Quad {
 
         @Setter
         private boolean applyDiffuseLighting;
+        @Setter
+        private boolean applyAmbientOcclusion;
         
         private final float[][] positions = new float[4][];
         private final float[][] uvs = new float[4][];
@@ -519,6 +522,7 @@ public class Quad {
             setQuadTint(baked.getTintIndex());
             setQuadOrientation(baked.getDirection());
             setApplyDiffuseLighting(baked.isShade());
+            setApplyAmbientOcclusion(baked.hasAmbientOcclusion());
             var vertices = baked.getVertices();
             for (int i = 0; i < 4; i++) {
                 int offset = i * STRIDE;
