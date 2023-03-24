@@ -19,13 +19,14 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.ChunkRenderTypeSet;
 import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.common.util.Lazy;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.util.BakedQuadRetextured;
-import team.chisel.ctm.client.util.CTMPackReloadListener;
 
 @ParametersAreNonnullByDefault
 public class ModelBakedCTM extends AbstractCTMBakedModel {
@@ -42,6 +43,9 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
             parent = castParent.getParent(rand);
         }
 
+        BakedModel finalParent = parent;
+        //Only use this if state is not null
+        Lazy<ChunkRenderTypeSet> lazyParentTypes = Lazy.of(() -> finalParent.getRenderTypes(state, rand, data));
         AbstractCTMBakedModel ret = new ModelBakedCTM(model, parent, layer);
         for (Direction facing : FACINGS) {
             List<BakedQuad> parentQuads = parent.getQuads(state, facing, rand, data, null); // NOTE: We pass null here so that all quads are always returned, layer filtering is done below
@@ -77,10 +81,11 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
             // Explore optimizations to quad goal (detecting overlaps??)
             int quadGoal = ctx == null ? 1 : texturemap.values().stream().mapToInt(tex -> tex.getType().getQuadsPerSide()).max().orElse(1);
             for (Entry<BakedQuad, ICTMTexture<?>> e : texturemap.entrySet()) {
+                ICTMTexture<?> texture = e.getValue();
                 // If the layer is null, this is a wrapped vanilla texture, so passthrough the layer check to the block
-                if (layer == null || (e.getValue().getLayer() != null && e.getValue().getLayer().getRenderType() == layer) || (e.getValue().getLayer() == null && (state == null || CTMPackReloadListener.canRenderInLayerFallback(state, layer)))) {
-                    ITextureContext tcx = ctx == null ? null : ctx.getRenderContext(e.getValue());
-                    quads.addAll(e.getValue().transformQuad(e.getKey(), tcx, quadGoal));
+                if (layer == null || (texture.getLayer() != null && texture.getLayer().getRenderType() == layer) || (texture.getLayer() == null && (state == null || lazyParentTypes.get().contains(layer)))) {
+                    ITextureContext tcx = ctx == null ? null : ctx.getRenderContext(texture);
+                    quads.addAll(texture.transformQuad(e.getKey(), tcx, quadGoal));
                 }
             }
         }

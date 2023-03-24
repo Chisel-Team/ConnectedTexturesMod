@@ -3,6 +3,7 @@ package team.chisel.ctm.client.model;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -66,7 +67,9 @@ public class ModelCTM implements IModelCTM {
     protected Map<Pair<Integer, ResourceLocation>, ICTMTexture<?>> textureOverrides;
 
     private final Collection<ResourceLocation> textureDependencies;
-    
+
+    private final Set<RenderType> extraLayers = new HashSet<>();
+    private final Set<RenderType> extraLayersView = Collections.unmodifiableSet(extraLayers);
     private transient byte layers;
 
     private Map<ResourceLocation, ICTMTexture<?>> textures = new HashMap<>();
@@ -162,7 +165,13 @@ public class ModelCTM implements IModelCTM {
 		        } else {
 		            tex = meta.get().makeTexture(sprite, spriteGetter);
 		        }
-		        layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
+                BlockRenderLayer renderLayer = tex.getLayer();
+                if (renderLayer != null) {
+                    extraLayers.add(renderLayer.getRenderType());
+                    layers |= 1 << renderLayer.ordinal();
+                } else {
+                    layers |= 1 << 7;
+                }
 		        return tex;
 		    });
 		}
@@ -190,7 +199,13 @@ public class ModelCTM implements IModelCTM {
                     	sprite = spriteGetter.apply(new Material(TextureAtlas.LOCATION_BLOCKS, texLoc));
                     }
                     ICTMTexture<?> tex = e.getValue().makeTexture(sprite, spriteGetter);
-                    layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
+                    BlockRenderLayer renderLayer = tex.getLayer();
+                    if (renderLayer != null) {
+                        extraLayers.add(renderLayer.getRenderType());
+                        layers |= 1 << renderLayer.ordinal();
+                    } else {
+                        layers |= 1 << 7;
+                    }
                     textureOverrides.put(Pair.of(e.getIntKey(), texLoc), tex);
                 }
             }
@@ -214,6 +229,11 @@ public class ModelCTM implements IModelCTM {
     public boolean canRenderInLayer(BlockState state, RenderType layer) {
         // sign bit is used to signify that a layer-less (vanilla) texture is present
         return (layers < 0 && CTMPackReloadListener.canRenderInLayerFallback(state, layer)) || ((layers >> BlockRenderLayer.fromType(layer).ordinal()) & 1) == 1;
+    }
+
+    @Override
+    public Set<RenderType> getExtraLayers(BlockState state) {
+        return extraLayersView;
     }
 
     @Override
