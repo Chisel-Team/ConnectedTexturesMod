@@ -106,14 +106,15 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
         Quad[] quads = quad.subdivide(4);
         
         int[] ctm = ((TextureContextCTM)context).getCTM(bq.getDirection()).getSubmapIndices();
-        
+        System.out.println(bq.getDirection() + ": " + Arrays.toString(ctm));
+
         for (int i = 0; i < quads.length; i++) {
             Quad q = quads[i];
             if (q != null) {
                 int ctmid = q.getUvs().normalize().getQuadrant();
-//              quads[i] = q.grow().transformUVs(sprites[1], CTMLogic.uvs[2]);
+//              quads[i] = q.grow().transformUVs(sprites[1], CTMLogic.uvs[16]);
 
-//                quads[i] = q.grow().transformUVs(sprites[ctm[1] > 15 ? 0 : 1], CTMLogic.uvs[ctm[ctmid]]);
+                quads[i] = q.grow().transformUVs(sprites[ctm[ctmid] > 15 ? 0 : 1], CTMLogic.uvs[ctm[ctmid]].unitScale());
             }
         }
         return Arrays.stream(quads).filter(Objects::nonNull).map(q -> q.rebake()).toList();

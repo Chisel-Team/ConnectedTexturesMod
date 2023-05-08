@@ -2,6 +2,7 @@ package team.chisel.ctm.tests;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Arrays;
 
@@ -13,9 +14,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraftforge.client.model.pipeline.QuadBakingVertexConsumer;
+import net.minecraftforge.client.model.pipeline.QuadBakingVertexConsumer.Buffered;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.client.util.CTMLogicBakery;
+import team.chisel.ctm.client.util.CTMLogicBakery.OutputFace;
 import team.chisel.ctm.client.util.NewCTMLogic;
+import team.chisel.ctm.client.util.Quad;
 import team.chisel.ctm.client.util.Submap;
 
 public class NewCTMLogicTest {
@@ -28,6 +33,24 @@ public class NewCTMLogicTest {
         assertArrayEquals(Submap.X3, Submap.grid(3, 3));
         assertArrayEquals(Submap.X4, Submap.grid(4, 4));
         System.out.println(Arrays.deepToString(Submap.grid(12, 4)));
+    }
+    
+    @Test
+    void quad() {
+        QuadBakingVertexConsumer.Buffered builder = new Buffered();
+        builder.vertex(0, 0, 0).uv(0, 0).normal(0, 1, 0).endVertex();
+        builder.vertex(1, 0, 0).uv(1, 0).normal(0, 1, 0).endVertex();
+        builder.vertex(1, 0, 1).uv(1, 1).normal(0, 1, 0).endVertex();
+        builder.vertex(0, 0, 1).uv(0, 1).normal(0, 1, 0).endVertex();
+        
+        Quad q = Quad.from(builder.getQuad());
+        Quad quarter = q.subsect(Submap.fromPixelScale(8, 8, 0, 0));
+        Quad half = q.subsect(Submap.fromPixelScale(8, 16, 0, 0));
+        Quad center = q.subsect(Submap.fromPixelScale(8, 8, 4, 4));
+        
+        assertNotNull(quarter);
+        assertNotNull(half);
+        assertNotNull(center);
     }
     
     // Prebaked rules for optifine style CTM with outputs 1-47
@@ -311,19 +334,28 @@ public class NewCTMLogicTest {
         assertEquals(Submap.fromPixelScale(16f / 12, 16f / 4, (16f / 12) * 10, (16f / 4) * 2), reference[34]);
         
         var world = new TestBlockGetter();
+        OutputFace[] output;
         world.addBlock(BlockPos.ZERO, Blocks.STONE.defaultBlockState());
         // Simple case of one connection upwards
         world.addBlock(BlockPos.ZERO.above(), Blocks.STONE.defaultBlockState());
-        assertArrayEquals(new ISubmap[] { reference[36] }, test.getSubmaps(world, BlockPos.ZERO, Direction.EAST));
+        output = test.getSubmaps(world, BlockPos.ZERO, Direction.EAST);
+        assertEquals(1, output.length);
+        assertEquals(reference[36], output[0].getUvs());
         // Add a diagonal connection that should not affect the result
         world.addBlock(BlockPos.ZERO.above().north(), Blocks.STONE.defaultBlockState());
-        assertArrayEquals(new ISubmap[] { reference[36] }, test.getSubmaps(world, BlockPos.ZERO, Direction.EAST));
+        output = test.getSubmaps(world, BlockPos.ZERO, Direction.EAST);
+        assertEquals(1, output.length);
+        assertEquals(reference[36], output[0].getUvs());
         // Add a sideways connection to make it a L shape with no inner corner
         world.addBlock(BlockPos.ZERO.north(), Blocks.STONE.defaultBlockState());
-        assertArrayEquals(new ISubmap[] { reference[37] }, test.getSubmaps(world, BlockPos.ZERO, Direction.EAST));
+        output = test.getSubmaps(world, BlockPos.ZERO, Direction.EAST);
+        assertEquals(1, output.length);
+        assertEquals(reference[37], output[0].getUvs());
         // Remove the diagonal connection to test inner corner
         world.removeBlock(BlockPos.ZERO.above().north());
-        assertArrayEquals(new ISubmap[] { reference[16] }, test.getSubmaps(world, BlockPos.ZERO, Direction.EAST));
+        output = test.getSubmaps(world, BlockPos.ZERO, Direction.EAST);
+        assertEquals(1, output.length);
+        assertEquals(reference[16], output[0].getUvs());
         
         System.out.println(CTMLogicBakery.TEST_OF.asJsonExample());
     }

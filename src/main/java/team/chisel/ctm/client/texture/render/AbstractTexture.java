@@ -2,7 +2,6 @@ package team.chisel.ctm.client.texture.render;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -12,6 +11,7 @@ import com.google.gson.JsonObject;
 
 import lombok.Getter;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -88,7 +88,7 @@ public abstract class AbstractTexture<T extends ITextureType> implements ICTMTex
     
     @Override
     public Collection<ResourceLocation> getTextures() {
-        return Arrays.stream(sprites).map(TextureAtlasSprite::getName).toList();
+        return Arrays.stream(sprites).map(TextureAtlasSprite::contents).map(SpriteContents::name).toList();
     }
 
     protected Quad makeQuad(BakedQuad bq, @Nullable ITextureContext context) {

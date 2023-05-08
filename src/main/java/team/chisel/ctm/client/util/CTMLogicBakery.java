@@ -53,7 +53,7 @@ public class CTMLogicBakery {
             for (int i = 0; i < input.length; i++) {
                 Trinary req = input[i];
                 boolean bit = ((state >> i) & 1) == 1;
-                if (req != Trinary.DONT_CARE && bit != (req == Trinary.TRUE)) {
+                if (req != Trinary.DONT_CARE && bit != req.val) {
                     return false;
                 }
             }
