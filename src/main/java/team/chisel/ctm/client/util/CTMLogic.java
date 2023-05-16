@@ -9,6 +9,7 @@ import static team.chisel.ctm.client.util.Dir.TOP;
 import static team.chisel.ctm.client.util.Dir.TOP_LEFT;
 import static team.chisel.ctm.client.util.Dir.TOP_RIGHT;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -20,6 +21,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.api.texture.ISubmap;
+import team.chisel.ctm.client.newctm.CTMLogicBakery.OutputFace;
+import team.chisel.ctm.client.newctm.ConnectionCheck;
+import team.chisel.ctm.client.newctm.ICTMLogic;
+import team.chisel.ctm.client.newctm.ILogicCache;
+import team.chisel.ctm.client.newctm.LocalDirection;
 
 // @formatter:off
 /**
@@ -73,12 +79,12 @@ import team.chisel.ctm.api.texture.ISubmap;
  */
 @ParametersAreNonnullByDefault
 @Accessors(fluent = true, chain = true)
-public class CTMLogic implements ICTMLogic {
+public class CTMLogic implements ICTMLogic, ILogicCache {
     
     public interface StateComparisonCallback {
         
         public static final StateComparisonCallback DEFAULT = 
-                (ctm, from, to, dir) -> ctm.ignoreStates ? from.getBlock() == to.getBlock() : from == to;
+                (ctm, from, to, dir) -> ctm.ignoreStates() ? from.getBlock() == to.getBlock() : from == to;
         
         boolean connects(ConnectionCheck instance, BlockState from, BlockState to, Direction dir);
     }
@@ -142,7 +148,8 @@ public class CTMLogic implements ICTMLogic {
 	 * 
 	 *         Indeces are in counter-clockwise order starting at bottom left.
 	 */
-    public int[] createSubmapIndices(@Nullable BlockGetter world, BlockPos pos, Direction side) {
+	@Override
+    public int[] getSubmapIds(@Nullable BlockGetter world, BlockPos pos, Direction side) {
 		if (world == null) {
             return submapCache;
         }
@@ -210,7 +217,6 @@ public class CTMLogic implements ICTMLogic {
 //        }
     }
 
-    @Override
     public void buildConnectionMap(long data, Direction side) {
         connectionMap = 0; // Clear all connections
         List<ConnectionLocations> connections = ConnectionLocations.decode(data);
@@ -247,7 +253,6 @@ public class CTMLogic implements ICTMLogic {
 	 *            The direction to check connection in.
 	 * @return True if the cached connectionMap holds a connection in this {@link Dir direction}.
 	 */
-	@Override
     public boolean connected(Dir dir) {
 		return ((connectionMap >> dir.ordinal()) & 1) == 1;
 	}
@@ -257,7 +262,6 @@ public class CTMLogic implements ICTMLogic {
 	 *            The directions to check connection in.
 	 * @return True if the cached connectionMap holds a connection in <i><b>all</b></i> the given {@link Dir directions}.
 	 */
-	@Override
     @SuppressWarnings("null")
     public boolean connectedAnd(Dir... dirs) {
 		for (Dir dir : dirs) {
@@ -273,7 +277,6 @@ public class CTMLogic implements ICTMLogic {
 	 *            The directions to check connection in.
 	 * @return True if the cached connectionMap holds a connection in <i><b>one of</b></i> the given {@link Dir directions}.
 	 */
-	@Override
     @SuppressWarnings("null")
     public boolean connectedOr(Dir... dirs) {
 		for (Dir dir : dirs) {
@@ -284,7 +287,6 @@ public class CTMLogic implements ICTMLogic {
 		return false;
     }
 	
-	@Override
     public boolean connectedNone(Dir... dirs) {
 	    for (Dir dir : dirs) {
 	        if (connected(dir)) {
@@ -294,7 +296,6 @@ public class CTMLogic implements ICTMLogic {
 	    return true;
 	}
 	
-	@Override
     public boolean connectedOnly(Dir... dirs) {
 	    byte map = 0;
 	    for (Dir dir : dirs) {
@@ -303,8 +304,35 @@ public class CTMLogic implements ICTMLogic {
 	    return map == this.connectionMap;
 	}
 	
-	@Override
     public int numConnections() {
 	    return Integer.bitCount(connectionMap);
 	}
+
+    @Override
+    @Deprecated
+    public OutputFace[] getCachedSubmaps() {
+        return new OutputFace[0];
+    }
+
+    @Override
+    @Deprecated
+    public OutputFace[] getSubmaps(BlockGetter world, BlockPos pos, Direction side) {
+        return new OutputFace[0];
+    }
+    
+    @Override
+    @Deprecated
+    public ILogicCache cached() {
+        return this;
+    }
+    
+    @Override
+    public List<ISubmap> outputSubmaps() {
+        return Arrays.stream(Submap.X2).flatMap(Arrays::stream).toList();
+    }
+    
+    @Override
+    public int requiredTextures() {
+        return 2;
+    }
 }

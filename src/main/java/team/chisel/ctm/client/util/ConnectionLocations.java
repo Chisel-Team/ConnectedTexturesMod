@@ -8,6 +8,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import team.chisel.ctm.client.newctm.LocalDirection;
 
 /**
  * Represents all the different spot for connection locations for a ctm block

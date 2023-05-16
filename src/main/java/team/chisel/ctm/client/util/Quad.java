@@ -30,6 +30,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
+import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.model.pipeline.QuadBakingVertexConsumer;
@@ -334,7 +335,7 @@ public class Quad {
     }
 
     public Quad subsect(ISubmap submap) {
-        submap = submap.unitScale();
+
         int firstIndex = 0;
         for (int i = 0; i < vertUv.length; i++) {
             if (vertUv[i].y == getUvs().minV && vertUv[i].x == getUvs().minU) {
@@ -376,6 +377,15 @@ public class Quad {
                 }
             }
         }
+        
+        if (normal.getAxis() != Axis.Y) {
+            submap = submap.flipY();
+        }
+        if (normal == Direction.EAST || normal == Direction.NORTH) {
+            submap = submap.flipX();
+        }
+        
+        submap = submap.unitScale();
         
         if (normal.getAxis() == Axis.Y || normal == Direction.SOUTH || normal == Direction.WEST) {
             // Relative X is the same sign for DOWN, UP, SOUTH, and WEST
@@ -558,6 +568,20 @@ public class Quad {
         return new Quad(vertPos, getUvs().transform(sprite, submap), builder, blocklight, skylight);
     }
     
+    public Quad setUVs(TextureAtlasSprite sprite, ISubmap submap) {
+        return new Quad(vertPos, sample(sprite, submap), builder, blocklight, skylight);
+    }
+    
+    private UVs sample(TextureAtlasSprite sprite, ISubmap submap) { 
+        submap = submap.unitScale();
+        float width = sprite.getU1() - sprite.getU0();
+        float height = sprite.getV1() - sprite.getV0();
+        return new UVs(Submap.raw(
+                width * submap.getWidth(), height * submap.getHeight(),
+                lerp(sprite.getU0(), sprite.getU1(), submap.getXOffset()),
+                lerp(sprite.getV0(), sprite.getV1(), submap.getYOffset())), sprite);
+    }
+
     public Quad grow() {
         return new Quad(vertPos, getUvs().normalizeQuadrant(), builder, blocklight, skylight);
     }

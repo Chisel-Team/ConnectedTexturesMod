@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
@@ -79,6 +78,11 @@ public class TextureTypeRegistry {
         else if (map.get(key) != type){
             map.put(key, type);
         }
+    }
+    
+    public static ITextureType remove(String name) {
+        String key = name.toLowerCase(Locale.ROOT);
+        return map.remove(key);
     }
 
     public static ITextureType getType(String name){

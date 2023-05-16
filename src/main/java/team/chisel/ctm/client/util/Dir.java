@@ -9,6 +9,7 @@ import static net.minecraft.core.Direction.WEST;
 import static net.minecraft.core.Direction.AxisDirection;
 
 import java.util.Arrays;
+import java.util.List;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -18,9 +19,12 @@ import com.google.gson.Gson;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.api.util.NonnullType;
+import team.chisel.ctm.client.newctm.ConnectionCheck;
+import team.chisel.ctm.client.newctm.LocalDirection;
 
 /**
  * Think of this class as a "Two dimensional ForgeDirection, with diagonals".
@@ -31,7 +35,7 @@ import team.chisel.ctm.api.util.NonnullType;
  * for inner corner rendering.
  */
 @ParametersAreNonnullByDefault
-public enum Dir implements LocalDirection {
+public enum Dir implements LocalDirection, StringRepresentable {
 	// @formatter:off
     TOP(UP), 
     TOP_RIGHT(UP, EAST),
@@ -243,5 +247,23 @@ public enum Dir implements LocalDirection {
     @Override
     public String asJson() {
         return "{\"id\": \"" + name() + "\", \"directions\": " + new Gson().toJson(dirs) + "}";
+    }
+
+    @Override
+    public String getSerializedName() {
+        return name();
+    }
+
+    public static LocalDirection fromDirections(List<Direction> directions) {
+        return fromDirections(directions.toArray(Direction[]::new));
+    }
+    
+    public static LocalDirection fromDirections(Direction... directions) {
+        for (var dir : values()) {
+            if (Arrays.equals(dir.dirs, directions)) {
+                return dir;
+            }
+        }
+        throw new UnsupportedOperationException("Currently invalid local direction");
     }
 }

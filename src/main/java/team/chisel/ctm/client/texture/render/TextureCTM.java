@@ -24,12 +24,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.Configurations;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
+import team.chisel.ctm.client.newctm.ConnectionCheck;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTM;
 import team.chisel.ctm.client.texture.type.TextureTypeCTM;
 import team.chisel.ctm.client.util.BlockstatePredicateParser;
 import team.chisel.ctm.client.util.CTMLogic;
 import team.chisel.ctm.client.util.CTMLogic.StateComparisonCallback;
-import team.chisel.ctm.client.util.ConnectionCheck;
 import team.chisel.ctm.client.util.ParseUtils;
 import team.chisel.ctm.client.util.Quad;
 

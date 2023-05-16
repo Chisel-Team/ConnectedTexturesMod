@@ -43,6 +43,10 @@ public class Submap implements ISubmap {
         return ret;
     }
 
+    public static ISubmap raw(float width, float height, float xOffset, float yOffset) {
+        return new Submap(width, height, xOffset, yOffset, 1);
+    }
+
     public static ISubmap fromUnitScale(float width, float height, float xOffset, float yOffset) {
         return fromPixelScale(width * PIXELS_PER_UNIT, height * PIXELS_PER_UNIT, xOffset * PIXELS_PER_UNIT, yOffset * PIXELS_PER_UNIT);
     }

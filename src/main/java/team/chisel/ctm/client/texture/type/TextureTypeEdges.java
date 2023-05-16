@@ -12,10 +12,10 @@ import net.minecraft.world.phys.Vec3;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.TextureType;
 import team.chisel.ctm.api.util.TextureInfo;
+import team.chisel.ctm.client.newctm.ConnectionCheck;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTM;
 import team.chisel.ctm.client.texture.render.TextureEdges;
 import team.chisel.ctm.client.util.CTMLogic;
-import team.chisel.ctm.client.util.ConnectionCheck;
 import team.chisel.ctm.client.util.Dir;
 
 @TextureType("edges")

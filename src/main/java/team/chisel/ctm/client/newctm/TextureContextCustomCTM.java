@@ -1,4 +1,4 @@
-package team.chisel.ctm.client.texture.ctx;
+package team.chisel.ctm.client.newctm;
 
 import java.util.EnumMap;
 
@@ -10,33 +10,33 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
-import team.chisel.ctm.client.util.CTMLogicBakery;
-import team.chisel.ctm.client.util.NewCTMLogic;
 
-public class TextureContextNewCTM implements ITextureContext {
+public class TextureContextCustomCTM implements ITextureContext {
     
 	protected final ICTMTexture<?> tex;
+	private final ICTMLogic logic;
 	
-    private EnumMap<Direction, NewCTMLogic> ctmData = new EnumMap<>(Direction.class);
+    private EnumMap<Direction, ILogicCache> ctmData = new EnumMap<>(Direction.class);
 
     private long data;
 
-    public TextureContextNewCTM(@Nonnull BlockState state, BlockGetter world, BlockPos pos, ICTMTexture<?> tex) {
+    public TextureContextCustomCTM(@Nonnull BlockState state, BlockGetter world, BlockPos pos, ICTMTexture<?> tex, ICTMLogic logic) {
     	this.tex = tex;
+    	this.logic = logic;
     	
         for (Direction face : Direction.values()) {
-            NewCTMLogic ctm = createCTM(state);
-            ctm.getSubmaps(world, pos, face);
+            ILogicCache ctm = createCTM(state);
+            ctm.buildConnectionMap(world, pos, face);
             ctmData.put(face, ctm);
             this.data |= ctm.serialized() << (face.ordinal() * 10);
         }
     }
     
-    protected NewCTMLogic createCTM(@Nonnull BlockState state) {
-        return CTMLogicBakery.TEST_OF.bake();
+    protected ILogicCache createCTM(@Nonnull BlockState state) {
+        return logic.cached();
     }
 
-    public NewCTMLogic getCTM(Direction face) {
+    public ILogicCache getCTM(Direction face) {
         return ctmData.get(face);
     }
 

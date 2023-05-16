@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import team.chisel.ctm.client.util.Submap;
 
 @ParametersAreNonnullByDefault
 public interface ISubmap {
@@ -99,5 +100,13 @@ public interface ISubmap {
         public float[] toArray() {
             return parent.toArray();
         }
+    }
+    
+    default ISubmap flipX() {
+        return Submap.fromPixelScale(getWidth(), getHeight(), PIXELS_PER_UNIT - getXOffset() - getWidth(), getYOffset());
+    }
+
+    default ISubmap flipY() {
+        return Submap.fromPixelScale(getWidth(), getHeight(), getXOffset(), PIXELS_PER_UNIT - getYOffset() - getHeight());
     }
 }

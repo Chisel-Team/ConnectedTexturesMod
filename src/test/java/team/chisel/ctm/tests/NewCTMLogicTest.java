@@ -17,9 +17,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.client.model.pipeline.QuadBakingVertexConsumer;
 import net.minecraftforge.client.model.pipeline.QuadBakingVertexConsumer.Buffered;
 import team.chisel.ctm.api.texture.ISubmap;
-import team.chisel.ctm.client.util.CTMLogicBakery;
-import team.chisel.ctm.client.util.CTMLogicBakery.OutputFace;
-import team.chisel.ctm.client.util.NewCTMLogic;
+import team.chisel.ctm.client.newctm.CTMLogicBakery;
+import team.chisel.ctm.client.newctm.CustomCTMLogic;
+import team.chisel.ctm.client.newctm.CTMLogicBakery.OutputFace;
 import team.chisel.ctm.client.util.Quad;
 import team.chisel.ctm.client.util.Submap;
 
@@ -360,7 +360,7 @@ public class NewCTMLogicTest {
         System.out.println(CTMLogicBakery.TEST_OF.asJsonExample());
     }
 
-    private static NewCTMLogic createTest() {
+    private static CustomCTMLogic createTest() {
         return CTMLogicBakery.TEST_OF.bake();
 //        String[] lines = TEST_INPUT.split("\r\n");
 //        int[][] lookups = new int[256][];

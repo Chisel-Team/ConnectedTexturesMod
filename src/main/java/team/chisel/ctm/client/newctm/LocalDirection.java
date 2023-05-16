@@ -1,4 +1,4 @@
-package team.chisel.ctm.client.util;
+package team.chisel.ctm.client.newctm;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

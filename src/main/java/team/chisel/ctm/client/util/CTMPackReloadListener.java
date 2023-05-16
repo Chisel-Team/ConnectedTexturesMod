@@ -26,7 +26,6 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.MultiPartBakedModel;
 import net.minecraft.client.resources.model.WeightedBakedModel;
 import net.minecraft.core.Holder;
-import net.minecraft.server.packs.resources.ReloadableResourceManager;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -34,20 +33,11 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.ChunkRenderTypeSet;
-import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 
 public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> {
-    
-    @SubscribeEvent
-    public void onParticleFactoryRegister(RegisterParticleProvidersEvent event) {
-        // Apparently this is the only event that is posted after other resource loaders are registered, but before
-        // the reload begins. We must register here to be AFTER model baking.
-        ((ReloadableResourceManager)Minecraft.getInstance().getResourceManager()).registerReloadListener(this);
-    }
     
     @Override
     protected Unit prepare(ResourceManager resourceManagerIn, ProfilerFiller profilerIn) {

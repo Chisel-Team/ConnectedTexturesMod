@@ -1,4 +1,4 @@
-package team.chisel.ctm.client.texture.render;
+package team.chisel.ctm.client.newctm;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,10 +9,6 @@ import java.util.function.BiPredicate;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-
-import it.unimi.dsi.fastutil.objects.Object2ByteMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
@@ -23,19 +19,17 @@ import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.Configurations;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
-import team.chisel.ctm.client.texture.ctx.TextureContextNewCTM;
-import team.chisel.ctm.client.texture.type.TextureTypeOptifineFullctm;
+import team.chisel.ctm.client.newctm.CTMLogicBakery.OutputFace;
+import team.chisel.ctm.client.texture.render.AbstractTexture;
 import team.chisel.ctm.client.util.BlockstatePredicateParser;
 import team.chisel.ctm.client.util.CTMLogic.StateComparisonCallback;
-import team.chisel.ctm.client.util.CTMLogicBakery.OutputFace;
-import team.chisel.ctm.client.util.ConnectionCheck;
 import team.chisel.ctm.client.util.ParseUtils;
 import team.chisel.ctm.client.util.Quad;
 import team.chisel.ctm.client.util.Submap;
 
 @ParametersAreNonnullByDefault
 @Accessors(fluent = true)
-public class TextureNewCTM<T extends TextureTypeOptifineFullctm> extends AbstractTexture<T> {
+public class TextureCustomCTM<T extends TextureTypeCustom> extends AbstractTexture<T> {
 
     private static final BlockstatePredicateParser predicateParser = new BlockstatePredicateParser();
 
@@ -79,9 +73,7 @@ public class TextureNewCTM<T extends TextureTypeOptifineFullctm> extends Abstrac
 		}
 	}
 
-	private final Cache<CacheKey, Object2ByteMap<BlockState>> connectionCache = CacheBuilder.newBuilder().build();
-
-    public TextureNewCTM(T type, TextureInfo info) {
+    public TextureCustomCTM(T type, TextureInfo info) {
         super(type, info);
         this.connectInside = info.getInfo().flatMap(obj -> ParseUtils.getBoolean(obj, "connect_inside"));
         this.ignoreStates = info.getInfo().map(obj -> GsonHelper.getAsBoolean(obj, "ignore_states", false)).orElse(false);
@@ -100,15 +92,16 @@ public class TextureNewCTM<T extends TextureTypeOptifineFullctm> extends Abstrac
     public List<BakedQuad> transformQuad(BakedQuad bq, ITextureContext context, int quadGoal) {
         Quad quad = makeQuad(bq, context);
         if (context == null || Configurations.disableCTM) {
-            return Collections.singletonList(quad.transformUVs(sprites[0], Submap.fromPixelScale(16f / 12, 16f / 4, 0, 0)).rebake());
+            return Collections.singletonList(quad.setUVs(sprites[0], Submap.X1).rebake());
         }
 
-        OutputFace[] ctm = ((TextureContextNewCTM)context).getCTM(bq.getDirection()).getCachedSubmaps();
+        OutputFace[] ctm = ((TextureContextCustomCTM)context).getCTM(bq.getDirection()).getCachedSubmaps();
         List<BakedQuad> ret = new ArrayList<>();
         for (var face : ctm) {
+            System.out.println(bq.getDirection() + "\t" + face.getFace() + ": " + face.getTex() + "@ " + face.getUvs());
             Quad sub = quad.subsect(face.getFace());
             if (sub != null) {
-                ret.add(sub.transformUVs(sprites[0], face.getUvs()).rebake());
+                ret.add(sub.setUVs(sprites[face.getTex()], face.getUvs()).rebake());
             }
         }
         return ret;

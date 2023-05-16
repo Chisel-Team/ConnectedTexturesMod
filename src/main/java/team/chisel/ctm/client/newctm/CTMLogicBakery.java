@@ -1,4 +1,4 @@
-package team.chisel.ctm.client.util;
+package team.chisel.ctm.client.newctm;
 
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -18,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.Value;
 import team.chisel.ctm.api.texture.ISubmap;
+import team.chisel.ctm.client.util.Dir;
+import team.chisel.ctm.client.util.Submap;
 
 @RequiredArgsConstructor
 public class CTMLogicBakery {
@@ -99,7 +101,7 @@ public class CTMLogicBakery {
     
     @Value
     public class OutputFace {
-        
+        int tex;
         ISubmap uvs;
         ISubmap face;
     }
@@ -122,10 +124,31 @@ public class CTMLogicBakery {
         return output(submap, texture, Submap.X1);
     }
     
+    public CTMLogicBakery output(int submap, int textureId, ISubmap texture) {
+        return output(submap, textureId, texture, Submap.X1);
+    }
+    
     public CTMLogicBakery output(int submap, ISubmap texture, ISubmap at) {
+        return output(submap, 0, texture, at);
+    }
+    
+    public CTMLogicBakery output(int submap, int textureId, ISubmap texture, ISubmap at) {
         this.curRule = submap;
-        this.outputs.put(submap, new OutputFace(texture, at));
+        this.outputs.put(submap, new OutputFace(textureId, texture, at));
         return this;
+    }
+    
+    public CTMLogicBakery at(int submap, ISubmap at) {
+        var existing = this.outputs.get(submap);
+        if (existing == null) {
+            throw new IllegalArgumentException("Unknown submap ID " + submap);
+        }
+        return output(submap, existing.uvs, at);
+    }
+    
+    public CTMLogicBakery when(int rule, int bit, boolean is) {
+        this.curRule = rule;
+        return when(bit, is);
     }
     
     public CTMLogicBakery when(int bit, boolean is) {
@@ -146,7 +169,7 @@ public class CTMLogicBakery {
         return this;
     }
     
-    public NewCTMLogic bake() {
+    public CustomCTMLogic bake() {
         int max = 1 << size;
         int[][] lookups = new int[max][];
         for (int state = 0; state < max; state++) {
@@ -160,7 +183,7 @@ public class CTMLogicBakery {
                 }
             }
         }
-        return new NewCTMLogic(lookups, asSortedArray(outputs, OutputFace[]::new), asSortedArray(bitmap, LocalDirection[]::new), new ConnectionCheck());
+        return new CustomCTMLogic(lookups, asSortedArray(outputs, OutputFace[]::new), asSortedArray(bitmap, LocalDirection[]::new), new ConnectionCheck());
     }
     
     private <T> T[] asSortedArray(Int2ObjectMap<T> indexedMap, IntFunction<T[]> ctor) {
