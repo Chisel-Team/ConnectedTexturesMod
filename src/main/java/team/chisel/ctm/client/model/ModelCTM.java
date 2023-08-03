@@ -8,9 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -26,7 +24,6 @@ import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BlockElementFace;
 import net.minecraft.client.renderer.block.model.BlockModel;
@@ -36,6 +33,7 @@ import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.client.resources.model.UnbakedModel;
@@ -105,74 +103,61 @@ public class ModelCTM implements IModelCTM {
         
         this.textureDependencies.removeIf(rl -> rl.getPath().startsWith("#"));
 	}
-
-	@Override
-	public Collection<Material> getMaterials(IGeometryBakingContext context, Function<ResourceLocation, UnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors) {
-		List<Material> ret = textureDependencies.stream()
-				.map(rl -> new Material(TextureAtlas.LOCATION_BLOCKS, rl))
-    			.collect(Collectors.toList());
-    	ret.addAll(vanillamodel.getMaterials(modelGetter, missingTextureErrors));
-        // Validate all texture metadata
-    	for (Material tex : ret) {
-            IMetadataSectionCTM meta;
-			try {
-				meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex.texture())).orElse(null); // TODO lazy null
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-            if (meta != null) {
-                if (meta.getType().requiredTextures() != meta.getAdditionalTextures().length + 1) {
-                    throw new IllegalArgumentException(String.format("Texture type %s requires exactly %d textures. %d were provided.", meta.getType(), meta.getType().requiredTextures(), meta.getAdditionalTextures().length + 1));
-                }
-            }
-    	}
-    	return ret;
-    }
 	
 	@Override
-    public BakedModel bake(IGeometryBakingContext context, ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState, ItemOverrides overrides, ResourceLocation modelLocation) {
+    public BakedModel bake(IGeometryBakingContext context, ModelBaker bakery, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState, ItemOverrides overrides, ResourceLocation modelLocation) {
 		return bake(bakery, spriteGetter, modelState, modelLocation);
 	}
 
 	private static final ItemModelGenerator ITEM_MODEL_GENERATOR = new ItemModelGenerator();
 
-	public BakedModel bake(ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelTransform, ResourceLocation modelLocation) {
+	public BakedModel bake(ModelBaker bakery, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelTransform, ResourceLocation modelLocation) {
         BakedModel parent;
         if (modelinfo != null && modelinfo.getRootModel() == ModelBakery.GENERATION_MARKER) { // Apply same special case that ModelBakery does
             return ITEM_MODEL_GENERATOR.generateBlockModel(spriteGetter, modelinfo).bake(bakery, modelinfo, spriteGetter, modelTransform, modelLocation, false);
         } else {
-            parent = vanillamodel.bake(bakery, spriteGetter, modelTransform, modelLocation);
+            initializeOverrides(spriteGetter);
+            this.textureDependencies.forEach(t -> initializeTexture(new Material(TextureAtlas.LOCATION_BLOCKS, t), spriteGetter));
+            parent = vanillamodel.bake(bakery, mat -> {
+                var ret = spriteGetter.apply(mat);
+                initializeTexture(mat, spriteGetter);
+                return ret;
+            }, modelTransform, modelLocation);
+            if (!isInitialized()) {
+                this.spriteOverrides = new Int2ObjectOpenHashMap<>();
+                this.textureOverrides = new HashMap<>();
+            }
         }
-        initializeTextures(bakery, spriteGetter);
         return new ModelBakedCTM(this, parent, null);
     }
 	
-	public void initializeTextures(ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter) {
-		for (Material m : getMaterials(null, bakery::getModel, new HashSet<>())) {
-		    TextureAtlasSprite sprite = spriteGetter.apply(m);
-		    Optional<IMetadataSectionCTM> chiselmeta = Optional.empty();
-		    try {
-		        chiselmeta = ResourceUtil.getMetadata(sprite);
-		    } catch (IOException e) {}
-		    final Optional<IMetadataSectionCTM> meta = chiselmeta;
-		    textures.computeIfAbsent(sprite.getName(), s -> {
-		        ICTMTexture<?> tex;
-		        if (meta.isEmpty()) {
-		            tex = new TextureNormal(TextureTypeNormal.INSTANCE, new TextureInfo(new TextureAtlasSprite[] { sprite }, Optional.empty(), null));
-		        } else {
-		            tex = meta.get().makeTexture(sprite, spriteGetter);
-		        }
-		        layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
-		        return tex;
-		    });
-		}
+	public void initializeTexture(Material m, Function<Material, TextureAtlasSprite> spriteGetter) {
+	    TextureAtlasSprite sprite = spriteGetter.apply(m);
+	    Optional<IMetadataSectionCTM> chiselmeta = Optional.empty();
+	    try {
+	        chiselmeta = ResourceUtil.getMetadata(sprite);
+	    } catch (IOException e) {}
+	    final Optional<IMetadataSectionCTM> meta = chiselmeta;
+	    textures.computeIfAbsent(sprite.contents().name(), s -> {
+	        ICTMTexture<?> tex;
+	        if (meta.isEmpty()) {
+	            tex = new TextureNormal(TextureTypeNormal.INSTANCE, new TextureInfo(new TextureAtlasSprite[] { sprite }, Optional.empty(), null));
+	        } else {
+	            tex = meta.get().makeTexture(sprite, spriteGetter);
+	        }
+	        layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
+	        return tex;
+	    });
+	}
+	
+	private void initializeOverrides(Function<Material, TextureAtlasSprite> spriteGetter) {
         if (spriteOverrides == null) {
-            spriteOverrides = new Int2ObjectArrayMap<>();
+            spriteOverrides = new Int2ObjectOpenHashMap<>();
             // Convert all primitive values into sprites
             for (Int2ObjectMap.Entry<JsonElement> e : overrides.int2ObjectEntrySet()) {
                 if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
-                    TextureAtlasSprite sprite = spriteGetter.apply(new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(e.getValue().getAsString())));
-                    spriteOverrides.put(e.getIntKey(), sprite);
+                    TextureAtlasSprite override = spriteGetter.apply(new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(e.getValue().getAsString())));
+                    spriteOverrides.put(e.getIntKey(), override);
                 }
             }
         }
@@ -184,17 +169,21 @@ public class ModelCTM implements IModelCTM {
                 // TODO 1.15 this isn't right
                 matches.forEach(part -> bySprite.put(modelinfo.textureMap.getOrDefault(part.texture.substring(1), Either.right(part.texture)).left().get(), part));
                 for (var e2 : bySprite.asMap().entrySet()) {
-                    ResourceLocation texLoc = e2.getKey().sprite().getName();
-                    TextureAtlasSprite sprite = getOverrideSprite(e.getIntKey());
-                    if (sprite == null) {
-                    	sprite = spriteGetter.apply(new Material(TextureAtlas.LOCATION_BLOCKS, texLoc));
+                    ResourceLocation texLoc = e2.getKey().sprite().contents().name();
+                    TextureAtlasSprite override = getOverrideSprite(e.getIntKey());
+                    if (override == null) {
+                        override = spriteGetter.apply(new Material(TextureAtlas.LOCATION_BLOCKS, texLoc));
                     }
-                    ICTMTexture<?> tex = e.getValue().makeTexture(sprite, spriteGetter);
+                    ICTMTexture<?> tex = e.getValue().makeTexture(override, spriteGetter);
                     layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
                     textureOverrides.put(Pair.of(e.getIntKey(), texLoc), tex);
                 }
             }
         }
+	}
+
+	public boolean isInitialized() {
+	    return spriteOverrides != null && textureOverrides != null && !textures.isEmpty();
 	}
 
     @Override

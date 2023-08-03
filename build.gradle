@@ -10,21 +10,24 @@ buildscript {
             name = "sonatype"
             url = "https://oss.sonatype.org/content/repositories/snapshots/"
         }
+    	maven { url = 'https://repo.spongepowered.org/maven' }
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+'
+        classpath "org.spongepowered:mixingradle:0.7-SNAPSHOT"
         classpath 'org.parchmentmc:librarian:1.+'
         classpath 'org.ajoberstar:gradle-git:0.10.1'
     }
 }
 plugins {
-    id "io.freefair.lombok" version "4.1.5"
+    id 'maven-publish'
+    id 'eclipse'
+    id 'io.freefair.lombok' version '4.1.5'
     id 'com.matthewprenger.cursegradle' version '1.4.0'
 }
-apply plugin: 'eclipse'
 apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'org.parchmentmc.librarian.forgegradle'
-apply plugin: 'maven-publish'
 
 import org.ajoberstar.grgit.Grgit
 
@@ -42,7 +45,7 @@ archivesBaseName = dev ? "CTM_DEV" : "CTM"
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
-    mappings channel: 'parchment', version: '2022.08.28-1.19.2'
+    mappings channel: 'parchment', version: '2023.02.26-1.19.3'
     
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -55,6 +58,7 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
+            arg '-mixin.config=ctm.mixins.json'
 
             mods {
                 ctm {
@@ -70,6 +74,7 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
+            arg '-mixin.config=ctm.mixins.json'
 
             mods {
                 ctm {
@@ -98,10 +103,28 @@ jar {
 
 repositories {
     mavenLocal()
+    maven {
+        name = 'sponge'
+    	url = 'https://repo.spongepowered.org/repository/maven-public/'
+    	content {
+    	    includeGroup "org.spongepowered"
+    	}
+    }
 }
 
 dependencies {
     minecraft 'net.minecraftforge:forge:' + minecraft_version + '-' + forge_version
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+
+    annotationProcessor 'org.spongepowered:mixin:0.8.5-SNAPSHOT:processor'
+}
+
+test {
+	useJUnitPlatform()
+	maxHeapSize = '1G'
+	testLogging {
+		events "passed"
+	}
 }
 
 lombok {
@@ -114,6 +137,10 @@ task apiJar(type: Jar) {
     from sourceSets.main.output
     include 'team/chisel/ctm/api/**/*'
     classifier = 'api'
+}
+
+mixin {
+    add sourceSets.main, "ctm.refmap.json"
 }
 
 publishing {

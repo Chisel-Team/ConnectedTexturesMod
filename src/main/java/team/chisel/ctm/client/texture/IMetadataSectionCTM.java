@@ -60,7 +60,7 @@ public interface IMetadataSectionCTM {
             }
         }
         return meta.getType().makeTexture(new TextureInfo(
-                Arrays.stream(ObjectArrays.concat(sprite.getName(), meta.getAdditionalTextures()))
+                Arrays.stream(ObjectArrays.concat(sprite.contents().name(), meta.getAdditionalTextures()))
                         .map(rl -> new Material(TextureAtlas.LOCATION_BLOCKS, rl))
                         .map(bakedTextureGetter)
                         .toArray(TextureAtlasSprite[]::new),

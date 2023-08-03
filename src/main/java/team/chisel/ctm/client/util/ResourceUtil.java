@@ -19,7 +19,7 @@ import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 public class ResourceUtil {
     
     public static Resource getResource(TextureAtlasSprite sprite) throws IOException {
-        return getResource(spriteToAbsolute(sprite.getName()));
+        return getResource(spriteToAbsolute(sprite.contents().name()));
     }
     
     public static ResourceLocation spriteToAbsolute(ResourceLocation sprite) {
@@ -66,7 +66,7 @@ public class ResourceUtil {
     }
     
     public static Optional<IMetadataSectionCTM> getMetadata(TextureAtlasSprite sprite) throws IOException {
-        return getMetadata(spriteToAbsolute(sprite.getName()));
+        return getMetadata(spriteToAbsolute(sprite.contents().name()));
     }
     
     public static Optional<IMetadataSectionCTM> getMetadataUnsafe(TextureAtlasSprite sprite) {

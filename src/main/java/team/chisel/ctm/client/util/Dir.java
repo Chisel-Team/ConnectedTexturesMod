@@ -9,16 +9,22 @@ import static net.minecraft.core.Direction.WEST;
 import static net.minecraft.core.Direction.AxisDirection;
 
 import java.util.Arrays;
+import java.util.List;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import com.google.gson.Gson;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.api.util.NonnullType;
+import team.chisel.ctm.client.newctm.ConnectionCheck;
+import team.chisel.ctm.client.newctm.LocalDirection;
 
 /**
  * Think of this class as a "Two dimensional ForgeDirection, with diagonals".
@@ -29,7 +35,7 @@ import team.chisel.ctm.api.util.NonnullType;
  * for inner corner rendering.
  */
 @ParametersAreNonnullByDefault
-public enum Dir {
+public enum Dir implements LocalDirection, StringRepresentable {
 	// @formatter:off
     TOP(UP), 
     TOP_RIGHT(UP, EAST),
@@ -117,7 +123,8 @@ public enum Dir {
      *            The side of the current face.
      * @return True if the block is connected in the given Dir, false otherwise.
      */
-    public boolean isConnected(CTMLogic ctm, BlockGetter world, BlockPos pos, Direction side) {
+    @Override
+    public boolean isConnected(ConnectionCheck ctm, BlockGetter world, BlockPos pos, Direction side) {
         return ctm.isConnected(world, pos, applyConnection(pos, side), side);
     }
 
@@ -136,7 +143,8 @@ public enum Dir {
      *            The state to check for connection with.
      * @return True if the block is connected in the given Dir, false otherwise.
      */
-    public boolean isConnected(CTMLogic ctm, BlockGetter world, BlockPos pos, Direction side, BlockState state) {
+    @Override
+    public boolean isConnected(ConnectionCheck ctm, BlockGetter world, BlockPos pos, Direction side, BlockState state) {
         return ctm.isConnected(world, pos, applyConnection(pos, side), side, state);
     }
 
@@ -151,6 +159,7 @@ public enum Dir {
         return pos.offset(getOffset(side));
     }
 
+    @Override
     public Dir relativize(Direction normal) {
         /*
         if (normal == NORMAL) {
@@ -170,12 +179,13 @@ public enum Dir {
         throw new UnsupportedOperationException("Yell at tterrag to finish deserialization");
     }
     
+    @Override
     @Nonnull
     public BlockPos getOffset(Direction normal) {
         return offsets[normal.ordinal()];
     }
 	
-	public @Nullable Dir getDirFor(Direction[] dirs) {
+	public @Nullable LocalDirection getDirFor(Direction[] dirs) {
 	    if (dirs == this.dirs) { // Short circuit for identical return from getNormalizedDirs
 	        return this; 
 	    }
@@ -233,4 +243,27 @@ public enum Dir {
 
         return facing;
 	}
+
+    @Override
+    public String asJson() {
+        return "{\"id\": \"" + name() + "\", \"directions\": " + new Gson().toJson(dirs) + "}";
+    }
+
+    @Override
+    public String getSerializedName() {
+        return name();
+    }
+
+    public static LocalDirection fromDirections(List<Direction> directions) {
+        return fromDirections(directions.toArray(Direction[]::new));
+    }
+    
+    public static LocalDirection fromDirections(Direction... directions) {
+        for (var dir : values()) {
+            if (Arrays.equals(dir.dirs, directions)) {
+                return dir;
+            }
+        }
+        throw new UnsupportedOperationException("Currently invalid local direction");
+    }
 }
