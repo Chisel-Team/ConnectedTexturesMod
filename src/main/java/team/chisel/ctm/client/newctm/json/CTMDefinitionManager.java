@@ -2,6 +2,9 @@ package team.chisel.ctm.client.newctm.json;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -34,40 +37,51 @@ public class CTMDefinitionManager {
     static final FileToIdConverter CTM_LOGIC_DEFINITIONS = FileToIdConverter.json("ctm_logic");
     
     private final Map<ResourceLocation, ICTMLogic> logicDefinitions = new HashMap<>();
-
+    
     @Getter
     private final PreparableReloadListener reloadListener = new SimplePreparableReloadListener<Map<ResourceLocation, CTMLogicDefinition>>() {
+        @Override
         protected Map<ResourceLocation, CTMLogicDefinition> prepare(ResourceManager resources, ProfilerFiller profiler) {
-            profiler.startTick();
-            var ops = JsonOps.INSTANCE;
-            var gson = new Gson();
-            var ret = new HashMap<ResourceLocation, CTMLogicDefinition>();
-            for (var entry : CTM_LOGIC_DEFINITIONS.listMatchingResources(resources).entrySet()) {
-                ResourceLocation fullLoc = entry.getKey();
-                ResourceLocation id = CTM_LOGIC_DEFINITIONS.fileToId(fullLoc);
-                profiler.push(id::toString);
-
-                try (var r = entry.getValue().openAsReader()) {
-                    profiler.push("reading");
-                    var json = GsonHelper.fromJson(gson, r, JsonObject.class);
-                    profiler.popPush("parsing");
-                    var dataresult = CTMLogicDefinition.CODEC.parse(ops, json);
-                    ret.put(id, dataresult.get().orThrow());
-                } catch (Exception e) {
-                    log.error("Failed to read CTM definition: " + id, e);
-                } finally {
-                    profiler.pop();
-                    profiler.pop();
+            TextureTypeRegistry.lock.writeLock().lock(); // Manually aqcuire to prevent registry being used in invalid state
+            try {
+                logicDefinitions.keySet().forEach(id -> TextureTypeRegistry.remove(id.toString()));
+                logicDefinitions.clear();
+                profiler.startTick();
+                var ops = JsonOps.INSTANCE;
+                var gson = new Gson();
+                var ret = new HashMap<ResourceLocation, CTMLogicDefinition>();
+                for (var entry : CTM_LOGIC_DEFINITIONS.listMatchingResources(resources).entrySet()) {
+                    ResourceLocation fullLoc = entry.getKey();
+                    ResourceLocation id = CTM_LOGIC_DEFINITIONS.fileToId(fullLoc);
+                    profiler.push(id::toString);
+    
+                    try (var r = entry.getValue().openAsReader()) {
+                        profiler.push("reading");
+                        var json = GsonHelper.fromJson(gson, r, JsonObject.class);
+                        profiler.popPush("parsing");
+                        var dataresult = CTMLogicDefinition.CODEC.parse(ops, json);
+                        ret.put(id, dataresult.get().orThrow());
+                    } catch (Exception e) {
+                        log.error("Failed to read CTM definition: " + id, e);
+                    } finally {
+                        profiler.pop();
+                        profiler.pop();
+                    }
                 }
+                profiler.endTick();
+                apply(ret, profiler);
+                return ret;
+            } finally {
+                TextureTypeRegistry.lock.writeLock().unlock();
             }
-            profiler.endTick();
-            return ret;
         }
         
+        @Override
         protected void apply(Map<ResourceLocation, CTMLogicDefinition> values, ResourceManager resources, ProfilerFiller profiler) {
+        }
+        
+        private void apply(Map<ResourceLocation, CTMLogicDefinition> values, ProfilerFiller profiler) {
             profiler.startTick();
-            logicDefinitions.keySet().forEach(id -> TextureTypeRegistry.remove(id.toString()));
-            logicDefinitions.clear();
             profiler.push("reloading");
             values.forEach((id, def) -> {
                var bakery = new CTMLogicBakery();
