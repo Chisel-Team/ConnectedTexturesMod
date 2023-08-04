@@ -1,16 +1,14 @@
 package team.chisel.ctm.client.newctm.json;
 
+import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -25,10 +23,10 @@ import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.client.newctm.CTMLogicBakery;
+import team.chisel.ctm.client.newctm.CustomCTMLogic;
 import team.chisel.ctm.client.newctm.ICTMLogic;
 import team.chisel.ctm.client.newctm.TextureTypeCustom;
 import team.chisel.ctm.client.texture.type.TextureTypeRegistry;
-import team.chisel.ctm.client.util.CTMLogic;
 import team.chisel.ctm.client.util.Dir;
 import team.chisel.ctm.client.util.Submap;
 
@@ -84,35 +82,7 @@ public class CTMDefinitionManager {
             profiler.startTick();
             profiler.push("reloading");
             values.forEach((id, def) -> {
-               var bakery = new CTMLogicBakery();
-               var bitNames = new Object2IntOpenHashMap<String>();
-               var submapNames = new HashMap<String, Pair<ISubmap, Integer>>();
-               var faceNames = new HashMap<String, ISubmap>();
-               var bit = def.positions().size() - 1;
-               for (var position : def.positions()) {
-                   bitNames.put(position.id(), bit);
-                   bakery.input(bit--, Dir.fromDirections(position.directions()));
-               }
-               var outputId = 0;
-               for (var e : def.submaps().entrySet()) {
-                   for (var p : e.getValue().forName(e.getKey())) {
-                       submapNames.put(p.getLeft(), Pair.of(p.getRight(), outputId++));
-                   }
-               }
-               for (var e : def.faces().entrySet()) {
-                   e.getValue().forName(e.getKey()).forEach(p -> faceNames.put(p.getLeft(), p.getRight()));
-               }
-               for (var rule : def.rules()) {
-                   var submap = submapNames.get(rule.output()).getLeft();
-                   var ruleId = submapNames.get(rule.output()).getRight();
-                   bakery.output(ruleId, rule.from(), submap, rule.at().map(faceNames::get).orElse(Submap.X1));
-                   for (var connected : rule.connected()) {
-                       bakery.when(bitNames.getInt(connected), true);
-                   }
-                   for (var unconnected : rule.unconnected()) {
-                       bakery.when(bitNames.getInt(unconnected), false);
-                   }
-               }
+               var bakery = createBakery(def);
                var logic = bakery.bake();
                logicDefinitions.put(id, logic);
                TextureTypeRegistry.register(id.toString(), new TextureTypeCustom(logic));
@@ -125,5 +95,46 @@ public class CTMDefinitionManager {
             return "CTMDefinitionManager";
          }
     };
-
+    
+    private static CTMLogicBakery createBakery(CTMLogicDefinition def) {
+        var bakery = new CTMLogicBakery();
+        var bitNames = new Object2IntOpenHashMap<String>();
+        var submapNames = new HashMap<String, Pair<ISubmap, Integer>>();
+        var faceNames = new HashMap<String, ISubmap>();
+        var bit = def.positions().size() - 1;
+        for (var position : def.positions()) {
+            bitNames.put(position.id(), bit);
+            bakery.input(bit--, Dir.fromDirections(position.directions()));
+        }
+        var outputId = 0;
+        for (var e : def.submaps().entrySet()) {
+            for (var p : e.getValue().forName(e.getKey())) {
+                submapNames.put(p.getLeft(), Pair.of(p.getRight(), outputId++));
+            }
+        }
+        for (var e : def.faces().entrySet()) {
+            e.getValue().forName(e.getKey()).forEach(p -> faceNames.put(p.getLeft(), p.getRight()));
+        }
+        for (var rule : def.rules()) {
+            var submap = submapNames.get(rule.output()).getLeft();
+            var ruleId = submapNames.get(rule.output()).getRight();
+            bakery.output(ruleId, rule.from(), submap, rule.at().map(faceNames::get).orElse(Submap.X1));
+            for (var connected : rule.connected()) {
+                bakery.when(bitNames.getInt(connected), true);
+            }
+            for (var unconnected : rule.unconnected()) {
+                bakery.when(bitNames.getInt(unconnected), false);
+            }
+        }
+        return bakery;
+    }
+    
+    @VisibleForTesting
+    public static CustomCTMLogic fromReader(Reader r) {
+        var gson = new Gson();
+        var json = GsonHelper.fromJson(gson, r, JsonObject.class);
+        var ops = JsonOps.INSTANCE;
+        var dataresult = CTMLogicDefinition.CODEC.parse(ops, json);
+        return createBakery(dataresult.get().orThrow()).bake();
+    }
 }
