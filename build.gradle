@@ -18,7 +18,7 @@ plugins {
     id 'maven-publish'
     id 'eclipse'
     id 'net.neoforged.gradle' version '[6.0.18,6.2)'
-    id 'io.freefair.lombok' version '4.1.5'
+    id 'io.freefair.lombok' version '8.1.0'
     id 'com.matthewprenger.cursegradle' version '1.4.0'
 }
 apply plugin: 'org.spongepowered.mixin'
