@@ -13,7 +13,7 @@ public interface ILogicCache {
     long serialized();
 
     /**
-     * Builds the connection map and stores it in this CTM instance. The {@link #connected(Dir)}, {@link #connectedAnd(Dir...)}, and {@link #connectedOr(Dir...)} methods can be used to access it.
+     * Builds the connection map and stores it in this CTM instance.
      */
     void buildConnectionMap(BlockGetter world, BlockPos pos, Direction side);
 }
