@@ -89,8 +89,8 @@ public class TextureTypeEdges extends TextureTypeCTM {
                         vA = difference.xRot(ang);
                         vB = difference.xRot(-ang);
                     }
-                    BlockPos posA = new BlockPos(vA).offset(current);
-                    BlockPos posB = new BlockPos(vB).offset(current);
+                    BlockPos posA = BlockPos.containing(vA).offset(current);
+                    BlockPos posB = BlockPos.containing(vB).offset(current);
                     return (getConnectionState(world, posA, dir, current) == state && !stateComparator(state, getConnectionState(world, posA.relative(dir), dir, current), dir))
                         || (getConnectionState(world, posB, dir, current) == state && !stateComparator(state, getConnectionState(world, posB.relative(dir), dir, current), dir));
                 } else {

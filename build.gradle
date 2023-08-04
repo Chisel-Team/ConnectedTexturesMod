@@ -1,10 +1,6 @@
 buildscript {
     repositories {
         mavenCentral()
-        maven {
-            name = "forge"
-            url = 'https://maven.minecraftforge.net'
-        }
         maven { url = 'https://maven.parchmentmc.org' }
         maven {
             name = "sonatype"
@@ -13,7 +9,6 @@ buildscript {
     	maven { url = 'https://repo.spongepowered.org/maven' }
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+'
         classpath "org.spongepowered:mixingradle:0.7-SNAPSHOT"
         classpath 'org.parchmentmc:librarian:1.+'
         classpath 'org.ajoberstar:gradle-git:0.10.1'
@@ -22,10 +17,10 @@ buildscript {
 plugins {
     id 'maven-publish'
     id 'eclipse'
+    id 'net.neoforged.gradle' version '[6.0.18,6.2)'
     id 'io.freefair.lombok' version '4.1.5'
     id 'com.matthewprenger.cursegradle' version '1.4.0'
 }
-apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'org.parchmentmc.librarian.forgegradle'
 
@@ -45,7 +40,7 @@ archivesBaseName = dev ? "CTM_DEV" : "CTM"
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
-    mappings channel: 'parchment', version: '2023.02.26-1.19.3'
+    mappings channel: 'parchment', version: '2023.07.30-1.20.1'
     
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -113,7 +108,7 @@ repositories {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:' + minecraft_version + '-' + forge_version
+    minecraft 'net.neoforged:forge:' + minecraft_version + '-' + forge_version
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5-SNAPSHOT:processor'
@@ -136,7 +131,7 @@ task apiJar(type: Jar) {
     from sourceSets.main.allSource
     from sourceSets.main.output
     include 'team/chisel/ctm/api/**/*'
-    classifier = 'api'
+    archiveClassifier = 'api'
 }
 
 mixin {

@@ -356,7 +356,7 @@ public class Quad {
         var n1 = new Vec3(positions[1]).subtract(origin);
         var n2 = new Vec3(positions[2]).subtract(origin);
         var normalVec = n1.cross(n2).normalize();
-        Direction normal = Direction.fromNormal(new BlockPos(normalVec));
+        Direction normal = Direction.fromDelta((int) normalVec.x, (int) normalVec.y, (int) normalVec.z);
         TextureAtlasSprite sprite = getUvs().getSprite();
         
         var xy = new float[4][2];
