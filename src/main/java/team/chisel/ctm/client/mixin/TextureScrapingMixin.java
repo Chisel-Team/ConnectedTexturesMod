@@ -3,6 +3,7 @@ package team.chisel.ctm.client.mixin;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
@@ -19,6 +20,7 @@ import team.chisel.ctm.client.util.TextureMetadataHandler;
 @Mixin(targets = {"net.minecraft.client.resources.model.ModelBakery$ModelBakerImpl"})
 public abstract class TextureScrapingMixin {
     
+    @Final
     @Shadow
     @Mutable
     private Function<Material, TextureAtlasSprite> modelTextureGetter;

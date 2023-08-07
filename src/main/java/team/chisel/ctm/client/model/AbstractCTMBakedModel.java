@@ -15,6 +15,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import net.minecraftforge.client.RenderTypeHelper;
 import org.jetbrains.annotations.NotNull;
 
 import com.google.common.base.Throwables;
@@ -165,7 +166,7 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
     private final @Nonnull BakedModel parent;
     private final @Nonnull Overrides overrides = new Overrides();
 
-    private final RenderType layer;
+    private final @Nullable RenderType layer;
     protected final List<BakedQuad> genQuads = new ArrayList<>();
     protected final ListMultimap<Direction, BakedQuad> faceQuads = ArrayListMultimap.create();
     
@@ -235,27 +236,21 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
     public ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data) {
         if (this.layer != null) {
             return ChunkRenderTypeSet.union(ChunkRenderTypeSet.of(layer), getParent(rand).getRenderTypes(state, rand, data));
-        } else {
-            List<RenderType> ret = new ArrayList<>();
-            for (RenderType type : ChunkRenderTypeSet.all()) {
-                if (this.getModel().canRenderInLayer(state, type)) {
-                    ret.add(type);
-                }
-            }
-            return ChunkRenderTypeSet.union(ChunkRenderTypeSet.of(ret), getParent(rand).getRenderTypes(state, rand, data));
         }
+        ChunkRenderTypeSet extraTypes = ChunkRenderTypeSet.of(this.getModel().getExtraLayers(state));
+        return ChunkRenderTypeSet.union(extraTypes, getParent(rand).getRenderTypes(state, rand, data));
     }
 
     @Override
     public List<RenderType> getRenderTypes(ItemStack itemStack, boolean fabulous) {
-        List<RenderType> ret = new ArrayList<>();
-        ret.addAll(this.getParent().getRenderTypes(itemStack, fabulous));
+        List<RenderType> ret = new ArrayList<>(this.getParent().getRenderTypes(itemStack, fabulous));
         if (this.layer != null) {
             if (!ret.contains(layer)) {
                 ret.add(layer);
             }
         } else {
-            var type = ItemBlockRenderTypes.getRenderType(itemStack, false);
+            //Note: Uses this model as opposed to parent so that any layers added by CTM can be checked as well
+            var type = RenderTypeHelper.getFallbackItemRenderType(itemStack, this, false);
             if (!ret.contains(type)) {
                 ret.add(type);
             }
@@ -283,7 +278,7 @@ public abstract class AbstractCTMBakedModel implements IDynamicBakedModel {
     @Nonnull
     public BakedModel getParent(RandomSource rand) {
         if (getParent() instanceof WeightedBakedModel weightedBakedModel) {
-            Optional<WeightedEntry.Wrapper<BakedModel>> model = WeightedRandom.getWeightedItem(weightedBakedModel.list, Math.abs((int)rand.nextLong()) % ((WeightedBakedModel)getParent()).totalWeight);
+            Optional<WeightedEntry.Wrapper<BakedModel>> model = WeightedRandom.getWeightedItem(weightedBakedModel.list, Math.abs((int)rand.nextLong()) % weightedBakedModel.totalWeight);
             if (model.isPresent()) {
                 return model.get().getData();
             }
