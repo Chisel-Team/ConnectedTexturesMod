@@ -92,7 +92,8 @@ jar {
                     "Implementation-Title": project.name,
                     "Implementation-Version": "${version}",
                     "Implementation-Vendor" :"chisel-team",
-                    "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")],)
+                    "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                    "MixinConfigs": "ctm.mixins.json"],)
     }
 }
 
@@ -123,7 +124,7 @@ test {
 }
 
 lombok {
-    version = "1.18.20"
+    version = "1.18.28"
 }
 
 // Create API jar with sources and compiled files

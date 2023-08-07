@@ -12,7 +12,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.DeferredWorkQueue;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -54,6 +53,8 @@ public class CTM {
             reloadListener = new CTMPackReloadListener();
             modBus.addListener(this::reloadListenersLate);
     	});
+    	
+    	logger.error("I EXIST");
     }
     
     private void modelRegistry(ModelEvent.RegisterGeometryLoaders event) {

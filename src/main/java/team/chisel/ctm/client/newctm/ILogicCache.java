@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
 import team.chisel.ctm.client.newctm.CTMLogicBakery.OutputFace;
-import team.chisel.ctm.client.util.Dir;
 
 public interface ILogicCache {
 
