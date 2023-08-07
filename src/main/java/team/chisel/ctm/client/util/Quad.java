@@ -519,12 +519,12 @@ public class Quad {
     }
     
     @SuppressWarnings("null")
-    public BakedQuad rebake() {        
-        var quad = new BakedQuad[1];
-        var builder = new QuadBakingVertexConsumer(q -> quad[0] = q);
+    public BakedQuad rebake() {
+        var builder = new QuadBakingVertexConsumer.Buffered();
         builder.setDirection(this.builder.quadOrientation);
         builder.setTintIndex(this.builder.quadTint);
         builder.setShade(this.builder.applyDiffuseLighting);
+        builder.setHasAmbientOcclusion(this.builder.applyAmbientOcclusion);
         builder.setSprite(this.uvs.getSprite());
         var format = DefaultVertexFormat.BLOCK;
         
@@ -557,7 +557,7 @@ public class Quad {
             builder.endVertex();
         }
 
-        return quad[0];
+        return builder.getQuad();
     }
     
     public Quad transformUVs(TextureAtlasSprite sprite) {
@@ -621,6 +621,9 @@ public class Quad {
 
         @Setter
         private boolean applyDiffuseLighting;
+
+        @Setter
+        private boolean applyAmbientOcclusion;
         
         private final float[][] positions = new float[4][];
         private final float[][] uvs = new float[4][];
@@ -632,6 +635,7 @@ public class Quad {
             setQuadTint(baked.getTintIndex());
             setQuadOrientation(baked.getDirection());
             setApplyDiffuseLighting(baked.isShade());
+            setApplyAmbientOcclusion(baked.hasAmbientOcclusion());
             var vertices = baked.getVertices();
             for (int i = 0; i < 4; i++) {
                 int offset = i * STRIDE;

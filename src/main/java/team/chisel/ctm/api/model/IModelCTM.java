@@ -2,6 +2,7 @@ package team.chisel.ctm.api.model;
 
 import java.util.Collection;
 
+import java.util.Set;
 import javax.annotation.Nullable;
 
 import net.minecraft.client.renderer.RenderType;
@@ -19,7 +20,7 @@ public interface IModelCTM extends IUnbakedGeometry<IModelCTM> {
     
     ICTMTexture<?> getTexture(ResourceLocation loc);
 
-    boolean canRenderInLayer(BlockState state, RenderType layer);
+    Set<RenderType> getExtraLayers(BlockState state);
 
     @Nullable
     TextureAtlasSprite getOverrideSprite(int tintIndex);
