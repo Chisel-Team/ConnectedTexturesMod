@@ -98,7 +98,7 @@ public class TextureCustomCTM<T extends TextureTypeCustom> extends AbstractTextu
         OutputFace[] ctm = ((TextureContextCustomCTM)context).getCTM(bq.getDirection()).getCachedSubmaps();
         List<BakedQuad> ret = new ArrayList<>();
         for (var face : ctm) {
-            System.out.println(bq.getDirection() + "\t" + face.getFace() + ": " + face.getTex() + "@ " + face.getUvs());
+            //System.out.println(bq.getDirection() + "\t" + face.getFace() + ": " + face.getTex() + "@ " + face.getUvs());
             Quad sub = quad.subsect(face.getFace());
             if (sub != null) {
                 ret.add(sub.setUVs(sprites[face.getTex()], face.getUvs()).rebake());
