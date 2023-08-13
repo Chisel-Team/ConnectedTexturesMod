@@ -18,8 +18,8 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.ChunkRenderTypeSet;
 import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.common.util.Lazy;
 import team.chisel.ctm.api.model.IModelCTM;
@@ -27,7 +27,6 @@ import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.RenderContextList;
 import team.chisel.ctm.client.util.BakedQuadRetextured;
-import team.chisel.ctm.client.util.CTMPackReloadListener;
 
 @ParametersAreNonnullByDefault
 public class ModelBakedCTM extends AbstractCTMBakedModel {
@@ -45,8 +44,24 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
         }
 
         BakedModel finalParent = parent;
-        //Only use this if state is not null
-        Lazy<ChunkRenderTypeSet> lazyParentTypes = Lazy.of(() -> finalParent.getRenderTypes(state, rand, data));
+        //Calculate this lazily as there is a variety of cases where we just passthrough and we only want to calculate
+        // this a single time, especially with the "duplicate" calls when checking the render type as an item render type
+        Lazy<Boolean> layerMatches = Lazy.of(() -> {
+            //No state or the parent's render types for the state contains the layer
+            if (state == null || finalParent.getRenderTypes(state, rand, data).contains(layer)) {
+                return true;
+            }
+            //Try to see if the render type is actually for the item variant of this block. This may be necessary if a mod is
+            // getting the block's model directly and then trying to render it, such as from within an ItemStackBlockEntityRender
+            ItemStack stack = new ItemStack(state.getBlock());
+            if (!stack.isEmpty()) {
+                //Some of these may be duplicate, but we need to check it as both fabulous and not as we don't have a display context
+                // available in order to check if it is a gui or first person
+                return finalParent.getRenderTypes(stack, false).contains(layer) ||
+                       finalParent.getRenderTypes(stack, true).contains(layer);
+            }
+            return false;
+        });
         AbstractCTMBakedModel ret = new ModelBakedCTM(model, parent, layer);
         for (Direction facing : FACINGS) {
             List<BakedQuad> parentQuads = parent.getQuads(state, facing, rand, data, null); // NOTE: We pass null here so that all quads are always returned, layer filtering is done below
@@ -84,7 +99,7 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
             for (Entry<BakedQuad, ICTMTexture<?>> e : texturemap.entrySet()) {
                 ICTMTexture<?> texture = e.getValue();
                 // If the layer is null, this is a wrapped vanilla texture, so passthrough the layer check to the block
-                if (layer == null || (texture.getLayer() != null && texture.getLayer().getRenderType() == layer) || (texture.getLayer() == null && (state == null || lazyParentTypes.get().contains(layer)))) {
+                if (layer == null || (texture.getLayer() != null && texture.getLayer().getRenderType() == layer) || (texture.getLayer() == null && layerMatches.get())) {
                     ITextureContext tcx = ctx == null ? null : ctx.getRenderContext(texture);
                     quads.addAll(texture.transformQuad(e.getKey(), tcx, quadGoal));
                 }
@@ -95,8 +110,17 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
 
     @Override
     public @Nonnull TextureAtlasSprite getParticleIcon() {
-        return Optional.ofNullable(getModel().getTexture(getParent().getParticleIcon(ModelData.EMPTY).contents().name()))
-                .map(ICTMTexture::getParticle)
-                .orElse(getParent().getParticleIcon(ModelData.EMPTY));
+        return wrapParticleIcon(super.getParticleIcon());
+    }
+
+    @Override
+    public @Nonnull TextureAtlasSprite getParticleIcon(@Nonnull ModelData data) {
+        return wrapParticleIcon(super.getParticleIcon(data));
+    }
+
+    private @Nonnull TextureAtlasSprite wrapParticleIcon(@Nonnull TextureAtlasSprite particleIcon) {
+        return Optional.ofNullable(getModel().getTexture(particleIcon.contents().name()))
+              .map(ICTMTexture::getParticle)
+              .orElse(particleIcon);
     }
 }
