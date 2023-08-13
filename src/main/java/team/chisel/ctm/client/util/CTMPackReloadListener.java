@@ -17,7 +17,6 @@ public class CTMPackReloadListener extends SimplePreparableReloadListener<Unit> 
     protected void apply(Unit objectIn, ResourceManager resourceManagerIn, ProfilerFiller profilerIn) {
         ResourceUtil.invalidateCaches();
         TextureMetadataHandler.INSTANCE.invalidateCaches();
-        TextureMetadataHandler.TEXTURES_SCRAPED.clear();
         AbstractCTMBakedModel.invalidateCaches();
     }
 }
