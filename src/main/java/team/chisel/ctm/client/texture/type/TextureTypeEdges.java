@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import team.chisel.ctm.api.texture.ICTMTexture;
@@ -60,7 +60,7 @@ public class TextureTypeEdges extends TextureTypeCTM {
         private boolean obscured;
         
         @Override
-        public boolean isConnected(BlockGetter world, BlockPos current, BlockPos connection, Direction dir, BlockState state) {
+        public boolean isConnected(BlockAndTintGetter world, BlockPos current, BlockPos connection, Direction dir, BlockState state) {
             if (isObscured()) {
                 return false;
             }
@@ -102,7 +102,7 @@ public class TextureTypeEdges extends TextureTypeCTM {
     }
     
     @Override
-    public TextureContextCTM getBlockRenderContext(BlockState state, BlockGetter world, BlockPos pos, ICTMTexture<?> tex) {
+    public TextureContextCTM getBlockRenderContext(BlockState state, BlockAndTintGetter world, BlockPos pos, ICTMTexture<?> tex) {
         return new TextureContextCTM(state, world, pos, (TextureEdges) tex) {
             
             @Override

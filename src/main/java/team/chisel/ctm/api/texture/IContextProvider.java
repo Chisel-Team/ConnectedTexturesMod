@@ -3,7 +3,7 @@ package team.chisel.ctm.api.texture;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
 @ParametersAreNonnullByDefault
@@ -23,7 +23,7 @@ public interface IContextProvider {
      *            The current {@link ICTMTexture} being rendered.
      * @return A context which can be used to manipulate quads later in the pipeline.
      */
-    ITextureContext getBlockRenderContext(BlockState state, BlockGetter world, BlockPos pos, ICTMTexture<?> tex);
+    ITextureContext getBlockRenderContext(BlockState state, BlockAndTintGetter world, BlockPos pos, ICTMTexture<?> tex);
 
     /**
      * Recreates a render context compressed data.

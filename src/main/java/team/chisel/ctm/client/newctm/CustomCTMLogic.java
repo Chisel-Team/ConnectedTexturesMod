@@ -10,7 +10,7 @@ import com.google.common.annotations.VisibleForTesting;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.client.newctm.CTMLogicBakery.OutputFace;
 
@@ -48,14 +48,14 @@ public class CustomCTMLogic implements ICTMLogic {
         }
 
         @Override
-        public void buildConnectionMap(BlockGetter world, BlockPos pos, Direction side) {
+        public void buildConnectionMap(BlockAndTintGetter world, BlockPos pos, Direction side) {
             this.cachedSubmapIds = CustomCTMLogic.this.getSubmapIds(world, pos, side);
             this.cachedSubmaps = CustomCTMLogic.this.getSubmaps(world, pos, side);
         }
     }
 
     @Override
-    public int[] getSubmapIds(BlockGetter world, BlockPos pos, Direction side) {
+    public int[] getSubmapIds(BlockAndTintGetter world, BlockPos pos, Direction side) {
         int key = 0;
         for (int i = 0; i < directions.length; i++) {
             BlockPos conPos = pos.offset(directions[i].getOffset(side));
@@ -69,7 +69,7 @@ public class CustomCTMLogic implements ICTMLogic {
     }
 
     @Override
-    public OutputFace[] getSubmaps(BlockGetter world, BlockPos pos, Direction side) {
+    public OutputFace[] getSubmaps(BlockAndTintGetter world, BlockPos pos, Direction side) {
         var tileIds = getSubmapIds(world, pos, side);
         OutputFace[] ret = new OutputFace[tileIds.length];
         for (int i = 0; i < ret.length; i++) {

@@ -6,7 +6,7 @@ import javax.annotation.Nonnull;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
@@ -20,7 +20,7 @@ public class TextureContextCustomCTM implements ITextureContext {
 
     private long data;
 
-    public TextureContextCustomCTM(@Nonnull BlockState state, BlockGetter world, BlockPos pos, ICTMTexture<?> tex, ICTMLogic logic) {
+    public TextureContextCustomCTM(@Nonnull BlockState state, BlockAndTintGetter world, BlockPos pos, ICTMTexture<?> tex, ICTMLogic logic) {
     	this.tex = tex;
     	this.logic = logic;
     	
