@@ -3,13 +3,12 @@ package team.chisel.ctm.client.newctm;
 import java.util.List;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
-import team.chisel.ctm.api.texture.TextureType;
 import team.chisel.ctm.api.util.TextureInfo;
 
 public class TextureTypeCustom implements ITextureType {
@@ -21,7 +20,7 @@ public class TextureTypeCustom implements ITextureType {
     }
 
     @Override
-    public ITextureContext getBlockRenderContext(BlockState state, BlockGetter world, BlockPos pos, ICTMTexture<?> tex) {
+    public ITextureContext getBlockRenderContext(BlockState state, BlockAndTintGetter world, BlockPos pos, ICTMTexture<?> tex) {
         return new TextureContextCustomCTM(state, world, pos, tex, logic);
     }
 

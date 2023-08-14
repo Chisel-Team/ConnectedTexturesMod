@@ -2,7 +2,7 @@ package team.chisel.ctm.client.newctm;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
 public interface LocalDirection {
@@ -20,7 +20,7 @@ public interface LocalDirection {
      *            The side of the current face.
      * @return True if the block is connected in the given Dir, false otherwise.
      */
-    boolean isConnected(ConnectionCheck ctm, BlockGetter world, BlockPos pos, Direction side);
+    boolean isConnected(ConnectionCheck ctm, BlockAndTintGetter world, BlockPos pos, Direction side);
 
     /**
      * Finds if this block is connected for the given side in this Dir.
@@ -37,7 +37,7 @@ public interface LocalDirection {
      *            The state to check for connection with.
      * @return True if the block is connected in the given Dir, false otherwise.
      */
-    boolean isConnected(ConnectionCheck ctm, BlockGetter world, BlockPos pos, Direction side, BlockState state);
+    boolean isConnected(ConnectionCheck ctm, BlockAndTintGetter world, BlockPos pos, Direction side, BlockState state);
 
     LocalDirection relativize(Direction normal);
 
