@@ -9,7 +9,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.Configurations;
 import team.chisel.ctm.api.IFacade;
@@ -40,7 +40,7 @@ public class ConnectionCheck {
      *            The {@link Direction side} of the block to check for connection status. This is <i>not</i> the direction to check in.
      * @return True if the given block can connect to the given location on the given side.
      */
-    public final boolean isConnected(BlockGetter world, BlockPos current, BlockPos connection, Direction dir) {
+    public final boolean isConnected(BlockAndTintGetter world, BlockPos current, BlockPos connection, Direction dir) {
 
         BlockState state = getConnectionState(world, current, dir, connection);
         return isConnected(world, current, connection, dir, state);
@@ -61,7 +61,7 @@ public class ConnectionCheck {
      * @return True if the given block can connect to the given location on the given side.
      */
     @SuppressWarnings({ "unused", "null" })
-    public boolean isConnected(BlockGetter world, BlockPos current, BlockPos connection, Direction dir, BlockState state) {
+    public boolean isConnected(BlockAndTintGetter world, BlockPos current, BlockPos connection, Direction dir, BlockState state) {
 
 //      if (CTMLib.chiselLoaded() && connectionBlocked(world, x, y, z, dir.ordinal())) {
 //          return false;
@@ -104,10 +104,12 @@ public class ConnectionCheck {
 //        return false;
 //    }
 
-    public BlockState getConnectionState(BlockGetter world, BlockPos pos, @Nullable Direction side, BlockPos connection) {
+    public BlockState getConnectionState(BlockAndTintGetter world, BlockPos pos, @Nullable Direction side, BlockPos connection) {
         BlockState state = world.getBlockState(pos);
         if (state.getBlock() instanceof IFacade facade) {
             return facade.getFacade(world, pos, side, connection);
+        } else if (side != null) {
+            return state.getAppearance(world, pos, side, world.getBlockState(connection), connection);
         }
         return state;
     }

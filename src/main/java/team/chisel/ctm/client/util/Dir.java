@@ -20,7 +20,7 @@ import com.google.gson.Gson;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.StringRepresentable;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.api.util.NonnullType;
 import team.chisel.ctm.client.newctm.ConnectionCheck;
@@ -124,7 +124,7 @@ public enum Dir implements LocalDirection, StringRepresentable {
      * @return True if the block is connected in the given Dir, false otherwise.
      */
     @Override
-    public boolean isConnected(ConnectionCheck ctm, BlockGetter world, BlockPos pos, Direction side) {
+    public boolean isConnected(ConnectionCheck ctm, BlockAndTintGetter world, BlockPos pos, Direction side) {
         return ctm.isConnected(world, pos, applyConnection(pos, side), side);
     }
 
@@ -144,7 +144,7 @@ public enum Dir implements LocalDirection, StringRepresentable {
      * @return True if the block is connected in the given Dir, false otherwise.
      */
     @Override
-    public boolean isConnected(ConnectionCheck ctm, BlockGetter world, BlockPos pos, Direction side, BlockState state) {
+    public boolean isConnected(ConnectionCheck ctm, BlockAndTintGetter world, BlockPos pos, Direction side, BlockState state) {
         return ctm.isConnected(world, pos, applyConnection(pos, side), side, state);
     }
 
