@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,8 +25,8 @@ import team.chisel.ctm.client.texture.render.AbstractTexture;
 import team.chisel.ctm.client.util.BlockstatePredicateParser;
 import team.chisel.ctm.client.util.CTMLogic.StateComparisonCallback;
 import team.chisel.ctm.client.util.ParseUtils;
+import team.chisel.ctm.client.util.PartialTextureAtlasSprite;
 import team.chisel.ctm.client.util.Quad;
-import team.chisel.ctm.client.util.Submap;
 
 @ParametersAreNonnullByDefault
 @Accessors(fluent = true)
@@ -41,6 +42,8 @@ public class TextureCustomCTM<T extends TextureTypeCustom> extends AbstractTextu
 	
 	@Nullable
 	private final BiPredicate<Direction, BlockState> connectionChecks;
+
+    private final TextureAtlasSprite particleSprite;
 	
 	@RequiredArgsConstructor
 	private static final class CacheKey {
@@ -78,6 +81,8 @@ public class TextureCustomCTM<T extends TextureTypeCustom> extends AbstractTextu
         this.connectInside = info.getInfo().flatMap(obj -> ParseUtils.getBoolean(obj, "connect_inside"));
         this.ignoreStates = info.getInfo().map(obj -> GsonHelper.getAsBoolean(obj, "ignore_states", false)).orElse(false);
         this.connectionChecks = info.getInfo().map(obj -> predicateParser.parse(obj.get("connect_to"))).orElse(null);
+        //Crop the particle sprite so that it only contains the bit it should
+        this.particleSprite = PartialTextureAtlasSprite.createPartial(super.getParticle(), type.getFallbackUvs());
     }
 
     public boolean connectTo(ConnectionCheck ctm, BlockState from, BlockState to, Direction dir) {
@@ -89,10 +94,15 @@ public class TextureCustomCTM<T extends TextureTypeCustom> extends AbstractTextu
     }
 
     @Override
+    public TextureAtlasSprite getParticle() {
+        return this.particleSprite;
+    }
+
+    @Override
     public List<BakedQuad> transformQuad(BakedQuad bq, ITextureContext context, int quadGoal) {
         Quad quad = makeQuad(bq, context);
         if (context == null || Configurations.disableCTM) {
-            return Collections.singletonList(quad.setUVs(sprites[0], Submap.X1).rebake());
+            return Collections.singletonList(quad.setUVs(sprites[0], type.getFallbackUvs()).rebake());
         }
 
         OutputFace[] ctm = ((TextureContextCustomCTM)context).getCTM(bq.getDirection()).getCachedSubmaps();
