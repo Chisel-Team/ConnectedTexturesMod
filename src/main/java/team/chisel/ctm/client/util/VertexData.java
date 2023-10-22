@@ -5,13 +5,17 @@ import com.mojang.blaze3d.vertex.VertexFormatElement;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
 @Getter
 @ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class VertexData {
 
     private double posX, posY, posZ;
@@ -27,32 +31,7 @@ public class VertexData {
     // 0 to 0xF0
     private int lightU, lightV;
 
-    private final Map<VertexFormatElement, int[]> miscData;
-
-    public VertexData() {
-        this.miscData = new HashMap<>();
-    }
-
-    private VertexData(double posX, double posY, double posZ, float normalX, float normalY, float normalZ, int red, int green, int blue, int alpha, float texU, float texV,
-          int overlayU, int overlayV, int lightU, int lightV, Map<VertexFormatElement, int[]> miscData) {
-        this.posX = posX;
-        this.posY = posY;
-        this.posZ = posZ;
-        this.normalX = normalX;
-        this.normalY = normalY;
-        this.normalZ = normalZ;
-        this.red = red;
-        this.green = green;
-        this.blue = blue;
-        this.alpha = alpha;
-        this.texU = texU;
-        this.texV = texV;
-        this.overlayU = overlayU;
-        this.overlayV = overlayV;
-        this.lightU = lightU;
-        this.lightV = lightV;
-        this.miscData = miscData;
-    }
+    private Map<VertexFormatElement, int[]> miscData = new HashMap<>();
 
     public Vec3 getPos() {
         return new Vec3(posX, posY, posZ);
