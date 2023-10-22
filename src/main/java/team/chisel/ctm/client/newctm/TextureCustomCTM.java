@@ -30,7 +30,7 @@ import team.chisel.ctm.client.util.Quad;
 
 @ParametersAreNonnullByDefault
 @Accessors(fluent = true)
-public class TextureCustomCTM<T extends TextureTypeCustom> extends AbstractTexture<T> {
+public class TextureCustomCTM<T extends TextureTypeCustom> extends AbstractTexture<T> implements ITextureConnection {
 
     private static final BlockstatePredicateParser predicateParser = new BlockstatePredicateParser();
 
@@ -85,6 +85,7 @@ public class TextureCustomCTM<T extends TextureTypeCustom> extends AbstractTextu
         this.particleSprite = PartialTextureAtlasSprite.createPartial(super.getParticle(), type.getFallbackUvs());
     }
 
+    @Override
     public boolean connectTo(ConnectionCheck ctm, BlockState from, BlockState to, Direction dir) {
         try {
             return ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0) == 1;

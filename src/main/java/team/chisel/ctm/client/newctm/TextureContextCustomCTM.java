@@ -11,7 +11,6 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
-import team.chisel.ctm.client.texture.render.TextureCTM;
 
 public class TextureContextCustomCTM implements ITextureContext {
     
@@ -26,16 +25,8 @@ public class TextureContextCustomCTM implements ITextureContext {
     	this.tex = tex;
     	this.logic = logic;
         ConnectionCheck connectionCheckOverride = null;
-        if (this.tex instanceof TextureCustomCTM<?> texCtm) {
-            connectionCheckOverride = new ConnectionCheck()
-                  .ignoreStates(texCtm.ignoreStates())
-                  .stateComparator(texCtm::connectTo);
-            connectionCheckOverride.disableObscuredFaceCheck = texCtm.connectInside();
-        } else if (this.tex instanceof TextureCTM<?> texCtm) {
-            connectionCheckOverride = new ConnectionCheck()
-                  .ignoreStates(texCtm.ignoreStates())
-                  .stateComparator(texCtm::connectTo);
-            connectionCheckOverride.disableObscuredFaceCheck = texCtm.connectInside();
+        if (this.tex instanceof ITextureConnection texCtm) {
+            connectionCheckOverride = texCtm.applyTo(new ConnectionCheck());
         }
     	
         for (Direction face : Direction.values()) {
