@@ -52,10 +52,7 @@ public interface IMetadataSectionCTM {
         if (getProxy() != null) {
             TextureAtlasSprite proxySprite = bakedTextureGetter.apply(new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(getProxy())));
             try {
-                meta = ResourceUtil.getMetadata(proxySprite);
-                if (meta == null) {
-                    meta = new V1();
-                }
+                meta = ResourceUtil.getMetadata(proxySprite).orElse(new V1());
                 sprite = proxySprite;
             } catch (IOException e) {
                 CTM.logger.error("Could not parse metadata of proxy, ignoring proxy and using base texture." + getProxy(), e);
@@ -63,7 +60,7 @@ public interface IMetadataSectionCTM {
             }
         }
         return meta.getType().makeTexture(new TextureInfo(
-                Arrays.stream(ObjectArrays.concat(sprite.getName(), meta.getAdditionalTextures()))
+                Arrays.stream(ObjectArrays.concat(sprite.contents().name(), meta.getAdditionalTextures()))
                         .map(rl -> new Material(TextureAtlas.LOCATION_BLOCKS, rl))
                         .map(bakedTextureGetter)
                         .toArray(TextureAtlasSprite[]::new),

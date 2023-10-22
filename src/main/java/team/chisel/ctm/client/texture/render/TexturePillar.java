@@ -43,6 +43,11 @@ public class TexturePillar extends AbstractTexture<TextureTypePillar> {
         return Lists.newArrayList(getQuad(quad, context));
     }
 
+    @Override
+    protected Quad makeQuad(BakedQuad bq, ITextureContext context) {
+        return super.makeQuad(bq, context).derotate();
+    }
+
     private BakedQuad getQuad(BakedQuad in, ITextureContext context) {
         Quad q = makeQuad(in, context);
         ConnectionData data = ((TextureContextPillar)context).getData();

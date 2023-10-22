@@ -9,22 +9,23 @@ import static team.chisel.ctm.client.util.Dir.TOP;
 import static team.chisel.ctm.client.util.Dir.TOP_LEFT;
 import static team.chisel.ctm.client.util.Dir.TOP_RIGHT;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import lombok.Getter;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import team.chisel.ctm.Configurations;
-import team.chisel.ctm.api.IFacade;
 import team.chisel.ctm.api.texture.ISubmap;
+import team.chisel.ctm.client.newctm.CTMLogicBakery.OutputFace;
+import team.chisel.ctm.client.newctm.ConnectionCheck;
+import team.chisel.ctm.client.newctm.ICTMLogic;
+import team.chisel.ctm.client.newctm.ILogicCache;
+import team.chisel.ctm.client.newctm.LocalDirection;
 
 // @formatter:off
 /**
@@ -78,14 +79,14 @@ import team.chisel.ctm.api.texture.ISubmap;
  */
 @ParametersAreNonnullByDefault
 @Accessors(fluent = true, chain = true)
-public class CTMLogic {
+public class CTMLogic implements ICTMLogic, ILogicCache {
     
     public interface StateComparisonCallback {
         
         public static final StateComparisonCallback DEFAULT = 
-                (ctm, from, to, dir) -> ctm.ignoreStates ? from.getBlock() == to.getBlock() : from == to;
+                (ctm, from, to, dir) -> ctm.ignoreStates() ? from.getBlock() == to.getBlock() : from == to;
         
-        boolean connects(CTMLogic instance, BlockState from, BlockState to, Direction dir);
+        boolean connects(ConnectionCheck instance, BlockState from, BlockState to, Direction dir);
     }
 	
     /**
@@ -93,38 +94,39 @@ public class CTMLogic {
      */
     public static final ISubmap[] uvs = new ISubmap[]{
             //Ctm texture
-            new Submap(4, 4, 0, 0),   // 0
-            new Submap(4, 4, 4, 0),   // 1
-            new Submap(4, 4, 8, 0),   // 2
-            new Submap(4, 4, 12, 0),  // 3
-            new Submap(4, 4, 0, 4),   // 4
-            new Submap(4, 4, 4, 4),   // 5
-            new Submap(4, 4, 8, 4),   // 6
-            new Submap(4, 4, 12, 4),  // 7
-            new Submap(4, 4, 0, 8),   // 8
-            new Submap(4, 4, 4, 8),   // 9
-            new Submap(4, 4, 8, 8),   // 10
-            new Submap(4, 4, 12, 8),  // 11
-            new Submap(4, 4, 0, 12),  // 12
-            new Submap(4, 4, 4, 12),  // 13
-            new Submap(4, 4, 8, 12),  // 14
-            new Submap(4, 4, 12, 12), // 15
+            Submap.fromPixelScale(4, 4, 0, 0),   // 0
+            Submap.fromPixelScale(4, 4, 4, 0),   // 1
+            Submap.fromPixelScale(4, 4, 8, 0),   // 2
+            Submap.fromPixelScale(4, 4, 12, 0),  // 3
+            Submap.fromPixelScale(4, 4, 0, 4),   // 4
+            Submap.fromPixelScale(4, 4, 4, 4),   // 5
+            Submap.fromPixelScale(4, 4, 8, 4),   // 6
+            Submap.fromPixelScale(4, 4, 12, 4),  // 7
+            Submap.fromPixelScale(4, 4, 0, 8),   // 8
+            Submap.fromPixelScale(4, 4, 4, 8),   // 9
+            Submap.fromPixelScale(4, 4, 8, 8),   // 10
+            Submap.fromPixelScale(4, 4, 12, 8),  // 11
+            Submap.fromPixelScale(4, 4, 0, 12),  // 12
+            Submap.fromPixelScale(4, 4, 4, 12),  // 13
+            Submap.fromPixelScale(4, 4, 8, 12),  // 14
+            Submap.fromPixelScale(4, 4, 12, 12), // 15
             // Default texture
-            new Submap(8, 8, 0, 0),   // 16
-            new Submap(8, 8, 8, 0),   // 17
-            new Submap(8, 8, 0, 8),   // 18
-            new Submap(8, 8, 8, 8)    // 19
+            Submap.fromPixelScale(8, 8, 0, 0),   // 16
+            Submap.fromPixelScale(8, 8, 8, 0),   // 17
+            Submap.fromPixelScale(8, 8, 0, 8),   // 18
+            Submap.fromPixelScale(8, 8, 8, 8)    // 19
     };
     
-    public static final ISubmap FULL_TEXTURE = new Submap(16, 16, 0, 0);
+    public static final ISubmap FULL_TEXTURE = Submap.X1;
     
     // @formatter:on
 
 	/** Some hardcoded offset values for the different corner indeces */
 	protected static int[] submapOffsets = { 4, 5, 1, 0 };
 
-	public Optional<Boolean> disableObscuredFaceCheck = Optional.empty();
-
+	// TODO encapsulate
+	public ConnectionCheck connectionCheck = new ConnectionCheck();
+	
     // Mapping the different corner indeces to their respective dirs
 	protected static final Dir[][] submapMap = new Dir[][] {
 	    { BOTTOM, LEFT, BOTTOM_LEFT },
@@ -135,14 +137,7 @@ public class CTMLogic {
 	
 	protected byte connectionMap;
 	protected int[] submapCache = new int[] { 18, 19, 17, 16 };
-	
-	@Getter
-	@Setter
-	protected boolean ignoreStates;
-	
-	@Getter
-	@Setter
-	protected StateComparisonCallback stateComparator = StateComparisonCallback.DEFAULT;
+
 
 	public static CTMLogic getInstance() {
 		return new CTMLogic();
@@ -153,7 +148,8 @@ public class CTMLogic {
 	 * 
 	 *         Indeces are in counter-clockwise order starting at bottom left.
 	 */
-    public int[] createSubmapIndices(@Nullable BlockGetter world, BlockPos pos, Direction side) {
+	@Override
+    public int[] getSubmapIds(@Nullable BlockAndTintGetter world, BlockPos pos, Direction side) {
 		if (world == null) {
             return submapCache;
         }
@@ -185,6 +181,7 @@ public class CTMLogic {
         return submapCache;
     }
     
+    @Override
     public long serialized() {
         return Byte.toUnsignedLong(connectionMap);
     }
@@ -193,11 +190,11 @@ public class CTMLogic {
         return (id == 16 || id == 17 || id == 18 || id == 19);
     }
     
-    protected void setConnectedState(Dir dir, boolean connected) {
+    protected void setConnectedState(LocalDirection dir, boolean connected) {
         connectionMap = setConnectedState(connectionMap, dir, connected);
     }
     
-    private static byte setConnectedState(byte map, Dir dir, boolean connected) {
+    private static byte setConnectedState(byte map, LocalDirection dir, boolean connected) {
         if (connected) {
             return (byte) (map | (1 << dir.ordinal()));
         } else {
@@ -208,13 +205,17 @@ public class CTMLogic {
     /**
      * Builds the connection map and stores it in this CTM instance. The {@link #connected(Dir)}, {@link #connectedAnd(Dir...)}, and {@link #connectedOr(Dir...)} methods can be used to access it.
      */
-    public void buildConnectionMap(BlockGetter world, BlockPos pos, Direction side) {
-        BlockState state = getConnectionState(world, pos, side, pos);
+    @Override
+    public void buildConnectionMap(BlockAndTintGetter world, BlockPos pos, Direction side) {
+        //BlockState state = connectionCheck.getConnectionState(world, pos, side, pos);
         // TODO this naive check doesn't work for models that have unculled faces.
         // Perhaps a smarter optimization could be done eventually?
 //        if (state.shouldSideBeRendered(world, pos, side)) {
             for (Dir dir : Dir.VALUES) {
-                setConnectedState(dir, dir.isConnected(this, world, pos, side, state));
+                //Note: We can't cache the state that we are checking about connection for as we want to ensure that
+                // we can take into account the side of the block we want to know the "state" of as if the block is
+                // a facade of some sort it might return different results based on where it is being queried from
+                setConnectedState(dir, dir.isConnected(connectionCheck, world, pos, side));
             }
 //        }
     }
@@ -224,7 +225,7 @@ public class CTMLogic {
         List<ConnectionLocations> connections = ConnectionLocations.decode(data);
         for (ConnectionLocations loc : connections) {
             if (loc.getDirForSide(side) != null) {
-                Dir dir = loc.getDirForSide(side);
+                LocalDirection dir = loc.getDirForSide(side);
                 if (dir != null) {
                     setConnectedState(dir, true);
                 }
@@ -255,7 +256,7 @@ public class CTMLogic {
 	 *            The direction to check connection in.
 	 * @return True if the cached connectionMap holds a connection in this {@link Dir direction}.
 	 */
-	public boolean connected(Dir dir) {
+    public boolean connected(Dir dir) {
 		return ((connectionMap >> dir.ordinal()) & 1) == 1;
 	}
 
@@ -264,7 +265,7 @@ public class CTMLogic {
 	 *            The directions to check connection in.
 	 * @return True if the cached connectionMap holds a connection in <i><b>all</b></i> the given {@link Dir directions}.
 	 */
-	@SuppressWarnings("null")
+    @SuppressWarnings("null")
     public boolean connectedAnd(Dir... dirs) {
 		for (Dir dir : dirs) {
 			if (!connected(dir)) {
@@ -279,7 +280,7 @@ public class CTMLogic {
 	 *            The directions to check connection in.
 	 * @return True if the cached connectionMap holds a connection in <i><b>one of</b></i> the given {@link Dir directions}.
 	 */
-	@SuppressWarnings("null")
+    @SuppressWarnings("null")
     public boolean connectedOr(Dir... dirs) {
 		for (Dir dir : dirs) {
 			if (connected(dir)) {
@@ -289,7 +290,7 @@ public class CTMLogic {
 		return false;
     }
 	
-	public boolean connectedNone(Dir... dirs) {
+    public boolean connectedNone(Dir... dirs) {
 	    for (Dir dir : dirs) {
 	        if (connected(dir)) {
 	            return false;
@@ -298,7 +299,7 @@ public class CTMLogic {
 	    return true;
 	}
 	
-	public boolean connectedOnly(Dir... dirs) {
+    public boolean connectedOnly(Dir... dirs) {
 	    byte map = 0;
 	    for (Dir dir : dirs) {
 	        map = setConnectedState(map, dir, true);
@@ -306,99 +307,35 @@ public class CTMLogic {
 	    return map == this.connectionMap;
 	}
 	
-	public int numConnections() {
+    public int numConnections() {
 	    return Integer.bitCount(connectionMap);
 	}
 
-    /**
-     * A simple check for if the given block can connect to the given direction on the given side.
-     * 
-     * @param world
-     * @param current
-     *            The position of your block.
-     * @param connection
-     *            The position of the block to check against.
-     * @param dir
-     *            The {@link Direction side} of the block to check for connection status. This is <i>not</i> the direction to check in.
-     * @return True if the given block can connect to the given location on the given side.
-     */
-    public final boolean isConnected(BlockGetter world, BlockPos current, BlockPos connection, Direction dir) {
-
-        BlockState state = getConnectionState(world, current, dir, connection);
-        return isConnected(world, current, connection, dir, state);
+    @Override
+    @Deprecated
+    public OutputFace[] getCachedSubmaps() {
+        return new OutputFace[0];
     }
 
-    /**
-     * A simple check for if the given block can connect to the given direction on the given side.
-     * 
-     * @param world
-     * @param current
-     *            The position of your block.
-     * @param connection
-     *            The position of the block to check against.
-     * @param dir
-     *            The {@link Direction side} of the block to check for connection status. This is <i>not</i> the direction to check in.
-     * @param state
-     *            The state to check against for connection.
-     * @return True if the given block can connect to the given location on the given side.
-     */
-    @SuppressWarnings({ "unused", "null" })
-    public boolean isConnected(BlockGetter world, BlockPos current, BlockPos connection, Direction dir, BlockState state) {
-
-//      if (CTMLib.chiselLoaded() && connectionBlocked(world, x, y, z, dir.ordinal())) {
-//          return false;
-//      }
-      
-        BlockPos obscuringPos = connection.relative(dir);
-
-        boolean disableObscured = disableObscuredFaceCheck.orElse(Configurations.connectInsideCTM);
-
-        BlockState con = getConnectionState(world, connection, dir, current);
-        BlockState obscuring = disableObscured ? null : getConnectionState(world, obscuringPos, dir, current);
-
-        // bad API user
-        if (con == null) {
-            throw new IllegalStateException("Error, received null blockstate as facade from block " + world.getBlockState(connection));
-        }
-
-        boolean ret = stateComparator(state, con, dir);
-
-        // no block obscuring this face
-        if (obscuring == null) {
-            return ret;
-        }
-
-        // check that we aren't already connected outwards from this side
-        ret &= !stateComparator(state, obscuring, dir);
-
-        return ret;
+    @Override
+    @Deprecated
+    public OutputFace[] getSubmaps(BlockAndTintGetter world, BlockPos pos, Direction side) {
+        return new OutputFace[0];
     }
     
-    protected boolean stateComparator(BlockState from, BlockState to, Direction dir) {
-        return stateComparator.connects(this, from, to, dir);
-    }
-
-//    private boolean connectionBlocked(IBlockReader world, int x, int y, int z, int side) {
-//        Block block = world.getBlock(x, y, z);
-//        if (block instanceof IConnectable) {
-//            return !((IConnectable) block).canConnectCTM(world, x, y, z, side);
-//        }
-//        return false;
-//    }
-
-    /**
-     * @deprecated Use the instance method {@link CTMLogic#getConnectionState(BlockGetter, BlockPos, Direction, BlockPos)}
-     */
+    @Override
     @Deprecated
-    public static BlockState getBlockOrFacade(BlockGetter world, BlockPos pos, @Nullable Direction side, BlockPos connection) {
-        return CTMLogic.getInstance().getConnectionState(world, pos, side, connection);
+    public ILogicCache cached() {
+        return this;
     }
-
-	public BlockState getConnectionState(BlockGetter world, BlockPos pos, @Nullable Direction side, BlockPos connection) {
-		BlockState state = world.getBlockState(pos);
-		if (state.getBlock() instanceof IFacade facade) {
-			return facade.getFacade(world, pos, side, connection);
-		}
-		return state;
-	}
+    
+    @Override
+    public List<ISubmap> outputSubmaps() {
+        return Arrays.stream(Submap.X2).flatMap(Arrays::stream).toList();
+    }
+    
+    @Override
+    public int requiredTextures() {
+        return 2;
+    }
 }

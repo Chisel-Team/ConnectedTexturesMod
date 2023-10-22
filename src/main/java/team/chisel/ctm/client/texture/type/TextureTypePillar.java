@@ -1,7 +1,7 @@
 package team.chisel.ctm.client.texture.type;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
@@ -21,7 +21,7 @@ public class TextureTypePillar implements ITextureType {
     }
     
     @Override
-    public TextureContextPillar getBlockRenderContext(BlockState state, BlockGetter world, BlockPos pos, ICTMTexture<?> tex) {
+    public TextureContextPillar getBlockRenderContext(BlockState state, BlockAndTintGetter world, BlockPos pos, ICTMTexture<?> tex) {
         return new TextureContextPillar(world, pos);
     }
     

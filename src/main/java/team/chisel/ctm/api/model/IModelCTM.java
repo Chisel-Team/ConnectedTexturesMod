@@ -2,16 +2,17 @@ package team.chisel.ctm.api.model;
 
 import java.util.Collection;
 
+import java.util.Set;
 import javax.annotation.Nullable;
 
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.model.geometry.IModelGeometry;
+import net.minecraftforge.client.model.geometry.IUnbakedGeometry;
 import team.chisel.ctm.api.texture.ICTMTexture;
 
-public interface IModelCTM extends IModelGeometry<IModelCTM> {
+public interface IModelCTM extends IUnbakedGeometry<IModelCTM> {
 
     void load();
     
@@ -19,7 +20,7 @@ public interface IModelCTM extends IModelGeometry<IModelCTM> {
     
     ICTMTexture<?> getTexture(ResourceLocation loc);
 
-    boolean canRenderInLayer(BlockState state, RenderType layer);
+    Set<RenderType> getExtraLayers(BlockState state);
 
     @Nullable
     TextureAtlasSprite getOverrideSprite(int tintIndex);

@@ -11,11 +11,12 @@ import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemModelShaper;
 import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.core.Holder;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.ItemModelMesherForge;
+import net.minecraftforge.client.model.ForgeItemModelShaper;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
-import net.minecraftforge.registries.IRegistryDelegate;
+import net.minecraftforge.registries.ForgeRegistries;
 
 @UtilityClass
 public class ModelUtil {
@@ -23,7 +24,7 @@ public class ModelUtil {
     private static final MethodHandle _locations;
     static {
         try {
-            _locations = MethodHandles.lookup().unreflectGetter(ObfuscationReflectionHelper.findField(ItemModelMesherForge.class, "locations"));
+            _locations = MethodHandles.lookup().unreflectGetter(ObfuscationReflectionHelper.findField(ForgeItemModelShaper.class, "locations"));
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
@@ -43,7 +44,7 @@ public class ModelUtil {
         
         Object locations = _locations.invoke(shaper);
         if (locations != null) {
-        	return ((Map<IRegistryDelegate<Item>, ModelResourceLocation>) locations).get(stack.getItem().delegate);
+        	return ((Map<Holder.Reference<Item>, ModelResourceLocation>) locations).get(ForgeRegistries.ITEMS.getDelegateOrThrow(stack.getItem()));
         }
         return null;
     }

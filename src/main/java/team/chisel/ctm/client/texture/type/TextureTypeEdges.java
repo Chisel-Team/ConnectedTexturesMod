@@ -2,18 +2,17 @@ package team.chisel.ctm.client.texture.type;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.mojang.math.Vector3d;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.TextureType;
 import team.chisel.ctm.api.util.TextureInfo;
+import team.chisel.ctm.client.newctm.ConnectionCheck;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTM;
 import team.chisel.ctm.client.texture.render.TextureEdges;
 import team.chisel.ctm.client.util.CTMLogic;
@@ -27,16 +26,41 @@ public class TextureTypeEdges extends TextureTypeCTM {
         return new TextureEdges(this, info);
     }
     
-    @RequiredArgsConstructor
     @ParametersAreNonnullByDefault
     public static class CTMLogicEdges extends CTMLogic {
+        
+        public CTMLogicEdges() {
+            this.connectionCheck = new ConnectionCheckEdges();
+        }
+
+        @Override
+        protected void fillSubmaps(int idx) {
+            Dir[] dirs = submapMap[idx];
+            if (!connectedOr(dirs[0], dirs[1]) && connected(dirs[2])) {
+                submapCache[idx] = submapOffsets[idx];
+            } else {
+                super.fillSubmaps(idx);
+            }
+        }
+        
+        @Override
+        public long serialized() {
+            return isObscured() ? (super.serialized() | (1 << 8)) : super.serialized();
+        }
+
+        public boolean isObscured() {
+            return ((ConnectionCheckEdges)connectionCheck).isObscured();
+        }
+    }
+    
+    public static class ConnectionCheckEdges extends ConnectionCheck {
         
         @Setter
         @Getter
         private boolean obscured;
         
         @Override
-        public boolean isConnected(BlockGetter world, BlockPos current, BlockPos connection, Direction dir, BlockState state) {
+        public boolean isConnected(BlockAndTintGetter world, BlockPos current, BlockPos connection, Direction dir, BlockState state) {
             if (isObscured()) {
                 return false;
             }
@@ -65,8 +89,8 @@ public class TextureTypeEdges extends TextureTypeCTM {
                         vA = difference.xRot(ang);
                         vB = difference.xRot(-ang);
                     }
-                    BlockPos posA = new BlockPos(vA).offset(current);
-                    BlockPos posB = new BlockPos(vB).offset(current);
+                    BlockPos posA = BlockPos.containing(vA).offset(current);
+                    BlockPos posB = BlockPos.containing(vB).offset(current);
                     return (getConnectionState(world, posA, dir, current) == state && !stateComparator(state, getConnectionState(world, posA.relative(dir), dir, current), dir))
                         || (getConnectionState(world, posB, dir, current) == state && !stateComparator(state, getConnectionState(world, posB.relative(dir), dir, current), dir));
                 } else {
@@ -75,25 +99,10 @@ public class TextureTypeEdges extends TextureTypeCTM {
             }
             return false;
         }
-        
-        @Override
-        protected void fillSubmaps(int idx) {
-            Dir[] dirs = submapMap[idx];
-            if (!connectedOr(dirs[0], dirs[1]) && connected(dirs[2])) {
-                submapCache[idx] = submapOffsets[idx];
-            } else {
-                super.fillSubmaps(idx);
-            }
-        }
-        
-        @Override
-        public long serialized() {
-            return isObscured() ? (super.serialized() | (1 << 8)) : super.serialized();
-        }
     }
     
     @Override
-    public TextureContextCTM getBlockRenderContext(BlockState state, BlockGetter world, BlockPos pos, ICTMTexture<?> tex) {
+    public TextureContextCTM getBlockRenderContext(BlockState state, BlockAndTintGetter world, BlockPos pos, ICTMTexture<?> tex) {
         return new TextureContextCTM(state, world, pos, (TextureEdges) tex) {
             
             @Override
@@ -101,8 +110,8 @@ public class TextureTypeEdges extends TextureTypeCTM {
                 CTMLogic parent = super.createCTM(state);
                 // FIXME
                 CTMLogic ret = new CTMLogicEdges();
-                ret.ignoreStates(parent.ignoreStates()).stateComparator(parent.stateComparator());
-                ret.disableObscuredFaceCheck = parent.disableObscuredFaceCheck;
+                ret.connectionCheck.ignoreStates(parent.connectionCheck.ignoreStates()).stateComparator(parent.connectionCheck.stateComparator());
+                ret.connectionCheck.disableObscuredFaceCheck = parent.connectionCheck.disableObscuredFaceCheck;
                 return ret;
             }
         };

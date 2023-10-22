@@ -11,16 +11,20 @@ import com.google.common.base.Preconditions;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraftforge.client.model.data.ModelDataManager;
 
 /**
  * Used by render state creation to avoid unnecessary block lookups through the world.
  */
 @ParametersAreNonnullByDefault
-public class RegionCache implements BlockGetter {
+public class RegionCache implements BlockAndTintGetter {
 
     /*
      * XXX
@@ -35,22 +39,22 @@ public class RegionCache implements BlockGetter {
     @SuppressWarnings("unused")
     private final int radius;
     
-    private WeakReference<BlockGetter> passthrough;
+    private WeakReference<BlockAndTintGetter> passthrough;
     private final Long2ObjectMap<BlockState> stateCache = new Long2ObjectOpenHashMap<>();
 
-    public RegionCache(BlockPos center, int radius, @Nullable BlockGetter passthrough) {
+    public RegionCache(BlockPos center, int radius, @Nullable BlockAndTintGetter passthrough) {
         this.center = center;
         this.radius = radius;
         this.passthrough = new WeakReference<>(passthrough);
     }
     
-    private BlockGetter getPassthrough() {
-        BlockGetter ret = passthrough.get();
+    private BlockAndTintGetter getPassthrough() {
+        BlockAndTintGetter ret = passthrough.get();
         Preconditions.checkNotNull(ret);
         return ret;
     }
     
-    public @Nonnull RegionCache updateWorld(BlockGetter passthrough) {
+    public @Nonnull RegionCache updateWorld(BlockAndTintGetter passthrough) {
         // We do NOT use getPassthrough() here so as to skip the null-validation - it's obviously valid to be null here
         if (this.passthrough.get() != passthrough) {
             stateCache.clear();
@@ -65,44 +69,11 @@ public class RegionCache implements BlockGetter {
         return getPassthrough().getBlockEntity(pos);
     }
 
-//    @Override
-//    public int getCombinedLight(BlockPos pos, int lightValue) {
-//        // In cases with direct passthroughs, these are never used by our code.
-//        // But in case something out there does use them, this will work
-//        return getPassthrough().getCombinedLight(pos, lightValue);
-//    }
-
     @Override
     public BlockState getBlockState(BlockPos pos) {
         long address = pos.asLong();
         return stateCache.computeIfAbsent(address, a -> getPassthrough().getBlockState(pos));
     }
-
-//    @Override
-//    public boolean isAirBlock(BlockPos pos) {
-//        BlockState state = getBlockState(pos);
-//        return state.getBlock().isAir(state, this, pos);
-//    }
-//
-//    @Override
-//    public Biome getBiome(BlockPos pos) {
-//        return getPassthrough().getBiome(pos);
-//    }
-//
-//    @Override
-//    public int getStrongPower(BlockPos pos, EnumFacing direction) {
-//        return getPassthrough().getStrongPower(pos, direction);
-//    }
-//
-//    @Override
-//    public WorldType getWorldType() {
-//        return getPassthrough().getWorldType();
-//    }
-//
-//    @Override
-//    public boolean isSideSolid(BlockPos pos, EnumFacing side, boolean _default) {
-//        return getPassthrough().isSideSolid(pos, side, _default);
-//    }
 
 	@Override
 	public FluidState getFluidState(BlockPos pos) {
@@ -117,5 +88,29 @@ public class RegionCache implements BlockGetter {
     @Override
     public int getMinBuildHeight() {
         return getPassthrough().getMinBuildHeight();
+    }
+
+    @Override
+    public float getShade(Direction direction, boolean shade) {
+        return getPassthrough().getShade(direction, shade);
+    }
+
+    @Override
+    public LevelLightEngine getLightEngine() {
+        return getPassthrough().getLightEngine();
+    }
+
+    @Override
+    public int getBlockTint(BlockPos pos, ColorResolver colorResolver) {
+        return getPassthrough().getBlockTint(pos, colorResolver);
+    }
+
+    @Nullable
+    @Override
+    public ModelDataManager getModelDataManager() {
+        //Note: While we don't have to override this method for purposes of compilation of the interface implementation
+        // we need to make sure to provide the model data manager so that mods that may query it from IForgeBlock#getAppearance
+        // can get their block's model data appropriately
+        return getPassthrough().getModelDataManager();
     }
 }

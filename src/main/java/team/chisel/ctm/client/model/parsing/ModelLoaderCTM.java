@@ -5,12 +5,11 @@ import java.util.Map;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraftforge.client.model.IModelLoader;
+import net.minecraftforge.client.model.geometry.IGeometryLoader;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.model.IModelParser;
 
-public enum ModelLoaderCTM implements IModelLoader<IModelCTM> {
+public enum ModelLoaderCTM implements IGeometryLoader<IModelCTM> {
 
 	INSTANCE;
 
@@ -38,17 +37,12 @@ public enum ModelLoaderCTM implements IModelLoader<IModelCTM> {
 //    
 
 	@Override
-	public IModelCTM read(JsonDeserializationContext ctx, JsonObject json) {
+	public IModelCTM read(JsonObject json, JsonDeserializationContext ctx) {
 		IModelParser parser = parserVersions.get(json.get("ctm_version").getAsInt());
 		if (parser == null) {
 			throw new IllegalArgumentException("Invalid \"ctm_version\" in model " + json);
 		}
 		json.remove("loader"); // Prevent reentrant parsing
 		return parser.fromJson(ctx, json);
-	}
-
-	@Override
-	public void onResourceManagerReload(ResourceManager resourceManager) {
-
 	}
 }

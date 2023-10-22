@@ -1,3 +1,25 @@
+1.1.7:
+Fixes
+- Various cases where model elements would render on incorrect layers
+
+1.1.6:
+New
+- Port to 1.19.2
+Changes
+- Model instances are now unique per render layer to support forge's built in multi-layer model system
+
+1.1.5:
+Fixes
+- #174 Occasional array index out of bounds exceptions during connection check
+
+1.1.4:
+New
+- Port to 1.18.2
+
+1.1.3:
+New
+- Port to 1.18 (agnor99)
+
 1.1.2:
 New
 - Added ctm_vertical and sctm texture types (ChloeDawn)

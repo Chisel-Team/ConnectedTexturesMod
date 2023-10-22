@@ -1,27 +1,28 @@
 buildscript {
     repositories {
         mavenCentral()
-        maven {
-            name = "forge"
-            url = 'https://maven.minecraftforge.net'
-        }
+        maven { url = 'https://maven.parchmentmc.org' }
         maven {
             name = "sonatype"
             url = "https://oss.sonatype.org/content/repositories/snapshots/"
         }
+    	maven { url = 'https://repo.spongepowered.org/maven' }
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+'
+        classpath "org.spongepowered:mixingradle:0.7-SNAPSHOT"
+        classpath 'org.parchmentmc:librarian:1.+'
         classpath 'org.ajoberstar:gradle-git:0.10.1'
     }
 }
 plugins {
-    id "io.freefair.lombok" version "4.1.5"
+    id 'maven-publish'
+    id 'eclipse'
+    id 'net.neoforged.gradle' version '[6.0.18,6.2)'
+    id 'io.freefair.lombok' version '8.1.0'
     id 'com.matthewprenger.cursegradle' version '1.4.0'
 }
-apply plugin: 'eclipse'
-apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'maven-publish'
+apply plugin: 'org.spongepowered.mixin'
+apply plugin: 'org.parchmentmc.librarian.forgegradle'
 
 import org.ajoberstar.grgit.Grgit
 
@@ -33,13 +34,13 @@ boolean dev = System.getenv('RELEASE') == null || System.getenv('RELEASE').equal
 ext.buildnumber = 0
 project.buildnumber = System.getenv('BUILD_NUMBER') != null ? System.getenv('BUILD_NUMBER') : project.ext.gitHash
 
-version = "${minecraft_version}-${mod_version}"
+version = "${minecraft_version}-${mod_version}+" + project.buildnumber
 group = "team.chisel.ctm" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = dev ? "CTM_DEV" : "CTM"
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
-    mappings channel: 'official', version: '1.18'
+    mappings channel: 'parchment', version: '2023.07.30-1.20.1'
     
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -52,6 +53,7 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
+            arg '-mixin.config=ctm.mixins.json'
 
             mods {
                 ctm {
@@ -67,6 +69,7 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
+            arg '-mixin.config=ctm.mixins.json'
 
             mods {
                 ctm {
@@ -81,24 +84,6 @@ minecraft {
 compileJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
 
-processResources {
-    // this will ensure that this task is redone when the versions change.
-    inputs.property 'version', project.version
-    inputs.property 'mcversion', minecraft_version
-    // replace stuff in mcmod.info, nothing else
-    from(sourceSets.main.resources.srcDirs) {
-        include 'META_INF/mods.toml'
-                
-        // replace version and mcversion
-        expand 'version':project.version, 'mcversion': minecraft_version
-    }
-
-    // copy everything else except the mods.toml
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'META_INF/mods.toml'
-    }
-}
-
 jar {
     manifest {
         attributes(["Specification-Title": "ctm",
@@ -107,20 +92,39 @@ jar {
                     "Implementation-Title": project.name,
                     "Implementation-Version": "${version}",
                     "Implementation-Vendor" :"chisel-team",
-                    "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")],)
+                    "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                    "MixinConfigs": "ctm.mixins.json"],)
     }
 }
 
 repositories {
     mavenLocal()
+    maven {
+        name = 'sponge'
+    	url = 'https://repo.spongepowered.org/repository/maven-public/'
+    	content {
+    	    includeGroup "org.spongepowered"
+    	}
+    }
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:' + minecraft_version + '-' + forge_version
+    minecraft 'net.neoforged:forge:' + minecraft_version + '-' + forge_version
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+
+    annotationProcessor 'org.spongepowered:mixin:0.8.5-SNAPSHOT:processor'
+}
+
+test {
+	useJUnitPlatform()
+	maxHeapSize = '1G'
+	testLogging {
+		events "passed"
+	}
 }
 
 lombok {
-    version = "1.18.20"
+    version = "1.18.28"
 }
 
 // Create API jar with sources and compiled files
@@ -128,7 +132,11 @@ task apiJar(type: Jar) {
     from sourceSets.main.allSource
     from sourceSets.main.output
     include 'team/chisel/ctm/api/**/*'
-    classifier = 'api'
+    archiveClassifier = 'api'
+}
+
+mixin {
+    add sourceSets.main, "ctm.refmap.json"
 }
 
 publishing {
@@ -195,8 +203,6 @@ curseforge {
         mainArtifact(jar) {
             displayName = "CTM - ${version}"
         }
-		addGameVersion '1.16.2'
-		addGameVersion '1.16.3'
-		addGameVersion '1.16.4'
+        addGameVersion project.minecraft_version
     }
 }

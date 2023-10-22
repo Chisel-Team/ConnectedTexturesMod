@@ -4,8 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 import com.google.gson.JsonParseException;
 
@@ -20,7 +19,7 @@ import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 public class ResourceUtil {
     
     public static Resource getResource(TextureAtlasSprite sprite) throws IOException {
-        return getResource(spriteToAbsolute(sprite.getName()));
+        return getResource(spriteToAbsolute(sprite.contents().name()));
     }
     
     public static ResourceLocation spriteToAbsolute(ResourceLocation sprite) {
@@ -33,8 +32,8 @@ public class ResourceUtil {
         return sprite;
     }
     
-    public static Resource getResource(ResourceLocation res) throws IOException {
-        return Minecraft.getInstance().getResourceManager().getResource(res);
+    public static Resource getResource(ResourceLocation res) throws FileNotFoundException {
+        return Minecraft.getInstance().getResourceManager().getResourceOrThrow(res);
     }
     
     public static Resource getResourceUnsafe(ResourceLocation res) {
@@ -48,28 +47,29 @@ public class ResourceUtil {
     private static final Map<ResourceLocation, IMetadataSectionCTM> metadataCache = new HashMap<>();
     private static final IMetadataSectionCTM.Serializer SERIALIZER = new IMetadataSectionCTM.Serializer();
 
-    public static @Nullable IMetadataSectionCTM getMetadata(ResourceLocation res) throws IOException {
+    public static Optional<IMetadataSectionCTM> getMetadata(ResourceLocation res) throws IOException {
         // Note, semantically different from computeIfAbsent, as we DO care about keys mapped to null values
         if (metadataCache.containsKey(res)) {
-            return metadataCache.get(res);
+            return Optional.ofNullable(metadataCache.get(res));
         }
-        IMetadataSectionCTM ret;
-        try (Resource resource = getResource(res)) {
-            ret = resource.getMetadata(SERIALIZER);
+        Optional<IMetadataSectionCTM> ret;
+        try {
+            Resource resource = getResource(res);
+            ret = resource.metadata().getSection(SERIALIZER);
         } catch (FileNotFoundException e) {
-            ret = null;  
+            ret = Optional.empty();
         } catch (JsonParseException e) {
             throw new IOException("Error loading metadata for location " + res, e);
         }
-        metadataCache.put(res, ret);
+        ret.ifPresentOrElse(r -> metadataCache.put(res, r), () -> metadataCache.put(res, null));
         return ret;
     }
     
-    public static @Nullable IMetadataSectionCTM getMetadata(TextureAtlasSprite sprite) throws IOException {
-        return getMetadata(spriteToAbsolute(sprite.getName()));
+    public static Optional<IMetadataSectionCTM> getMetadata(TextureAtlasSprite sprite) throws IOException {
+        return getMetadata(spriteToAbsolute(sprite.contents().name()));
     }
     
-    public static @Nullable IMetadataSectionCTM getMetadataUnsafe(TextureAtlasSprite sprite) {
+    public static Optional<IMetadataSectionCTM> getMetadataUnsafe(TextureAtlasSprite sprite) {
         try {
             return getMetadata(sprite);
         } catch (IOException e) {

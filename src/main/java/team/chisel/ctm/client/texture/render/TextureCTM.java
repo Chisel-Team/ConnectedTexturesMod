@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.function.BiPredicate;
 
 import javax.annotation.Nullable;
@@ -15,7 +14,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
 import it.unimi.dsi.fastutil.objects.Object2ByteMap;
-import it.unimi.dsi.fastutil.objects.Object2ByteOpenCustomHashMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
@@ -26,12 +24,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.Configurations;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
+import team.chisel.ctm.client.newctm.ConnectionCheck;
 import team.chisel.ctm.client.texture.ctx.TextureContextCTM;
 import team.chisel.ctm.client.texture.type.TextureTypeCTM;
 import team.chisel.ctm.client.util.BlockstatePredicateParser;
 import team.chisel.ctm.client.util.CTMLogic;
 import team.chisel.ctm.client.util.CTMLogic.StateComparisonCallback;
-import team.chisel.ctm.client.util.IdentityStrategy;
 import team.chisel.ctm.client.util.ParseUtils;
 import team.chisel.ctm.client.util.Quad;
 
@@ -89,22 +87,11 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
         this.ignoreStates = info.getInfo().map(obj -> GsonHelper.getAsBoolean(obj, "ignore_states", false)).orElse(false);
         this.connectionChecks = info.getInfo().map(obj -> predicateParser.parse(obj.get("connect_to"))).orElse(null);
     }
-    
-    public boolean connectTo(CTMLogic ctm, BlockState from, BlockState to, Direction dir) {
-        try {
-        	Object2ByteMap<BlockState> sidecache = connectionCache.get(new CacheKey(from, dir), 
-				() -> {
-					Object2ByteMap<BlockState> map = new Object2ByteOpenCustomHashMap<>(new IdentityStrategy<>());
-					map.defaultReturnValue((byte) -1);
-					return map;
-				});
 
-        	byte cached = sidecache.getByte(to);
-            if (cached == -1) {
-                sidecache.put(to, cached = (byte) ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0));
-            }
-            return cached == 1;
-        } catch (ExecutionException e) {
+    public boolean connectTo(ConnectionCheck ctm, BlockState from, BlockState to, Direction dir) {
+        try {
+            return ((connectionChecks == null ? StateComparisonCallback.DEFAULT.connects(ctm, from, to, dir) : connectionChecks.test(dir, to)) ? 1 : 0) == 1;
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -119,12 +106,15 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
         Quad[] quads = quad.subdivide(4);
         
         int[] ctm = ((TextureContextCTM)context).getCTM(bq.getDirection()).getSubmapIndices();
-        
+        System.out.println(bq.getDirection() + ": " + Arrays.toString(ctm));
+
         for (int i = 0; i < quads.length; i++) {
             Quad q = quads[i];
             if (q != null) {
                 int ctmid = q.getUvs().normalize().getQuadrant();
-                quads[i] = q.grow().transformUVs(sprites[ctm[ctmid] > 15 ? 0 : 1], CTMLogic.uvs[ctm[ctmid]].normalize());
+//              quads[i] = q.grow().transformUVs(sprites[1], CTMLogic.uvs[16]);
+
+                quads[i] = q.grow().transformUVs(sprites[ctm[ctmid] > 15 ? 0 : 1], CTMLogic.uvs[ctm[ctmid]].unitScale());
             }
         }
         return Arrays.stream(quads).filter(Objects::nonNull).map(q -> q.rebake()).toList();

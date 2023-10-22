@@ -1,5 +1,8 @@
 package team.chisel.ctm.client.texture.render;
 
+import java.util.Collections;
+import java.util.List;
+
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Direction;
 import team.chisel.ctm.api.texture.ISubmap;
@@ -11,9 +14,6 @@ import team.chisel.ctm.client.util.CTMLogic;
 import team.chisel.ctm.client.util.Dir;
 import team.chisel.ctm.client.util.Quad;
 import team.chisel.ctm.client.util.Submap;
-
-import java.util.Collections;
-import java.util.List;
 
 public class TexturePlane extends TextureCTM<TextureTypePlane> {
     private final Direction.Plane plane;
