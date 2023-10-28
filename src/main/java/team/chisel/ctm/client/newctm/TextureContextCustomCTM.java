@@ -4,6 +4,7 @@ import java.util.EnumMap;
 
 import javax.annotation.Nonnull;
 
+import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -23,17 +24,21 @@ public class TextureContextCustomCTM implements ITextureContext {
     public TextureContextCustomCTM(@Nonnull BlockState state, BlockAndTintGetter world, BlockPos pos, ICTMTexture<?> tex, ICTMLogic logic) {
     	this.tex = tex;
     	this.logic = logic;
+        ConnectionCheck connectionCheckOverride = null;
+        if (this.tex instanceof ITextureConnection texCtm) {
+            connectionCheckOverride = texCtm.applyTo(new ConnectionCheck());
+        }
     	
         for (Direction face : Direction.values()) {
-            ILogicCache ctm = createCTM(state);
+            ILogicCache ctm = createCTM(state, connectionCheckOverride);
             ctm.buildConnectionMap(world, pos, face);
             ctmData.put(face, ctm);
             this.data |= ctm.serialized() << (face.ordinal() * 10);
         }
     }
     
-    protected ILogicCache createCTM(@Nonnull BlockState state) {
-        return logic.cached();
+    protected ILogicCache createCTM(@Nonnull BlockState state, @Nullable ConnectionCheck connectionCheckOverride) {
+        return logic.cached(connectionCheckOverride);
     }
 
     public ILogicCache getCTM(Direction face) {
