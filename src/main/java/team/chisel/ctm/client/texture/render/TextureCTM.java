@@ -106,7 +106,7 @@ public class TextureCTM<T extends TextureTypeCTM> extends AbstractTexture<T> {
         Quad[] quads = quad.subdivide(4);
         
         int[] ctm = ((TextureContextCTM)context).getCTM(bq.getDirection()).getSubmapIndices();
-        System.out.println(bq.getDirection() + ": " + Arrays.toString(ctm));
+        //System.out.println(bq.getDirection() + ": " + Arrays.toString(ctm));
 
         for (int i = 0; i < quads.length; i++) {
             Quad q = quads[i];

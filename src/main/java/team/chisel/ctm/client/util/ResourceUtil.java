@@ -24,10 +24,10 @@ public class ResourceUtil {
     
     public static ResourceLocation spriteToAbsolute(ResourceLocation sprite) {
         if (!sprite.getPath().startsWith("textures/")) {
-            sprite = new ResourceLocation(sprite.getNamespace(), "textures/" + sprite.getPath());
+            sprite = sprite.withPrefix("textures/");
         }
         if (!sprite.getPath().endsWith(".png")) {
-            sprite = new ResourceLocation(sprite.getNamespace(), sprite.getPath() + ".png");
+            sprite = sprite.withSuffix(".png");
         }
         return sprite;
     }

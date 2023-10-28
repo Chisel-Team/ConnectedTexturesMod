@@ -6,7 +6,6 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 import javax.annotation.Nonnull;
 
@@ -14,13 +13,10 @@ import org.apache.logging.log4j.message.ParameterizedMessage;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 
 import it.unimi.dsi.fastutil.objects.Object2BooleanLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import lombok.SneakyThrows;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.client.resources.model.Material;
@@ -36,7 +32,6 @@ import team.chisel.ctm.client.mixin.ModelBakerImplAccessor;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 import team.chisel.ctm.client.model.ModelBakedCTM;
 import team.chisel.ctm.client.model.ModelCTM;
-import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 
 public enum TextureMetadataHandler {
 
@@ -44,6 +39,11 @@ public enum TextureMetadataHandler {
 	
 	private final Set<ResourceLocation> registeredTextures = new HashSet<>();
 	private final Object2BooleanMap<ResourceLocation> wrappedModels = new Object2BooleanLinkedOpenHashMap<>();
+    private final Multimap<ResourceLocation, Material> scrapedTextures = HashMultimap.create();
+
+    public void textureScraped(ResourceLocation modelLocation, Material material) {
+        scrapedTextures.put(modelLocation, material);
+    }
     
     /*
      * Handle stitching metadata additional textures
@@ -108,16 +108,16 @@ public enum TextureMetadataHandler {
 //        }
 //    }
 
-	public static final Multimap<ResourceLocation, Material> TEXTURES_SCRAPED = HashMultimap.create();
-    @SuppressWarnings("unchecked")
     @SubscribeEvent(priority = EventPriority.LOWEST) // low priority to capture all event-registered models
     @SneakyThrows
     public void onModelBake(ModelEvent.ModifyBakingResult event) {
         Map<ResourceLocation, UnbakedModel> stateModels = ObfuscationReflectionHelper.getPrivateValue(ModelBakery.class, event.getModelBakery(), "f_119212_");
-        for (ResourceLocation rl : event.getModels().keySet()) {
+        Map<ResourceLocation, BakedModel> models = event.getModels();
+        for (Map.Entry<ResourceLocation, BakedModel> entry : models.entrySet()) {
+            ResourceLocation rl = entry.getKey();
             UnbakedModel rootModel = stateModels.get(rl);
             if (rootModel != null) {
-            	BakedModel baked = event.getModels().get(rl);
+            	BakedModel baked = entry.getValue();
             	if (baked instanceof AbstractCTMBakedModel) {
             		continue;
             	}
@@ -140,40 +140,22 @@ public enum TextureMetadataHandler {
                     }
 
                     try {
-                        Set<Material> textures = Sets.newHashSet(TEXTURES_SCRAPED.get(dep));
-                    // FORGE WHY
-//                    if (vanillaModelWrapperClass.isAssignableFrom(model.getClass())) {
-//                        BlockModel parent = ((BlockModel) modelWrapperModel.get(model)).parent;
-//                        while (parent != null) {
-//                            textures.addAll(parent.textures.values().stream().filter(e -> e.left().isPresent()).map(e -> e.left().orElseThrow(IllegalStateException::new)).collect(Collectors.toSet()));
-//                            parent = parent.parent;
-//                        }
-//                    }
-                    
-                        Set<ResourceLocation> newDependencies = Sets.newHashSet(model.getDependencies());
-                        
-                    // FORGE WHYYYYY
-//                    if (multipartModelClass.isAssignableFrom(model.getClass())) {
-//                        Map<?, IUnbakedModel> partModels = (Map<?, IUnbakedModel>) multipartPartModels.get(model);
-//                        textures = partModels.values().stream().map(m -> m.getTextures(event.getModelLoader()::getUnbakedModel, Sets.newHashSet())).flatMap(Collection::stream).collect(Collectors.toSet());
-//                        newDependencies.addAll(partModels.values().stream().flatMap(m -> m.getDependencies().stream()).collect(Collectors.toList()));
-//                    }
-
+                        Set<Material> textures = new HashSet<>(scrapedTextures.get(dep));
                         for (Material tex : textures) {
-                            IMetadataSectionCTM meta = null;
                             // Cache all dependent texture metadata
                             try {
-                                meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex.texture())).orElse(null); // TODO lazy
-                            } catch (IOException e) {} // Fallthrough
-                            if (meta != null) {
                                 // At least one texture has CTM metadata, so we should wrap this model
-                                shouldWrap = true;
-                            }
+                                if (ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(tex.texture())).isPresent()) { // TODO lazy
+                                    shouldWrap = true;
+                                    break;
+                                }
+                            } catch (IOException e) {} // Fallthrough
                         }
-                        
-                        for (ResourceLocation newDep : newDependencies) {
-                            if (seenModels.add(newDep)) {
-                                dependencies.push(newDep);
+                        if (!shouldWrap) {
+                            for (ResourceLocation newDep : model.getDependencies()) {
+                                if (seenModels.add(newDep)) {
+                                    dependencies.push(newDep);
+                                }
                             }
                         }
                     } catch (Exception e) {
@@ -183,8 +165,7 @@ public enum TextureMetadataHandler {
                 wrappedModels.put(rl, shouldWrap);
                 if (shouldWrap) {
                     try {
-                        event.getModels().put(rl, wrap(rootModel, baked));
-                        dependencies.clear();
+                        entry.setValue(wrap(rootModel, baked));
                     } catch (IOException e) {
                         CTM.logger.error("Could not wrap model " + rl + ". Aborting...", e);
                     }
@@ -208,17 +189,19 @@ public enum TextureMetadataHandler {
             if (e.getValue() instanceof AbstractCTMBakedModel baked && 
                     baked.getModel() instanceof ModelCTM ctmModel && 
                     !ctmModel.isInitialized()) {
-                Function<Material, TextureAtlasSprite> spriteGetter = (m) -> Minecraft.getInstance().getModelManager().getAtlas(m.atlasLocation()).getSprite(m.texture());
-                var baker = ModelBakerImplAccessor.createImpl(event.getModelBakery(), ($, m) -> spriteGetter.apply(m), e.getKey());
-                ctmModel.bake(baker, spriteGetter, BlockModelRotation.X0_Y0, e.getKey()); 
+                var baker = ModelBakerImplAccessor.createImpl(event.getModelBakery(), ($, m) -> m.sprite(), e.getKey());
+                ctmModel.bake(baker, Material::sprite, BlockModelRotation.X0_Y0, e.getKey());
+                //Note: We have to clear the cache after baking each model to ensure that we can initialize and capture any textures
+                // that might be done by parent models
+                cache.clear();
             }
         }
-        cache.clear();
         cache.putAll(cacheCopy);
     }
 
     public void invalidateCaches() {
         registeredTextures.clear();
         wrappedModels.clear();
+        scrapedTextures.clear();
     }
 }

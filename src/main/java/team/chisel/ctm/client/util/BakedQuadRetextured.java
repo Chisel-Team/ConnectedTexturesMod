@@ -2,34 +2,29 @@ package team.chisel.ctm.client.util;
 
 import java.util.Arrays;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.FaceBakery;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.model.IQuadTransformer;
 
 /**
  * Revived from 1.14
  * 
  * @author Mojang
  */
-@OnlyIn(Dist.CLIENT)
 public class BakedQuadRetextured extends BakedQuad {
    private final TextureAtlasSprite texture;
 
    public BakedQuadRetextured(BakedQuad quad, TextureAtlasSprite textureIn) {
-      super(Arrays.copyOf(quad.getVertices(), quad.getVertices().length), quad.getTintIndex(), FaceBakery.calculateFacing(quad.getVertices()), quad.getSprite(), quad.isShade());
+      super(Arrays.copyOf(quad.getVertices(), quad.getVertices().length), quad.getTintIndex(), quad.getDirection(), quad.getSprite(), quad.isShade(), quad.hasAmbientOcclusion());
       this.texture = textureIn;
       this.remapQuad();
    }
 
    private void remapQuad() {
       for(int i = 0; i < 4; ++i) {
-          int j = DefaultVertexFormat.BLOCK.getIntegerSize() * i;
-          int uvIndex = 4;
-          this.vertices[j + uvIndex] = Float.floatToRawIntBits(this.texture.getU(getUnInterpolatedU(this.sprite, Float.intBitsToFloat(this.vertices[j + uvIndex]))));
-          this.vertices[j + uvIndex + 1] = Float.floatToRawIntBits(this.texture.getV(getUnInterpolatedV(this.sprite, Float.intBitsToFloat(this.vertices[j + uvIndex + 1]))));
+          int offset = i * IQuadTransformer.STRIDE + IQuadTransformer.UV0;
+          this.vertices[offset] = Float.floatToRawIntBits(this.texture.getU(getUnInterpolatedU(this.sprite, Float.intBitsToFloat(this.vertices[offset]))));
+          this.vertices[offset + 1] = Float.floatToRawIntBits(this.texture.getV(getUnInterpolatedV(this.sprite, Float.intBitsToFloat(this.vertices[offset + 1]))));
       }
    }
    

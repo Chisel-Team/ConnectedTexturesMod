@@ -121,11 +121,7 @@ public class ModelCTM implements IModelCTM {
         } else {
             initializeOverrides(spriteGetter);
             this.textureDependencies.forEach(t -> initializeTexture(new Material(TextureAtlas.LOCATION_BLOCKS, t), spriteGetter));
-            parent = vanillamodel.bake(bakery, mat -> {
-                var ret = spriteGetter.apply(mat);
-                initializeTexture(mat, spriteGetter);
-                return ret;
-            }, modelTransform, modelLocation);
+            parent = vanillamodel.bake(bakery, mat -> initializeTexture(mat, spriteGetter), modelTransform, modelLocation);
             if (!isInitialized()) {
                 this.spriteOverrides = new Int2ObjectOpenHashMap<>();
                 this.textureOverrides = new HashMap<>();
@@ -134,7 +130,7 @@ public class ModelCTM implements IModelCTM {
         return new ModelBakedCTM(this, parent, null);
     }
 	
-	public void initializeTexture(Material m, Function<Material, TextureAtlasSprite> spriteGetter) {
+	public TextureAtlasSprite initializeTexture(Material m, Function<Material, TextureAtlasSprite> spriteGetter) {
 	    TextureAtlasSprite sprite = spriteGetter.apply(m);
 	    Optional<IMetadataSectionCTM> chiselmeta = Optional.empty();
 	    try {
@@ -154,6 +150,7 @@ public class ModelCTM implements IModelCTM {
             }
 	        return tex;
 	    });
+        return sprite;
 	}
 	
 	private void initializeOverrides(Function<Material, TextureAtlasSprite> spriteGetter) {
