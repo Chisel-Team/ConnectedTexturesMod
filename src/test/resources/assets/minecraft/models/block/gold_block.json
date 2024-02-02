@@ -1,0 +1,20 @@
+{
+    "parent": "block/util_cube_glow_5_all",
+    "textures": {
+        "glow_4": "minecraft:block/gold_block",
+        "glow_3": "minecraft:block/gold_block",
+        "glow_2": "minecraft:block/gold_block",
+        "glow_1": "minecraft:block/gold_block",
+        "glow_0": "minecraft:block/gold_block",
+        "particle": "minecraft:block/gold_block"
+    },
+    "loader": "ctm:ctm",
+    "ctm_version": 1,
+    "ctm_overrides": {
+        "0": {
+            "extra": {
+                "light": 15
+            }
+        }
+    }
+}

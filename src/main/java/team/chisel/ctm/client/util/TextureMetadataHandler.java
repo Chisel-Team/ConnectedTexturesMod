@@ -10,6 +10,7 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
+import net.minecraftforge.client.model.BlockModelConfiguration;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 
 import com.google.common.collect.Sets;
@@ -61,17 +62,17 @@ public enum TextureMetadataHandler {
                         event.addSprite(proxysprite);
                         if (proxymeta != null) {
                             // Load proxy's additional textures
-                            for (ResourceLocation r : proxymeta.getAdditionalTextures()) {
-                            	if (registeredTextures.add(r)) {
-                            		event.addSprite(r);
+                            for (String r : proxymeta.getAdditionalTextures()) {
+                            	if (registeredTextures.add(new ResourceLocation(r))) {
+                            		event.addSprite(new ResourceLocation(r));
                             	}
                             }
                         }
                     }
                     // Load additional textures
-                    for (ResourceLocation r : metadata.getAdditionalTextures()) {
-                        if (registeredTextures.add(r)) {
-                            event.addSprite(r);
+                    for (String r : metadata.getAdditionalTextures()) {
+                        if (registeredTextures.add(new ResourceLocation(r))) {
+                            event.addSprite(new ResourceLocation(r));
                         }
                     }
                 }

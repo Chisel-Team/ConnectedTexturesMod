@@ -41,7 +41,7 @@ public interface IMetadataSectionCTM {
     
     BlockRenderLayer getLayer();
     
-    ResourceLocation[] getAdditionalTextures();
+    String[] getAdditionalTextures();
     
     @Nullable String getProxy();
 
@@ -63,8 +63,8 @@ public interface IMetadataSectionCTM {
             }
         }
         return meta.getType().makeTexture(new TextureInfo(
-                Arrays.stream(ObjectArrays.concat(sprite.getName(), meta.getAdditionalTextures()))
-                        .map(rl -> new Material(TextureAtlas.LOCATION_BLOCKS, rl))
+                Arrays.stream(ObjectArrays.concat(sprite.getName().toString(), meta.getAdditionalTextures()))
+                        .map(rl -> new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(rl)))
                         .map(bakedTextureGetter)
                         .toArray(TextureAtlasSprite[]::new),
                 Optional.of(meta.getExtraData()), 
@@ -79,7 +79,7 @@ public interface IMetadataSectionCTM {
         private ITextureType type = TextureTypeRegistry.getType("NORMAL");
         private BlockRenderLayer layer = null;
         private String proxy;
-        private ResourceLocation[] additionalTextures = new ResourceLocation[0];
+        private String[] additionalTextures = new String[0];
         private JsonObject extraData = new JsonObject();
 
         @Override
@@ -128,11 +128,11 @@ public interface IMetadataSectionCTM {
                 JsonElement texturesEle = obj.get("textures");
                 if (texturesEle.isJsonArray()) {
                     JsonArray texturesArr = texturesEle.getAsJsonArray();
-                    ret.additionalTextures = new ResourceLocation[texturesArr.size()];
+                    ret.additionalTextures = new String[texturesArr.size()];
                     for (int i = 0; i < texturesArr.size(); i++) {
                         JsonElement e = texturesArr.get(i);
                         if (e.isJsonPrimitive() && e.getAsJsonPrimitive().isString()) {
-                            ret.additionalTextures[i] = new ResourceLocation(e.getAsString());
+                            ret.additionalTextures[i] = e.getAsString();
                         }
                     }
                 }

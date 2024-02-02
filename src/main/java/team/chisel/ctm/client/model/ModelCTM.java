@@ -27,6 +27,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.model.BlockModelConfiguration;
 import net.minecraftforge.client.model.IModelConfiguration;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
@@ -51,7 +52,7 @@ public class ModelCTM implements IModelCTM {
     protected Int2ObjectMap<TextureAtlasSprite> spriteOverrides;
     protected Map<Pair<Integer, ResourceLocation>, ICTMTexture<?>> textureOverrides;
 
-    private final Collection<ResourceLocation> textureDependencies;
+    private final Collection<String> textureDependencies;
     
     private transient byte layers;
 
@@ -74,7 +75,7 @@ public class ModelCTM implements IModelCTM {
             if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
                 ResourceLocation rl = new ResourceLocation(e.getValue().getAsString());
                 meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(rl));
-                textureDependencies.add(rl);
+                textureDependencies.add(rl.toString());
             } else if (e.getValue().isJsonObject()) {
                 JsonObject obj = e.getValue().getAsJsonObject();
                 if (!obj.has("ctm_version")) {
@@ -89,15 +90,15 @@ public class ModelCTM implements IModelCTM {
             }
         }
         
-        this.textureDependencies.removeIf(rl -> rl.getPath().startsWith("#"));
+        this.textureDependencies.removeIf(rl -> rl.startsWith("#"));
 	}
 
 	@Override
 	public Collection<Material> getTextures(IModelConfiguration owner, Function<ResourceLocation, UnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors) {
 		List<Material> ret = textureDependencies.stream()
-				.map(rl -> new Material(TextureAtlas.LOCATION_BLOCKS, rl))
+				.map(rl -> new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(rl)))
     			.collect(Collectors.toList());
-    	ret.addAll(vanillamodel.getMaterials(modelGetter, missingTextureErrors));
+        ret.addAll(vanillamodel.getMaterials(modelGetter, missingTextureErrors));
         // Validate all texture metadata
     	for (Material tex : ret) {
             IMetadataSectionCTM meta;
@@ -117,7 +118,7 @@ public class ModelCTM implements IModelCTM {
 	
 	@Override
 	public BakedModel bake(IModelConfiguration owner, ModelBakery bakery, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelTransform, ItemOverrides itemOverrides, ResourceLocation modelLocation) {
-		return bake(bakery, spriteGetter, modelTransform, modelLocation);
+       return bake(bakery, spriteGetter, modelTransform, modelLocation);
 	}
 	
 	private static final ItemModelGenerator ITEM_MODEL_GENERATOR = new ItemModelGenerator();
@@ -168,9 +169,9 @@ public class ModelCTM implements IModelCTM {
                 List<BlockElementFace> matches = modelinfo.getElements().stream().flatMap(b -> b.faces.values().stream()).filter(b -> b.tintIndex == e.getIntKey()).toList();
                 Multimap<Material, BlockElementFace> bySprite = HashMultimap.create();
                 // TODO 1.15 this isn't right
-                matches.forEach(part -> bySprite.put(modelinfo.textureMap.getOrDefault(part.texture.substring(1), Either.right(part.texture)).left().get(), part));
+                matches.forEach(part -> bySprite.put(modelinfo.getMaterial(part.texture), part));
                 for (var e2 : bySprite.asMap().entrySet()) {
-                    ResourceLocation texLoc = e2.getKey().sprite().getName();
+                    ResourceLocation texLoc = e2.getKey().texture();
                     TextureAtlasSprite sprite = getOverrideSprite(e.getIntKey());
                     if (sprite == null) {
                     	sprite = spriteGetter.apply(new Material(TextureAtlas.LOCATION_BLOCKS, texLoc));
