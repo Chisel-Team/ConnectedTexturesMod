@@ -10,7 +10,7 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
-import net.minecraftforge.client.model.BlockModelConfiguration;
+import net.minecraft.client.renderer.block.model.MultiVariant;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 
 import com.google.common.collect.Sets;
@@ -31,6 +31,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import team.chisel.ctm.CTM;
+import team.chisel.ctm.client.BlockModelExtension;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 import team.chisel.ctm.client.model.ModelBakedCTM;
 import team.chisel.ctm.client.model.ModelCTM;
@@ -132,6 +133,10 @@ public enum TextureMetadataHandler {
                          model = dep == rl ? rootModel : event.getModelLoader().getModel(dep);
                     } catch (Exception e) {
                         continue;
+                    }
+
+                    if (model instanceof BlockModelExtension extension) {
+                        shouldWrap = !extension.getMetaOverrides().isEmpty();
                     }
 
                     try {

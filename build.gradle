@@ -10,11 +10,13 @@ buildscript {
             name = "sonatype"
             url = "https://oss.sonatype.org/content/repositories/snapshots/"
         }
+        maven { url = 'https://repo.spongepowered.org/maven' }
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+'
         classpath 'org.parchmentmc:librarian:1.+'
         classpath 'org.ajoberstar:gradle-git:0.10.1'
+        classpath "org.spongepowered:mixingradle:0.7-SNAPSHOT"
     }
 }
 plugins {
@@ -24,6 +26,7 @@ plugins {
 apply plugin: 'eclipse'
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'org.parchmentmc.librarian.forgegradle'
+apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'maven-publish'
 
 import org.ajoberstar.grgit.Grgit
@@ -55,6 +58,7 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
+            arg '-mixin.config=ctm.mixins.json'
 
             mods {
                 ctm {
@@ -70,6 +74,7 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
+            arg '-mixin.config=ctm.mixins.json'
 
             mods {
                 ctm {
@@ -92,16 +97,26 @@ jar {
                     "Implementation-Title": project.name,
                     "Implementation-Version": "${version}",
                     "Implementation-Vendor" :"chisel-team",
-                    "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")],)
+                    "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                    "MixinConfigs": "ctm.mixins.json"],)
     }
 }
 
 repositories {
     mavenLocal()
+    maven {
+        name = 'sponge'
+        url = 'https://repo.spongepowered.org/repository/maven-public/'
+        content {
+            includeGroup "org.spongepowered"
+        }
+    }
 }
 
 dependencies {
     minecraft 'net.minecraftforge:forge:' + minecraft_version + '-' + forge_version
+
+    annotationProcessor 'org.spongepowered:mixin:0.8.5-SNAPSHOT:processor'
 }
 
 lombok {
@@ -114,6 +129,10 @@ task apiJar(type: Jar) {
     from sourceSets.main.output
     include 'team/chisel/ctm/api/**/*'
     classifier = 'api'
+}
+
+mixin {
+    add sourceSets.main, "ctm.refmap.json"
 }
 
 publishing {

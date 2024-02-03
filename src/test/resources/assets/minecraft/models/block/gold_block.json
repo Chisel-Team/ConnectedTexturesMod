@@ -7,14 +7,5 @@
         "glow_1": "minecraft:block/gold_block",
         "glow_0": "minecraft:block/gold_block",
         "particle": "minecraft:block/gold_block"
-    },
-    "loader": "ctm:ctm",
-    "ctm_version": 1,
-    "ctm_overrides": {
-        "0": {
-            "extra": {
-                "light": 15
-            }
-        }
     }
 }

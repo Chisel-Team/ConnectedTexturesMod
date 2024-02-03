@@ -22,6 +22,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
+import org.apache.commons.lang3.ArrayUtils;
 import team.chisel.ctm.CTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureType;
@@ -71,7 +72,9 @@ public interface IMetadataSectionCTM {
                 meta.getLayer()
         ));
     }
-    
+
+    void merge(IMetadataSectionCTM iMetadataSectionCTM);
+
     @ToString
     @Getter
     class V1 implements IMetadataSectionCTM {
@@ -85,6 +88,24 @@ public interface IMetadataSectionCTM {
         @Override
         public int getVersion() {
             return 1;
+        }
+
+        @Override
+        public void merge(@Nonnull IMetadataSectionCTM other) {
+            if (type == TextureTypeRegistry.getType("NORMAL")) {
+                type = other.getType();
+            }
+            if (this.proxy == null) {
+                this.proxy = other.getProxy();
+            }
+
+            if (this.layer == null) {
+                this.layer = other.getLayer();
+            }
+            this.additionalTextures = ArrayUtils.addAll(this.additionalTextures, other.getAdditionalTextures());
+            if (this.extraData.isJsonNull()) {
+                this.extraData = other.getExtraData();
+            }
         }
 
         public static IMetadataSectionCTM fromJson(JsonObject obj) throws JsonParseException {

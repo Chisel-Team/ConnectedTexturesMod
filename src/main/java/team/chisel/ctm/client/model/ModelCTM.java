@@ -6,7 +6,6 @@ import com.google.common.collect.Multimap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -27,11 +26,11 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.model.BlockModelConfiguration;
 import net.minecraftforge.client.model.IModelConfiguration;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.util.TextureInfo;
+import team.chisel.ctm.client.BlockModelExtension;
 import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 import team.chisel.ctm.client.texture.render.TextureNormal;
 import team.chisel.ctm.client.texture.type.TextureTypeNormal;
@@ -46,7 +45,7 @@ public class ModelCTM implements IModelCTM {
 
     // Populated from overrides data during construction
     private final Int2ObjectMap<JsonElement> overrides;
-    protected final Int2ObjectMap<IMetadataSectionCTM> metaOverrides = new Int2ObjectArrayMap<>();
+    protected Int2ObjectMap<IMetadataSectionCTM> metaOverrides = new Int2ObjectArrayMap<>();
     
     // Populated during bake with real texture data
     protected Int2ObjectMap<TextureAtlasSprite> spriteOverrides;
@@ -60,9 +59,19 @@ public class ModelCTM implements IModelCTM {
     
     public ModelCTM(UnbakedModel modelinfo) {
         this.vanillamodel = modelinfo;
-        this.modelinfo = null;
         this.overrides = new Int2ObjectOpenHashMap<>();
         this.textureDependencies = new HashSet<>();
+        BlockModel temp = null;
+
+        if (modelinfo instanceof BlockModel blockmodel && blockmodel instanceof BlockModelExtension extension) {
+            temp = blockmodel;
+            metaOverrides = extension.getMetaOverrides();
+            for (IMetadataSectionCTM meta: metaOverrides.values()) {
+                textureDependencies.addAll(Arrays.asList(meta.getAdditionalTextures()));
+            }
+            this.textureDependencies.removeIf(rl -> rl.startsWith("#"));
+        }
+        this.modelinfo = temp;
     }
     
     public ModelCTM(BlockModel modelinfo, Int2ObjectMap<JsonElement> overrides) throws IOException {
@@ -72,7 +81,7 @@ public class ModelCTM implements IModelCTM {
         this.textureDependencies = new HashSet<>();
         for (Int2ObjectMap.Entry<JsonElement> e : this.overrides.int2ObjectEntrySet()) {
             IMetadataSectionCTM meta = null;
-            if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) {
+            if (e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isString()) { //TODO is this still a thing?
                 ResourceLocation rl = new ResourceLocation(e.getValue().getAsString());
                 meta = ResourceUtil.getMetadata(ResourceUtil.spriteToAbsolute(rl));
                 textureDependencies.add(rl.toString());
@@ -153,7 +162,7 @@ public class ModelCTM implements IModelCTM {
 		        return tex;
 		    });
 		}
-        if (spriteOverrides == null) {
+        if (spriteOverrides == null) { //TODO is this a thing?
             spriteOverrides = new Int2ObjectArrayMap<>();
             // Convert all primitive values into sprites
             for (Int2ObjectMap.Entry<JsonElement> e : overrides.int2ObjectEntrySet()) {
