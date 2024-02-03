@@ -57,5 +57,13 @@
                 "east":  { "texture": "#glow_0", "cullface": "east", "tintindex": 0 }
             }
         }
-    ]
+    ],
+    "ctm_version": 1,
+    "ctm_overrides": {
+        "0": {
+            "extra": {
+                "light": 15
+            }
+        }
+    }
 }
