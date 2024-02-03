@@ -44,6 +44,6 @@ public class CTM {
     }
     
     private void modelRegistry(ModelRegistryEvent event) {
-        ModelLoaderRegistry.registerLoader(new ResourceLocation(MOD_ID, "ctm"), ModelLoaderCTM.INSTANCE);
+        //ModelLoaderRegistry.registerLoader(new ResourceLocation(MOD_ID, "ctm"), ModelLoaderCTM.INSTANCE);
     }
 }

@@ -39,19 +39,20 @@ public abstract class BlockModelMixin implements UnbakedModel, BlockModelExtensi
     }
 
     private Int2ObjectMap<IMetadataSectionCTM> ctm$merge(Int2ObjectMap<IMetadataSectionCTM> other) {
+        Int2ObjectMap<IMetadataSectionCTM> copy = new Int2ObjectArrayMap<>(this.metaOverrides).clone();
         for (int i: other.keySet()) {
             if (!metaOverrides.containsKey(i)) {
-                metaOverrides.put(i, other.get(i));
+                copy.put(i, other.get(i));
             } else {
-                metaOverrides.get(i).merge(other.get(i));
+                copy.get(i).merge(other.get(i));
             }
         }
-        return this.metaOverrides;
+        return copy;
     }
 
     public Int2ObjectMap<IMetadataSectionCTM> getMetaOverrides() {
         if (((BlockModel) (Object) this).parent != null ) {
-            ctm$merge(((BlockModelMixin) (Object) ((BlockModel) (Object) this).parent).getMetaOverrides());
+            return ctm$merge(((BlockModelMixin) (Object) ((BlockModel) (Object) this).parent).getMetaOverrides());
         }
         return metaOverrides;
     }

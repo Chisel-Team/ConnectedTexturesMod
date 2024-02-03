@@ -8,7 +8,6 @@
         "beacon": "block/beacon",
         "beaconlines": "block/lines"
     },
-    "loader": "ctm:ctm",
     "elements": [
         {   "__comment": "Glass shell",
             "from": [ 0, 0, 0 ],

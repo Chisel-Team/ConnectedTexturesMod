@@ -69,7 +69,7 @@ public class ModelCTM implements IModelCTM {
             for (IMetadataSectionCTM meta: metaOverrides.values()) {
                 textureDependencies.addAll(Arrays.asList(meta.getAdditionalTextures()));
             }
-            this.textureDependencies.removeIf(rl -> rl.startsWith("#"));
+            this.textureDependencies.removeIf(rl -> rl.contains("#"));
         }
         this.modelinfo = temp;
     }
@@ -99,7 +99,7 @@ public class ModelCTM implements IModelCTM {
             }
         }
         
-        this.textureDependencies.removeIf(rl -> rl.startsWith("#"));
+        this.textureDependencies.removeIf(rl -> rl.contains("#"));
 	}
 
 	@Override
@@ -187,6 +187,10 @@ public class ModelCTM implements IModelCTM {
                     }
                     ICTMTexture<?> tex = e.getValue().makeTexture(sprite, spriteGetter);
                     layers |= 1 << (tex.getLayer() == null ? 7 : tex.getLayer().ordinal());
+                    for (String s: e.getValue().getAdditionalTextures()) {
+                        TextureAtlasSprite atlasSprite = spriteGetter.apply(modelinfo.getMaterial(s));
+                        tex.addSprite(atlasSprite);
+                    }
                     textureOverrides.put(Pair.of(e.getIntKey(), texLoc), tex);
                 }
             }

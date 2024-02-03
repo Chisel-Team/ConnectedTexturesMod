@@ -61,6 +61,7 @@
     "ctm_version": 1,
     "ctm_overrides": {
         "0": {
+            "layer": "TRANSLUCENT",
             "extra": {
                 "light": 15
             }

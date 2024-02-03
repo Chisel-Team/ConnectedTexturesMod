@@ -31,6 +31,8 @@ public interface ICTMTexture<T extends ITextureType> {
     List<BakedQuad> transformQuad(BakedQuad quad, @Nullable ITextureContext context, int quadGoal);
 
     Collection<ResourceLocation> getTextures();
+
+    public void addSprite(TextureAtlasSprite sprite);
     
     /**
      * Gets the block render type of this texture

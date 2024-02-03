@@ -65,6 +65,7 @@ public interface IMetadataSectionCTM {
         }
         return meta.getType().makeTexture(new TextureInfo(
                 Arrays.stream(ObjectArrays.concat(sprite.getName().toString(), meta.getAdditionalTextures()))
+                        .filter(s -> !s.startsWith("#"))
                         .map(rl -> new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(rl)))
                         .map(bakedTextureGetter)
                         .toArray(TextureAtlasSprite[]::new),

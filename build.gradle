@@ -111,10 +111,15 @@ repositories {
             includeGroup "org.spongepowered"
         }
     }
+    flatDir {
+        dirs 'lib'
+    }
 }
 
 dependencies {
     minecraft 'net.minecraftforge:forge:' + minecraft_version + '-' + forge_version
+
+    implementation fg.deobf("team.chisel.chisel:Chisel_DEV:1.18.2-2.0.2-alpha.c436c33")
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5-SNAPSHOT:processor'
 }

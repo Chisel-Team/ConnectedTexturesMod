@@ -136,7 +136,7 @@ public enum TextureMetadataHandler {
                     }
 
                     if (model instanceof BlockModelExtension extension) {
-                        shouldWrap = !extension.getMetaOverrides().isEmpty();
+                        //shouldWrap = !extension.getMetaOverrides().isEmpty();
                     }
 
                     try {
