@@ -62,6 +62,10 @@
     "ctm_overrides": {
         "0": {
             "layer": "TRANSLUCENT",
+            "type": "ctm",
+            "textures": [
+                "#ctm"
+            ],
             "extra": {
                 "light": 15
             }

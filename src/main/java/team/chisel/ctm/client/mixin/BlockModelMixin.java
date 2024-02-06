@@ -1,8 +1,10 @@
 package team.chisel.ctm.client.mixin;
 
+import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
@@ -17,12 +19,19 @@ import team.chisel.ctm.client.model.ModelBakedCTM;
 import team.chisel.ctm.client.model.ModelCTM;
 import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 
+import java.util.Collection;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 @Mixin(BlockModel.class)
 public abstract class BlockModelMixin implements UnbakedModel, BlockModelExtension {
 
     @Shadow public abstract BakedModel bake(ModelBakery pBakery, BlockModel pModel, Function<Material, TextureAtlasSprite> pSpriteGetter, ModelState pTransform, ResourceLocation pLocation, boolean pGuiLight3d);
+
+    @Shadow public abstract Material getMaterial(String pName);
+
+    @Shadow public abstract String toString();
 
     @Unique
     protected Int2ObjectMap<IMetadataSectionCTM> metaOverrides = new Int2ObjectArrayMap<>();
@@ -35,6 +44,21 @@ public abstract class BlockModelMixin implements UnbakedModel, BlockModelExtensi
             model.initializeTextures(pBakery, pSpriteGetter);
             ModelBakedCTM bakedCTM = new ModelBakedCTM(model, cir.getReturnValue());
             cir.setReturnValue(bakedCTM);
+        }
+    }
+
+    @Inject(at = @At("RETURN"), method = "getMaterials")
+    private void ctm$materials(Function<ResourceLocation, UnbakedModel> pModelGetter, Set<Pair<String, String>> pMissingTextureErrors, CallbackInfoReturnable<Collection<Material>> cir) {
+        for (IMetadataSectionCTM meta : getMetaOverrides().values()) {
+            for (String s : meta.getAdditionalTextures()) {
+                Material material = this.getMaterial(s);
+
+                if (Objects.equals(material.texture(), MissingTextureAtlasSprite.getLocation())) {
+                    pMissingTextureErrors.add(Pair.of(s, this.toString()));
+                }
+
+                cir.getReturnValue().add(material);
+            }
         }
     }
 

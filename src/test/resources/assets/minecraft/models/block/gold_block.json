@@ -6,7 +6,7 @@
         "glow_2": "minecraft:block/gold_block",
         "glow_1": "minecraft:block/gold_block",
         "glow_0": "minecraft:block/tiles_small",
-        "gold_ctm": "minecraft:block/redstone_block",
+        "ctm": "ctm:block/tiles_small",
         "particle": "minecraft:block/gold_block"
     }
 }
