@@ -22,6 +22,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
+import org.apache.commons.lang3.ArrayUtils;
 import team.chisel.ctm.CTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureType;
@@ -41,7 +42,7 @@ public interface IMetadataSectionCTM {
     
     BlockRenderLayer getLayer();
     
-    ResourceLocation[] getAdditionalTextures();
+    String[] getAdditionalTextures();
     
     @Nullable String getProxy();
 
@@ -63,15 +64,18 @@ public interface IMetadataSectionCTM {
             }
         }
         return meta.getType().makeTexture(new TextureInfo(
-                Arrays.stream(ObjectArrays.concat(sprite.getName(), meta.getAdditionalTextures()))
-                        .map(rl -> new Material(TextureAtlas.LOCATION_BLOCKS, rl))
+                Arrays.stream(ObjectArrays.concat(sprite.getName().toString(), meta.getAdditionalTextures()))
+                        .filter(s -> !s.startsWith("#"))
+                        .map(rl -> new Material(TextureAtlas.LOCATION_BLOCKS, new ResourceLocation(rl)))
                         .map(bakedTextureGetter)
                         .toArray(TextureAtlasSprite[]::new),
                 Optional.of(meta.getExtraData()), 
                 meta.getLayer()
         ));
     }
-    
+
+    void merge(IMetadataSectionCTM iMetadataSectionCTM);
+
     @ToString
     @Getter
     class V1 implements IMetadataSectionCTM {
@@ -79,12 +83,30 @@ public interface IMetadataSectionCTM {
         private ITextureType type = TextureTypeRegistry.getType("NORMAL");
         private BlockRenderLayer layer = null;
         private String proxy;
-        private ResourceLocation[] additionalTextures = new ResourceLocation[0];
+        private String[] additionalTextures = new String[0];
         private JsonObject extraData = new JsonObject();
 
         @Override
         public int getVersion() {
             return 1;
+        }
+
+        @Override
+        public void merge(@Nonnull IMetadataSectionCTM other) {
+            if (type == TextureTypeRegistry.getType("NORMAL")) {
+                type = other.getType();
+            }
+            if (this.proxy == null) {
+                this.proxy = other.getProxy();
+            }
+
+            if (this.layer == null) {
+                this.layer = other.getLayer();
+            }
+            this.additionalTextures = ArrayUtils.addAll(this.additionalTextures, other.getAdditionalTextures());
+            if (this.extraData.isJsonNull()) {
+                this.extraData = other.getExtraData();
+            }
         }
 
         public static IMetadataSectionCTM fromJson(JsonObject obj) throws JsonParseException {
@@ -128,11 +150,11 @@ public interface IMetadataSectionCTM {
                 JsonElement texturesEle = obj.get("textures");
                 if (texturesEle.isJsonArray()) {
                     JsonArray texturesArr = texturesEle.getAsJsonArray();
-                    ret.additionalTextures = new ResourceLocation[texturesArr.size()];
+                    ret.additionalTextures = new String[texturesArr.size()];
                     for (int i = 0; i < texturesArr.size(); i++) {
                         JsonElement e = texturesArr.get(i);
                         if (e.isJsonPrimitive() && e.getAsJsonPrimitive().isString()) {
-                            ret.additionalTextures[i] = new ResourceLocation(e.getAsString());
+                            ret.additionalTextures[i] = e.getAsString();
                         }
                     }
                 }

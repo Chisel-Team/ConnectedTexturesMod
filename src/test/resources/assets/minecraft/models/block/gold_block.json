@@ -1,0 +1,12 @@
+{
+    "parent": "block/util_cube_glow_5_all",
+    "textures": {
+        "glow_4": "minecraft:block/gold_block",
+        "glow_3": "minecraft:block/gold_block",
+        "glow_2": "minecraft:block/gold_block",
+        "glow_1": "minecraft:block/gold_block",
+        "glow_0": "minecraft:block/tiles_small",
+        "ctm": "ctm:block/tiles_small",
+        "particle": "minecraft:block/gold_block"
+    }
+}

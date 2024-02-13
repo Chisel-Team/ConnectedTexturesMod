@@ -10,6 +10,7 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
+import net.minecraft.client.renderer.block.model.MultiVariant;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 
 import com.google.common.collect.Sets;
@@ -30,6 +31,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import team.chisel.ctm.CTM;
+import team.chisel.ctm.client.BlockModelExtension;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 import team.chisel.ctm.client.model.ModelBakedCTM;
 import team.chisel.ctm.client.model.ModelCTM;
@@ -61,17 +63,17 @@ public enum TextureMetadataHandler {
                         event.addSprite(proxysprite);
                         if (proxymeta != null) {
                             // Load proxy's additional textures
-                            for (ResourceLocation r : proxymeta.getAdditionalTextures()) {
-                            	if (registeredTextures.add(r)) {
-                            		event.addSprite(r);
+                            for (String r : proxymeta.getAdditionalTextures()) {
+                            	if (registeredTextures.add(new ResourceLocation(r))) {
+                            		event.addSprite(new ResourceLocation(r));
                             	}
                             }
                         }
                     }
                     // Load additional textures
-                    for (ResourceLocation r : metadata.getAdditionalTextures()) {
-                        if (registeredTextures.add(r)) {
-                            event.addSprite(r);
+                    for (String r : metadata.getAdditionalTextures()) {
+                        if (registeredTextures.add(new ResourceLocation(r))) {
+                            event.addSprite(new ResourceLocation(r));
                         }
                     }
                 }

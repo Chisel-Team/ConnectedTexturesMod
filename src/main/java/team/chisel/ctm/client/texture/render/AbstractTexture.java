@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import org.apache.commons.lang3.ArrayUtils;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
@@ -99,5 +100,10 @@ public abstract class AbstractTexture<T extends ITextureType> implements ICTMTex
             q = q.setFullbright(fullbright);
         }
         return q;
+    }
+
+    @Override
+    public void addSprite(TextureAtlasSprite sprite) {
+        sprites = ArrayUtils.add(sprites, sprite);
     }
 }
