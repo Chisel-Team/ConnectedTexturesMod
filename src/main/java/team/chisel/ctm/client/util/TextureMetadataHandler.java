@@ -135,10 +135,6 @@ public enum TextureMetadataHandler {
                         continue;
                     }
 
-                    if (model instanceof BlockModelExtension extension) {
-                        //shouldWrap = !extension.getMetaOverrides().isEmpty();
-                    }
-
                     try {
                         Set<Material> textures = Sets.newHashSet(model.getMaterials(event.getModelLoader()::getModel, Sets.newHashSet()));
                     // FORGE WHY
