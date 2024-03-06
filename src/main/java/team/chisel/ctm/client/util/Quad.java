@@ -24,7 +24,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.model.pipeline.QuadBakingVertexConsumer;
+import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.util.NonnullType;
 

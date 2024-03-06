@@ -33,13 +33,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraftforge.registries.ForgeRegistries;
 
 public class BlockstatePredicateParser {
     
@@ -153,7 +153,7 @@ public class BlockstatePredicateParser {
         public Predicate<BlockState> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (json.isJsonObject()) {
                 JsonObject obj = json.getAsJsonObject();
-                Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(GsonHelper.getAsString(obj, "block")));
+                Block block = BuiltInRegistries.BLOCK.get(new ResourceLocation(GsonHelper.getAsString(obj, "block")));
                 if (block == Blocks.AIR) {
                     return EMPTY;
                 }

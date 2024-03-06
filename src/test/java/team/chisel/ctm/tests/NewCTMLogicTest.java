@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 
+import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
+import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer.Buffered;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -17,10 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.client.model.pipeline.QuadBakingVertexConsumer;
-import net.minecraftforge.client.model.pipeline.QuadBakingVertexConsumer.Buffered;
 import team.chisel.ctm.api.texture.ISubmap;
-import team.chisel.ctm.client.newctm.CTMLogicBakery;
 import team.chisel.ctm.client.newctm.CustomCTMLogic;
 import team.chisel.ctm.client.newctm.CTMLogicBakery.OutputFace;
 import team.chisel.ctm.client.newctm.json.CTMDefinitionManager;

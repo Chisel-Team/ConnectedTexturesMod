@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[38,)"
+loaderVersion="[2,)"
 issueTrackerURL="https://github.com/Chisel-Team/ConnectedTexturesMod/issues/"
 license="GPL-2.0"
 
@@ -14,9 +14,12 @@ license="GPL-2.0"
     Allows resource packs to add connected textures, emissive rendering, and much more.
     '''
 
+[[mixins]]
+    config = "ctm.mixins.json"
+
 [[dependencies.ctm]]
-    modId="forge"
-    mandatory=true
-    versionRange="[38.0.17,)"
+    modId="neoforge"
+    type="required"
+    versionRange="[20.4.174,)"
     ordering="NONE"
     side="BOTH"

@@ -15,8 +15,8 @@ import com.google.common.collect.Multimap;
 
 import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.forgespi.language.ModFileScanData;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforgespi.language.ModFileScanData;
 import team.chisel.ctm.api.texture.ITextureType;
 import team.chisel.ctm.api.texture.TextureType;
 

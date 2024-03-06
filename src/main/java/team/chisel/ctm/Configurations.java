@@ -1,10 +1,10 @@
 package team.chisel.ctm;
 
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod.EventBusSubscriber;
+import net.neoforged.fml.common.Mod.EventBusSubscriber.Bus;
+import net.neoforged.fml.event.config.ModConfigEvent;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 
 @EventBusSubscriber(modid = CTM.MOD_ID, bus = Bus.MOD)

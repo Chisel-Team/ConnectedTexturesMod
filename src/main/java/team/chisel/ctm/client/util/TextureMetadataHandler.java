@@ -23,10 +23,10 @@ import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.event.ModelEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.neoforged.neoforge.client.event.ModelEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import team.chisel.ctm.CTM;
 import team.chisel.ctm.client.mixin.ModelBakerImplAccessor;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
@@ -111,7 +111,7 @@ public enum TextureMetadataHandler {
     @SubscribeEvent(priority = EventPriority.LOWEST) // low priority to capture all event-registered models
     @SneakyThrows
     public void onModelBake(ModelEvent.ModifyBakingResult event) {
-        Map<ResourceLocation, UnbakedModel> stateModels = ObfuscationReflectionHelper.getPrivateValue(ModelBakery.class, event.getModelBakery(), "f_119212_");
+        Map<ResourceLocation, UnbakedModel> stateModels = ObfuscationReflectionHelper.getPrivateValue(ModelBakery.class, event.getModelBakery(), "unbakedCache");
         Map<ResourceLocation, BakedModel> models = event.getModels();
         for (Map.Entry<ResourceLocation, BakedModel> entry : models.entrySet()) {
             ResourceLocation rl = entry.getKey();
@@ -182,7 +182,7 @@ public enum TextureMetadataHandler {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @SubscribeEvent
     public void onModelBake(ModelEvent.BakingCompleted event) {
-        var cache = ObfuscationReflectionHelper.<Map, ModelBakery>getPrivateValue(ModelBakery.class, event.getModelBakery(), "f_119213_");
+        var cache = ObfuscationReflectionHelper.<Map, ModelBakery>getPrivateValue(ModelBakery.class, event.getModelBakery(), "bakedCache");
         var cacheCopy = Map.copyOf(cache);
         cache.clear();
         for (var e : event.getModels().entrySet()) {

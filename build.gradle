@@ -1,35 +1,21 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        maven { url = 'https://maven.parchmentmc.org' }
-        maven {
-            name = "sonatype"
-            url = "https://oss.sonatype.org/content/repositories/snapshots/"
-        }
-    	maven { url = 'https://repo.spongepowered.org/maven' }
-    }
-    dependencies {
-        classpath "org.spongepowered:mixingradle:0.7-SNAPSHOT"
-        classpath 'org.parchmentmc:librarian:1.+'
-        classpath 'org.ajoberstar:gradle-git:0.10.1'
-    }
-}
 plugins {
     id 'maven-publish'
     id 'eclipse'
-    id 'net.neoforged.gradle' version '[6.0.18,6.2)'
-    id 'io.freefair.lombok' version '8.1.0'
+    id 'idea'
+    id 'org.ajoberstar.grgit.service' version '5.2.2'
+    id 'net.neoforged.gradle.userdev' version '7.0.96'//https://projects.neoforged.net/neoforged/neogradle
+    id 'io.freefair.lombok' version '8.6'
     id 'com.matthewprenger.cursegradle' version '1.4.0'
 }
-apply plugin: 'org.spongepowered.mixin'
-apply plugin: 'org.parchmentmc.librarian.forgegradle'
 
-import org.ajoberstar.grgit.Grgit
+tasks.named('wrapper', Wrapper).configure {
+    //Define wrapper values here so as to not have to always do so when updating gradlew.properties
+    gradleVersion = '8.6'
+}
 
-def repo = Grgit.open(project.file('.'))
-project.ext.gitHash = repo.log().find().abbreviatedId
+project.ext.gitHash = grgitService.service.get().grgit.log().find().abbreviatedId
 
-boolean dev = System.getenv('RELEASE') == null || System.getenv('RELEASE').equals('false');
+boolean dev = System.getenv('RELEASE') == null || System.getenv('RELEASE') == 'false'
 
 ext.buildnumber = 0
 project.buildnumber = System.getenv('BUILD_NUMBER') != null ? System.getenv('BUILD_NUMBER') : project.ext.gitHash
@@ -39,86 +25,48 @@ group = "team.chisel.ctm" // http://maven.apache.org/guides/mini/guide-naming-co
 archivesBaseName = dev ? "CTM_DEV" : "CTM"
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-minecraft {
-    mappings channel: 'parchment', version: '2023.07.30-1.20.1'
-    
-    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+minecraft.accessTransformers {
+    file(file('src/main/resources/META-INF/accesstransformer.cfg'))
+}
 
-    // default run configurations.
-    // these can be tweaked, removed, or duplicated as needed.
-    runs {
-        client {
-            taskName 'ctm_client'
-            workingDirectory project.file('run')
+runs {
+    configureEach { net.neoforged.gradle.dsl.common.runs.run.Run run ->
+        run.workingDirectory(file("run"))
 
-            // Recommended logging level for the console
-            property 'forge.logging.console.level', 'debug'
-            arg '-mixin.config=ctm.mixins.json'
+        run.modSources(sourceSets.main, sourceSets.test)
 
-            mods {
-                ctm {
-                    source sourceSets.main
-                    source sourceSets.test
-                }
-            }
-        }
-
-        server {
-            taskName 'ctm_server'
-            workingDirectory project.file('run')
-
-            // Recommended logging level for the console
-            property 'forge.logging.console.level', 'debug'
-            arg '-mixin.config=ctm.mixins.json'
-
-            mods {
-                ctm {
-                    source sourceSets.main
-                    source sourceSets.test
-                }
-            }
-        }
+        // Recommended logging level for the console
+        run.systemProperty('forge.logging.console.level', 'debug')
+    }
+    client {
+    }
+    server {
     }
 }
 
 compileJava.options.encoding = 'UTF-8'
 javadoc.options.encoding = 'UTF-8'
 
-// Workaround for SpongePowered/MixinGradle#38
-afterEvaluate {
-    tasks.configureReobfTaskForReobfJar.mustRunAfter(tasks.compileJava)
-    tasks.configureReobfTaskForReobfJarJar.mustRunAfter(tasks.compileJava)
-}
-
 jar {
     manifest {
         attributes(["Specification-Title": "ctm",
                     "Specification-Vendor": "chisel-team",
-                    "Specification-Version": "25.0", // We are version 1 of the modlauncher specification
+                    "Specification-Version": "25.0",
                     "Implementation-Title": project.name,
                     "Implementation-Version": "${version}",
                     "Implementation-Vendor" :"chisel-team",
                     "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                    "MixinConfigs": "ctm.mixins.json"],)
+                    ])
     }
 }
 
 repositories {
     mavenLocal()
-    maven {
-        name = 'sponge'
-    	url = 'https://repo.spongepowered.org/repository/maven-public/'
-    	content {
-    	    includeGroup "org.spongepowered"
-    	}
-    }
 }
 
 dependencies {
-    minecraft 'net.neoforged:forge:' + minecraft_version + '-' + forge_version
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
-
-    annotationProcessor 'org.spongepowered:mixin:0.8.5-SNAPSHOT:processor'
+    implementation "net.neoforged:neoforge:${forge_version}"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 }
 
 test {
@@ -130,35 +78,31 @@ test {
 }
 
 lombok {
-    version = "1.18.28"
+    version = "1.18.30"
 }
 
 // Create API jar with sources and compiled files
-task apiJar(type: Jar) {
+tasks.register('apiJar', Jar) {
+    duplicatesStrategy(DuplicatesStrategy.FAIL)
+    archiveClassifier.set("api")
     from sourceSets.main.allSource
     from sourceSets.main.output
     include 'team/chisel/ctm/api/**/*'
-    archiveClassifier = 'api'
-}
-
-mixin {
-    add sourceSets.main, "ctm.refmap.json"
 }
 
 publishing {
     tasks.publish.dependsOn 'build'
-    publications {
-        mavenJava(MavenPublication) {
-            artifactId = 'CTM'
-            artifact jar
+    publications { PublicationContainer publicationContainer ->
+        publicationContainer.register("mavenJava", MavenPublication) { MavenPublication publication ->
+            publication.artifactId = 'CTM'
+            publication.artifacts = [jar, apiJar]
             //artifact sourceJar
-            artifact apiJar
         }
     }
 
     repositories {
         if (project.hasProperty('mavendir')) {
-            maven { url mavendir }
+            maven { url project.property('mavendir') }
         }
     }
 }
@@ -179,8 +123,8 @@ String getChangelogText() {
                 temp = "<h2>$temp</h2>"
             } else if (it.startsWith('-')) {
                 temp = "&nbsp;&nbsp;&nbsp;$temp"
-                temp = temp.replaceAll("(\\S+\\/\\S+)#([0-9]+)\\b", "<a href=\"https://github.com/\$1/issues/\$2\">\$0</a>");
-                temp = temp.replaceAll("#([0-9]+)\\b(?!<\\/a>)", "<a href=\"https://github.com/$github_project/issues/\$1\">\$0</a>");
+                temp = temp.replaceAll("(\\S+\\/\\S+)#([0-9]+)\\b", "<a href=\"https://github.com/\$1/issues/\$2\">\$0</a>")
+                temp = temp.replaceAll("#([0-9]+)\\b(?!<\\/a>)", "<a href=\"https://github.com/$github_project/issues/\$1\">\$0</a>")
             } else {
                 temp = "<h4>$temp</h4>"
             }
@@ -198,12 +142,12 @@ tasks.curseforge.enabled = !dev && project.hasProperty('curseforge_key')
     
 curseforge {
     if (project.hasProperty('curseforge_key')) {
-        apiKey = project.curseforge_key
+        apiKey = project.property('curseforge_key')
     }
 
     project {
         id = project.projectId
-        changelog = System.getenv('CHANGELOG') == null || System.getenv('CHANGELOG').equals('none') ? getChangelogText() : System.getenv('CHANGELOG')
+        changelog = System.getenv('CHANGELOG') == null || System.getenv('CHANGELOG') == 'none' ? getChangelogText() : System.getenv('CHANGELOG')
         changelogType = 'html'
         releaseType = project.curse_type
         mainArtifact(jar) {

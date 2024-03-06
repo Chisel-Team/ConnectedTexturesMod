@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraftforge.client.model.data.ModelDataManager;
+import net.neoforged.neoforge.client.model.data.ModelDataManager;
 
 /**
  * Used by render state creation to avoid unnecessary block lookups through the world.

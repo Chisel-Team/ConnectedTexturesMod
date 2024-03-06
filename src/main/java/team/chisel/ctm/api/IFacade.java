@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * To be implemented on blocks that "hide" another block inside, so connected textures can still be accomplished.
  * 
- * @deprecated Implement {@link net.minecraftforge.common.extensions.IForgeBlock#getAppearance(BlockState, BlockAndTintGetter, BlockPos, Direction, BlockState, BlockPos)}
+ * @deprecated Implement {@link net.neoforged.neoforge.common.extensions.IBlockExtension#getAppearance(BlockState, BlockAndTintGetter, BlockPos, Direction, BlockState, BlockPos)}
  */
 @Deprecated
 public interface IFacade {

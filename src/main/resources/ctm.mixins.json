@@ -2,10 +2,9 @@
   "required": true,
   "package": "team.chisel.ctm.client.mixin",
   "compatibilityLevel": "JAVA_17",
-  "refmap": "ctm.refmap.json",
   "mixins": [
     "TextureScrapingMixin",
-	"ModelBakerImplAccessor"
+	  "ModelBakerImplAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

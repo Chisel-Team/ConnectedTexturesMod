@@ -41,7 +41,7 @@ import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.model.geometry.IGeometryBakingContext;
+import net.neoforged.neoforge.client.model.geometry.IGeometryBakingContext;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -49,7 +49,6 @@ import team.chisel.ctm.client.texture.IMetadataSectionCTM;
 import team.chisel.ctm.client.texture.render.TextureNormal;
 import team.chisel.ctm.client.texture.type.TextureTypeNormal;
 import team.chisel.ctm.client.util.BlockRenderLayer;
-import team.chisel.ctm.client.util.CTMPackReloadListener;
 import team.chisel.ctm.client.util.ResourceUtil;
 
 public class ModelCTM implements IModelCTM {
