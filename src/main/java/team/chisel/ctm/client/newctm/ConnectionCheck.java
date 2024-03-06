@@ -67,7 +67,7 @@ public class ConnectionCheck {
       
         BlockPos obscuringPos = connection.relative(dir);
 
-        boolean disableObscured = disableObscuredFaceCheck.orElse(Configurations.connectInsideCTM);
+        boolean disableObscured = disableObscuredFaceCheck.orElseGet(Configurations.INSTANCE.connectInsideCTM);
 
         BlockState con = getConnectionState(world, connection, dir, current);
         BlockState obscuring = disableObscured ? null : getConnectionState(world, obscuringPos, dir, current);

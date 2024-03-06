@@ -109,7 +109,7 @@ public class TextureCustomCTM<T extends TextureTypeCustom> extends AbstractTextu
     @Override
     public List<BakedQuad> transformQuad(BakedQuad bq, ITextureContext context, int quadGoal) {
         Quad quad = makeQuad(bq, context);
-        if (context == null || Configurations.disableCTM) {
+        if (context == null || Configurations.isDisabled()) {
             return Collections.singletonList(quad.setUVs(sprites[0], getFallbackUvs()).rebake());
         }
 

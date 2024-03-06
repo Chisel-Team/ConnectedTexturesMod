@@ -27,7 +27,7 @@ public class TextureTypeCTM implements ITextureType {
 
     @Override
     public int getQuadsPerSide() {
-        return Configurations.disableCTM ? 1 : 4;
+        return Configurations.isDisabled() ? 1 : 4;
     }
 
     @Override

@@ -42,11 +42,12 @@ public class CTM {
     @Getter
     private CTMPackReloadListener reloadListener;
 
-    public CTM(IEventBus modBus) {
+    public CTM(ModContainer modContainer, IEventBus modBus) {
     	instance = this;
-        if (FMLEnvironment.dist.isClient()) {//TODO: Test on dedicated server
+        if (FMLEnvironment.dist.isClient()) {
     	    modBus.addListener(this::modelRegistry);
     	    modBus.register(TextureMetadataHandler.INSTANCE);
+            Configurations.register(modContainer, modBus);
     	    
             TextureTypeRegistry.scan();
 
