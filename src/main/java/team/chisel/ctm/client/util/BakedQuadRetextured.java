@@ -23,23 +23,13 @@ public class BakedQuadRetextured extends BakedQuad {
    private void remapQuad() {
       for(int i = 0; i < 4; ++i) {
           int offset = i * IQuadTransformer.STRIDE + IQuadTransformer.UV0;
-          this.vertices[offset] = Float.floatToRawIntBits(this.texture.getU(getUnInterpolatedU(this.sprite, Float.intBitsToFloat(this.vertices[offset]))));
-          this.vertices[offset + 1] = Float.floatToRawIntBits(this.texture.getV(getUnInterpolatedV(this.sprite, Float.intBitsToFloat(this.vertices[offset + 1]))));
+          this.vertices[offset] = Float.floatToRawIntBits(this.texture.getU(this.sprite.getUOffset(Float.intBitsToFloat(this.vertices[offset]))));
+          this.vertices[offset + 1] = Float.floatToRawIntBits(this.texture.getV(this.sprite.getUOffset(Float.intBitsToFloat(this.vertices[offset + 1]))));
       }
    }
    
    @Override
 	public TextureAtlasSprite getSprite() {
       return texture;
-	}
-
-	private static float getUnInterpolatedU(TextureAtlasSprite sprite, float u) {
-		float f = sprite.getU1() - sprite.getU0();
-		return (u - sprite.getU0()) / f * 16.0F;
-	}
-	
-	private static float getUnInterpolatedV(TextureAtlasSprite sprite, float v) {
-		float f = sprite.getV1() - sprite.getV0();
-		return (v - sprite.getV0()) / f * 16.0F;
 	}
 }

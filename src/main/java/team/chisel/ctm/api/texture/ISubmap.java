@@ -20,11 +20,11 @@ public interface ISubmap {
     float getHeight();
 
     default float getInterpolatedU(TextureAtlasSprite sprite, float u) {
-        return sprite.getU(getXOffset() + u / getWidth());
+        return sprite.getU((getXOffset() + u / getWidth()) / 16F);
     }
 
     default float getInterpolatedV(TextureAtlasSprite sprite, float v) {
-        return sprite.getV(getYOffset() + v / getWidth());
+        return sprite.getV((getYOffset() + v / getHeight()) / 16F);
     }
 
     default float[] toArray() {

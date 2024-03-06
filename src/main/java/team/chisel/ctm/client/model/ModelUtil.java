@@ -6,6 +6,7 @@ import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemModelShaper;
+import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.model.RegistryAwareItemModelShaper;
@@ -22,12 +23,12 @@ public class ModelUtil {
      */
     @SuppressWarnings("UnstableApiUsage")
     @SneakyThrows
-    public static @Nullable ModelResourceLocation getMesh(ItemStack stack) {
+    public static ModelResourceLocation getMesh(ItemStack stack) {
         ItemModelShaper shaper = Minecraft.getInstance().getItemRenderer().getItemModelShaper();
         if (shaper instanceof RegistryAwareItemModelShaper registryAwareShaper) {
             return registryAwareShaper.getLocation(stack);
         }
-        return null;
+        return ModelBakery.MISSING_MODEL_LOCATION;
     }
 
 }

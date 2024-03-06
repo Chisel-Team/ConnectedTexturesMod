@@ -22,10 +22,13 @@ public class TextureInfo {
 
     private BlockRenderLayer renderLayer;
 
-    public TextureInfo(TextureAtlasSprite[] sprites, Optional<JsonObject> info, BlockRenderLayer layer){
+    private boolean isProxy;
+
+    public TextureInfo(TextureAtlasSprite[] sprites, Optional<JsonObject> info, BlockRenderLayer layer, boolean isProxy){
         this.sprites = sprites;
         this.info = info;
         this.renderLayer = layer;
+        this.isProxy = isProxy;
     }
 
     /**
@@ -49,6 +52,13 @@ public class TextureInfo {
      */
     public BlockRenderLayer getRenderLayer(){
         return this.renderLayer;
+    }
+
+    /**
+     * Gets whether the first texture was proxied.
+     */
+    public boolean isProxy(){
+        return this.isProxy;
     }
 
     /**

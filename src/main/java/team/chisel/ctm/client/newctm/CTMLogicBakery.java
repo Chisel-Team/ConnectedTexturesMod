@@ -101,7 +101,7 @@ public class CTMLogicBakery {
     }
     
     @Value
-    public class OutputFace {
+    public static class OutputFace {
         int tex;
         ISubmap uvs;
         ISubmap face;

@@ -13,6 +13,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.neoforged.neoforge.client.RenderTypeHelper;
 import net.neoforged.neoforge.client.model.BakedModelWrapper;
@@ -64,12 +65,12 @@ public abstract class AbstractCTMBakedModel extends BakedModelWrapper<BakedModel
     private static Cache<ModelResourceLocation, AbstractCTMBakedModel> itemcache = CacheBuilder.newBuilder()
             .expireAfterAccess(10, TimeUnit.SECONDS)
             .maximumSize(0)
-            .<ModelResourceLocation, AbstractCTMBakedModel>build();
+            .build();
     private static Cache<State, AbstractCTMBakedModel> modelcache = CacheBuilder.newBuilder()
             .expireAfterAccess(1, TimeUnit.MINUTES)
 //            .maximumSize(5000)
             .maximumSize(0)
-            .<State, AbstractCTMBakedModel>build();
+            .build();
 
     public static void invalidateCaches()
     {
@@ -87,16 +88,16 @@ public abstract class AbstractCTMBakedModel extends BakedModelWrapper<BakedModel
         @Override
         @SneakyThrows
         public BakedModel resolve(BakedModel originalModel, ItemStack stack, ClientLevel world, LivingEntity entity, int unknown) {
+            ModelResourceLocation mrl = ModelUtil.getMesh(stack);
+            if (mrl == ModelBakery.MISSING_MODEL_LOCATION) {
+                // this must be a missing/invalid model
+                return Minecraft.getInstance().getBlockRenderer().getBlockModelShaper().getModelManager().getMissingModel();
+            }
             Block block = null;
             if (stack.getItem() instanceof BlockItem blockItem) {
                 block = blockItem.getBlock();
             }
             final BlockState state = block == null ? null : block.defaultBlockState();
-            ModelResourceLocation mrl = ModelUtil.getMesh(stack);
-            if (mrl == null) {
-                // this must be a missing/invalid model
-                return Minecraft.getInstance().getBlockRenderer().getBlockModelShaper().getModelManager().getMissingModel();
-            }
             RandomSource random = RandomSource.create();
             random.setSeed(42L);
             return itemcache.get(mrl, () -> createModel(state, model, getParent(random), null, random, ModelData.EMPTY, null));
@@ -199,12 +200,10 @@ public abstract class AbstractCTMBakedModel extends BakedModelWrapper<BakedModel
 	            ProfileUtil.endAndStart("model_creation"); // state_creation
 	            baked = modelcache.get(new State(state, serialized, parent, layer), () -> createModel(state, model, parent, ctxList, rand, extraData, layer));
 	            ProfileUtil.end(); // model_creation
-	        } else if (state != null)  {
+	        } else {
 	            ProfileUtil.start("model_creation");
 	            baked = modelcache.get(new State(state, null, parent, layer), () -> createModel(state, model, parent, null, rand, extraData, layer));
 	            ProfileUtil.end(); // model_creation
-	        } else {
-	            throw new IllegalStateException("Unreachable? Block: " + state + "   layer: " + layer);
 	        }
         } catch (Exception e) {
             Throwables.throwIfUnchecked(e);

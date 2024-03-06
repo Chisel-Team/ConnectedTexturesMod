@@ -12,19 +12,19 @@ public class Submap implements ISubmap {
     
     public static final ISubmap X1 = fromPixelScale(16, 16, 0, 0);
     
-    public static final ISubmap[][] X2 = new ISubmap[][] {
+    public static final ISubmap[][] X2 = {
         { fromPixelScale(8, 8, 0, 0), fromPixelScale(8, 8, 8, 0) },
         { fromPixelScale(8, 8, 0, 8), fromPixelScale(8, 8, 8, 8) }
     };
     
     private static final float DIV3 = 16 / 3f;
-    public static final ISubmap[][] X3 = new ISubmap[][] {
+    public static final ISubmap[][] X3 = {
         { fromPixelScale(DIV3, DIV3, 0, 0),         fromPixelScale(DIV3, DIV3, DIV3, 0),        fromPixelScale(DIV3, DIV3, DIV3 * 2, 0) },
         { fromPixelScale(DIV3, DIV3, 0, DIV3),      fromPixelScale(DIV3, DIV3, DIV3, DIV3),     fromPixelScale(DIV3, DIV3, DIV3 * 2, DIV3) },
         { fromPixelScale(DIV3, DIV3, 0, DIV3 * 2),  fromPixelScale(DIV3, DIV3, DIV3, DIV3 * 2), fromPixelScale(DIV3, DIV3, DIV3 * 2, DIV3 * 2) },
     };
     
-    public static final ISubmap[][] X4 = new ISubmap[][] {
+    public static final ISubmap[][] X4 = {
         { fromPixelScale(4, 4, 0, 0),   fromPixelScale(4, 4, 4, 0),     fromPixelScale(4, 4, 8, 0),     fromPixelScale(4, 4, 12, 0) },
         { fromPixelScale(4, 4, 0, 4),   fromPixelScale(4, 4, 4, 4),     fromPixelScale(4, 4, 8, 4),     fromPixelScale(4, 4, 12, 4) },
         { fromPixelScale(4, 4, 0, 8),   fromPixelScale(4, 4, 4, 8),     fromPixelScale(4, 4, 8, 8),     fromPixelScale(4, 4, 12, 8) },

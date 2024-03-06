@@ -18,6 +18,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.Configurations;
+import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.newctm.CTMLogicBakery.OutputFace;
@@ -27,6 +28,7 @@ import team.chisel.ctm.client.util.CTMLogic.StateComparisonCallback;
 import team.chisel.ctm.client.util.ParseUtils;
 import team.chisel.ctm.client.util.PartialTextureAtlasSprite;
 import team.chisel.ctm.client.util.Quad;
+import team.chisel.ctm.client.util.Submap;
 
 @ParametersAreNonnullByDefault
 @Accessors(fluent = true)
@@ -82,7 +84,7 @@ public class TextureCustomCTM<T extends TextureTypeCustom> extends AbstractTextu
         this.ignoreStates = info.getInfo().map(obj -> GsonHelper.getAsBoolean(obj, "ignore_states", false)).orElse(false);
         this.connectionChecks = info.getInfo().map(obj -> predicateParser.parse(obj.get("connect_to"))).orElse(null);
         //Crop the particle sprite so that it only contains the bit it should
-        this.particleSprite = PartialTextureAtlasSprite.createPartial(super.getParticle(), type.getFallbackUvs());
+        this.particleSprite = PartialTextureAtlasSprite.createPartial(super.getParticle(), getFallbackUvs());
     }
 
     @Override
@@ -99,11 +101,16 @@ public class TextureCustomCTM<T extends TextureTypeCustom> extends AbstractTextu
         return this.particleSprite;
     }
 
+    private ISubmap getFallbackUvs() {
+        //TODO: Is this the proper submap to use when not a proxy?
+        return isProxy ? type.getFallbackUvs() : Submap.X1;
+    }
+
     @Override
     public List<BakedQuad> transformQuad(BakedQuad bq, ITextureContext context, int quadGoal) {
         Quad quad = makeQuad(bq, context);
         if (context == null || Configurations.disableCTM) {
-            return Collections.singletonList(quad.setUVs(sprites[0], type.getFallbackUvs()).rebake());
+            return Collections.singletonList(quad.setUVs(sprites[0], getFallbackUvs()).rebake());
         }
 
         OutputFace[] ctm = ((TextureContextCustomCTM)context).getCTM(bq.getDirection()).getCachedSubmaps();

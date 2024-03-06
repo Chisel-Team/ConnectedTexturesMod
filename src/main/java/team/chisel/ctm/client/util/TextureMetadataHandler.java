@@ -28,7 +28,6 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import team.chisel.ctm.CTM;
-import team.chisel.ctm.client.mixin.ModelBakerImplAccessor;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 import team.chisel.ctm.client.model.ModelBakedCTM;
 import team.chisel.ctm.client.model.ModelCTM;
@@ -36,8 +35,7 @@ import team.chisel.ctm.client.model.ModelCTM;
 public enum TextureMetadataHandler {
 
     INSTANCE;
-	
-	private final Set<ResourceLocation> registeredTextures = new HashSet<>();
+
 	private final Object2BooleanMap<ResourceLocation> wrappedModels = new Object2BooleanLinkedOpenHashMap<>();
     private final Multimap<ResourceLocation, Material> scrapedTextures = HashMultimap.create();
 
@@ -178,7 +176,7 @@ public enum TextureMetadataHandler {
         ModelCTM modelchisel = new ModelCTM(model);
         return new ModelBakedCTM(modelchisel, object, null); 	
     }
-    
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @SubscribeEvent
     public void onModelBake(ModelEvent.BakingCompleted event) {
@@ -189,7 +187,7 @@ public enum TextureMetadataHandler {
             if (e.getValue() instanceof AbstractCTMBakedModel baked && 
                     baked.getModel() instanceof ModelCTM ctmModel && 
                     !ctmModel.isInitialized()) {
-                var baker = ModelBakerImplAccessor.createImpl(event.getModelBakery(), ($, m) -> m.sprite(), e.getKey());
+                var baker = event.getModelBakery().new ModelBakerImpl((rl, m) -> m.sprite(), e.getKey());
                 ctmModel.bake(baker, Material::sprite, BlockModelRotation.X0_Y0, e.getKey());
                 //Note: We have to clear the cache after baking each model to ensure that we can initialize and capture any textures
                 // that might be done by parent models
@@ -200,7 +198,6 @@ public enum TextureMetadataHandler {
     }
 
     public void invalidateCaches() {
-        registeredTextures.clear();
         wrappedModels.clear();
         scrapedTextures.clear();
     }

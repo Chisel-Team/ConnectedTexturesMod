@@ -93,7 +93,7 @@ public class ModelCTM implements IModelCTM {
                 JsonObject obj = e.getValue().getAsJsonObject();
                 if (!obj.has("ctm_version")) {
                     // This model can only be version 1, TODO improve this
-                    obj.add("ctm_version", new JsonPrimitive(1));
+                    obj.addProperty("ctm_version", 1);
                 }
                 meta = new IMetadataSectionCTM.Serializer().fromJson(obj);
             }
@@ -139,7 +139,7 @@ public class ModelCTM implements IModelCTM {
 	    textures.computeIfAbsent(sprite.contents().name(), s -> {
 	        ICTMTexture<?> tex;
 	        if (meta.isEmpty()) {
-	            tex = new TextureNormal(TextureTypeNormal.INSTANCE, new TextureInfo(new TextureAtlasSprite[] { sprite }, Optional.empty(), null));
+	            tex = new TextureNormal(TextureTypeNormal.INSTANCE, new TextureInfo(new TextureAtlasSprite[] { sprite }, Optional.empty(), null, false));
 	        } else {
 	            tex = meta.get().makeTexture(sprite, spriteGetter);
 	        }
