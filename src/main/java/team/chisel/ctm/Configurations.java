@@ -43,4 +43,11 @@ public class Configurations {
     public static boolean isDisabled() {
         return INSTANCE.disableCTM.get();
     }
+
+    public static boolean connectInsideCTM() {
+        if (INSTANCE.configSpec.isLoaded()) {
+            return INSTANCE.disableCTM.get();
+        }
+        return INSTANCE.disableCTM.getDefault();
+    }
 }
