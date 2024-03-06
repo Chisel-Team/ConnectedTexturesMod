@@ -5,8 +5,6 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Function;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.google.common.collect.ObjectArrays;
@@ -22,6 +20,8 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import team.chisel.ctm.CTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureType;
@@ -167,7 +167,7 @@ public interface IMetadataSectionCTM {
         }
 
         @Override
-        public @Nonnull String getMetadataSectionName() {
+        public @NotNull String getMetadataSectionName() {
             return SECTION_NAME;
         }
     }

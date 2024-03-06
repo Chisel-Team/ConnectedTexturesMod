@@ -15,9 +15,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
@@ -40,6 +37,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class BlockstatePredicateParser {
     
@@ -198,7 +197,7 @@ public class BlockstatePredicateParser {
             throw new JsonSyntaxException("Predicate deserialization expects an object or an array. Found: " + json);
         }
         
-        private Predicate<BlockState> compose(@Nullable Composition composition, @Nonnull Predicate<BlockState> child) {
+        private Predicate<BlockState> compose(@Nullable Composition composition, @NotNull Predicate<BlockState> child) {
             if (composition == null) {
                 return child;
             }
@@ -206,7 +205,7 @@ public class BlockstatePredicateParser {
         }
 
         @SuppressWarnings({ "rawtypes", "unchecked" })
-        private Predicate<BlockState> parsePredicate(@Nonnull Block block, JsonObject obj, JsonDeserializationContext context) {
+        private Predicate<BlockState> parsePredicate(@NotNull Block block, JsonObject obj, JsonDeserializationContext context) {
             ComparisonType compareFunc = GsonHelper.getAsObject(obj, "compare_func", ComparisonType.EQUAL, context, ComparisonType.class);
             obj.remove("compare_func");
             

@@ -7,11 +7,11 @@ import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
+import org.jetbrains.annotations.Nullable;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.client.newctm.CTMLogicBakery.OutputFace;
 

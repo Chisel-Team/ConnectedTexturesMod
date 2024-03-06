@@ -1,17 +1,16 @@
 package team.chisel.ctm.client.texture.ctx;
 
-import javax.annotation.Nonnull;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import org.jetbrains.annotations.NotNull;
 import team.chisel.ctm.api.texture.ITextureContext;
 
 public class TextureContextPosition implements ITextureContext {
 
-    protected @Nonnull
+    protected @NotNull
     BlockPos position;
 
-    public TextureContextPosition(@Nonnull BlockPos pos) {
+    public TextureContextPosition(@NotNull BlockPos pos) {
         this.position = pos;
     }
 
@@ -24,7 +23,7 @@ public class TextureContextPosition implements ITextureContext {
         return this;
     }
 
-    public @Nonnull BlockPos getPosition() {
+    public @NotNull BlockPos getPosition() {
         return position;
     }
 

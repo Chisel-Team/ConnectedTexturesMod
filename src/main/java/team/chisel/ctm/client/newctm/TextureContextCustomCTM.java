@@ -2,13 +2,12 @@ package team.chisel.ctm.client.newctm;
 
 import java.util.EnumMap;
 
-import javax.annotation.Nonnull;
-
-import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 
@@ -21,7 +20,7 @@ public class TextureContextCustomCTM implements ITextureContext {
 
     private long data;
 
-    public TextureContextCustomCTM(@Nonnull BlockState state, BlockAndTintGetter world, BlockPos pos, ICTMTexture<?> tex, ICTMLogic logic) {
+    public TextureContextCustomCTM(@NotNull BlockState state, BlockAndTintGetter world, BlockPos pos, ICTMTexture<?> tex, ICTMLogic logic) {
     	this.tex = tex;
     	this.logic = logic;
         ConnectionCheck connectionCheckOverride = null;
@@ -37,7 +36,7 @@ public class TextureContextCustomCTM implements ITextureContext {
         }
     }
     
-    protected ILogicCache createCTM(@Nonnull BlockState state, @Nullable ConnectionCheck connectionCheckOverride) {
+    protected ILogicCache createCTM(@NotNull BlockState state, @Nullable ConnectionCheck connectionCheckOverride) {
         return logic.cached(connectionCheckOverride);
     }
 

@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.google.common.collect.ObjectArrays;
@@ -22,6 +20,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.common.util.Lazy;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
@@ -109,16 +109,16 @@ public class ModelBakedCTM extends AbstractCTMBakedModel {
     }
 
     @Override
-    public @Nonnull TextureAtlasSprite getParticleIcon() {
+    public @NotNull TextureAtlasSprite getParticleIcon() {
         return wrapParticleIcon(super.getParticleIcon());
     }
 
     @Override
-    public @Nonnull TextureAtlasSprite getParticleIcon(@Nonnull ModelData data) {
+    public @NotNull TextureAtlasSprite getParticleIcon(@NotNull ModelData data) {
         return wrapParticleIcon(super.getParticleIcon(data));
     }
 
-    private @Nonnull TextureAtlasSprite wrapParticleIcon(@Nonnull TextureAtlasSprite particleIcon) {
+    private @NotNull TextureAtlasSprite wrapParticleIcon(@NotNull TextureAtlasSprite particleIcon) {
         return Optional.ofNullable(getModel().getTexture(particleIcon.contents().name()))
               .map(ICTMTexture::getParticle)
               .orElse(particleIcon);

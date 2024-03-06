@@ -1,7 +1,5 @@
 package team.chisel.ctm.client.model;
 
-import javax.annotation.Nullable;
-
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;

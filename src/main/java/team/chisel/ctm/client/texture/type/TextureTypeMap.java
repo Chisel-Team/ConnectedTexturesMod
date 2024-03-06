@@ -1,11 +1,10 @@
 package team.chisel.ctm.client.texture.type;
 
-import javax.annotation.Nonnull;
-
 import lombok.RequiredArgsConstructor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
@@ -27,7 +26,7 @@ public class TextureTypeMap implements ITextureType {
     }
     
     @Override
-    public ITextureContext getBlockRenderContext(BlockState state, BlockAndTintGetter world, @Nonnull BlockPos pos, ICTMTexture<?> tex) {
+    public ITextureContext getBlockRenderContext(BlockState state, BlockAndTintGetter world, @NotNull BlockPos pos, ICTMTexture<?> tex) {
         return type.getContext(pos, (TextureMap) tex);
     }
     

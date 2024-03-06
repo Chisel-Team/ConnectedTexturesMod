@@ -26,7 +26,6 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
 import team.chisel.ctm.api.texture.ISubmap;
-import team.chisel.ctm.api.util.NonnullType;
 
 @ParametersAreNonnullByDefault
 @ToString(of = { "vertices"})
@@ -145,7 +144,7 @@ public class Quad {
             return data == null ? new Vec2[]{ new Vec2(minU, minV), new Vec2(minU, maxV), new Vec2(maxU, maxV), new Vec2(maxU, minV) } : data;
         }
         
-        private Vec2[] normalize(Vec2 min, Vec2 max, @NonnullType Vec2... vecs) {
+        private Vec2[] normalize(Vec2 min, Vec2 max, @NotNull Vec2... vecs) {
             Vec2[] ret = new Vec2[vecs.length];
             for (int i = 0; i < ret.length; i++) {
                 ret[i] = normalize(min, max, vecs[i]);
@@ -157,7 +156,7 @@ public class Quad {
             return new Vec2(Quad.normalize(min.x, max.x, vec.x), Quad.normalize(min.y, max.y, vec.y));
         }
         
-        private Vec2[] lerp(Vec2 min, Vec2 max, @NonnullType Vec2... vecs) {
+        private Vec2[] lerp(Vec2 min, Vec2 max, @NotNull Vec2... vecs) {
             Vec2[] ret = new Vec2[vecs.length];
             for (int i = 0; i < ret.length; i++) {
                 ret[i] = lerp(min, max, vecs[i]);

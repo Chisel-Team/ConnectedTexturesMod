@@ -1,10 +1,9 @@
 package team.chisel.ctm.client.util;
 
-import javax.annotation.Nonnull;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.profiling.InactiveProfiler;
 import net.minecraft.util.profiling.ProfilerFiller;
+import org.jetbrains.annotations.NotNull;
 
 public class ProfileUtil {
     
@@ -16,7 +15,7 @@ public class ProfileUtil {
         }
     });
     
-    public static void start(@Nonnull String section) {
+    public static void start(@NotNull String section) {
         profiler.get().push(section);
     }
     
@@ -24,7 +23,7 @@ public class ProfileUtil {
         profiler.get().pop();
     }
     
-    public static void endAndStart(@Nonnull String section) {
+    public static void endAndStart(@NotNull String section) {
         profiler.get().popPush(section);
     }
 }

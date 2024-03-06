@@ -3,11 +3,11 @@ package team.chisel.ctm.client.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import org.jetbrains.annotations.Nullable;
 import team.chisel.ctm.client.newctm.LocalDirection;
 
 /**

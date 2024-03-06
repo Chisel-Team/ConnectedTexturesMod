@@ -2,8 +2,6 @@ package team.chisel.ctm.client.newctm;
 
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -11,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 import team.chisel.ctm.Configurations;
 import team.chisel.ctm.client.util.CTMLogic.StateComparisonCallback;
 

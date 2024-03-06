@@ -1,13 +1,12 @@
 package team.chisel.ctm.api;
 
-import javax.annotation.Nonnull;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 
 public interface IOffsetProvider {
     
-    @Nonnull
-    BlockPos getOffset(@Nonnull Level world, @Nonnull BlockPos pos);
+    @NotNull
+    BlockPos getOffset(@NotNull Level world, @NotNull BlockPos pos);
 
 }

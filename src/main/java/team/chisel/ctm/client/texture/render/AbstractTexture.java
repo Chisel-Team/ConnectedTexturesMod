@@ -3,7 +3,6 @@ package team.chisel.ctm.client.texture.render;
 import java.util.Arrays;
 import java.util.Collection;
 
-import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.google.gson.JsonElement;
@@ -15,10 +14,11 @@ import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.texture.ITextureType;
-import team.chisel.ctm.api.util.NonnullType;
 import team.chisel.ctm.api.util.TextureInfo;
 import team.chisel.ctm.client.util.BlockRenderLayer;
 import team.chisel.ctm.client.util.Quad;
@@ -37,7 +37,7 @@ public abstract class AbstractTexture<T extends ITextureType> implements ICTMTex
     protected BlockRenderLayer layer;
 
     @SuppressWarnings("null")
-    protected @NonnullType TextureAtlasSprite @NonnullType[] sprites;
+    protected @NotNull TextureAtlasSprite @NotNull[] sprites;
     protected boolean isProxy;
 
     @Deprecated

@@ -7,8 +7,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Nonnull;
-
 import org.apache.logging.log4j.message.ParameterizedMessage;
 
 import com.google.common.collect.HashMultimap;
@@ -27,6 +25,7 @@ import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.util.ObfuscationReflectionHelper;
+import org.jetbrains.annotations.NotNull;
 import team.chisel.ctm.CTM;
 import team.chisel.ctm.client.model.AbstractCTMBakedModel;
 import team.chisel.ctm.client.model.ModelBakedCTM;
@@ -172,7 +171,7 @@ public enum TextureMetadataHandler {
         }
     }
 
-    private @Nonnull BakedModel wrap(UnbakedModel model, BakedModel object) throws IOException {
+    private @NotNull BakedModel wrap(UnbakedModel model, BakedModel object) throws IOException {
         ModelCTM modelchisel = new ModelCTM(model);
         return new ModelBakedCTM(modelchisel, object, null); 	
     }

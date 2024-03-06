@@ -2,8 +2,6 @@ package team.chisel.ctm.client.util;
 
 import java.lang.ref.WeakReference;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.google.common.base.Preconditions;
@@ -19,6 +17,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.material.FluidState;
 import net.neoforged.neoforge.client.model.data.ModelDataManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Used by render state creation to avoid unnecessary block lookups through the world.
@@ -54,7 +54,7 @@ public class RegionCache implements BlockAndTintGetter {
         return ret;
     }
     
-    public @Nonnull RegionCache updateWorld(BlockAndTintGetter passthrough) {
+    public @NotNull RegionCache updateWorld(BlockAndTintGetter passthrough) {
         // We do NOT use getPassthrough() here so as to skip the null-validation - it's obviously valid to be null here
         if (this.passthrough.get() != passthrough) {
             stateCache.clear();

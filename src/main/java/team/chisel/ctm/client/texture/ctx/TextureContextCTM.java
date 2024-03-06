@@ -2,12 +2,11 @@ package team.chisel.ctm.client.texture.ctx;
 
 import java.util.EnumMap;
 
-import javax.annotation.Nonnull;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.client.texture.render.TextureCTM;
 import team.chisel.ctm.client.util.CTMLogic;
@@ -20,7 +19,7 @@ public class TextureContextCTM implements ITextureContext {
 
     private long data;
 
-    public TextureContextCTM(@Nonnull BlockState state, BlockAndTintGetter world, BlockPos pos, TextureCTM<?> tex) {
+    public TextureContextCTM(@NotNull BlockState state, BlockAndTintGetter world, BlockPos pos, TextureCTM<?> tex) {
     	this.tex = tex;
     	
         for (Direction face : Direction.values()) {
@@ -31,7 +30,7 @@ public class TextureContextCTM implements ITextureContext {
         }
     }
     
-    protected CTMLogic createCTM(@Nonnull BlockState state) {
+    protected CTMLogic createCTM(@NotNull BlockState state) {
         CTMLogic ret = CTMLogic.getInstance();
         tex.applyTo(ret.connectionCheck);
         return ret;

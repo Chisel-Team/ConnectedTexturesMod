@@ -11,8 +11,6 @@ import static net.minecraft.core.Direction.AxisDirection;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.google.gson.Gson;
@@ -22,7 +20,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import team.chisel.ctm.api.util.NonnullType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import team.chisel.ctm.client.newctm.ConnectionCheck;
 import team.chisel.ctm.client.newctm.LocalDirection;
 
@@ -60,9 +59,9 @@ public enum Dir implements LocalDirection, StringRepresentable {
 	    }
 	}
 
-	private @NonnullType Direction[] dirs;
+	private @NotNull Direction[] dirs;
 	
-	private @NonnullType BlockPos[] offsets = new BlockPos[6];
+	private @NotNull BlockPos[] offsets = new BlockPos[6];
 
 	Dir(Direction... dirs) {
 		this.dirs = dirs;
@@ -71,7 +70,7 @@ public enum Dir implements LocalDirection, StringRepresentable {
     private void buildCaches() {
         // Fill normalized dirs
         for (Direction normal : Direction.values()) {
-            @NonnullType Direction[] normalized;
+            @NotNull Direction[] normalized;
             if (normal == NORMAL) {
                 normalized = dirs;
             } else if (normal == NORMAL.getOpposite()) {
@@ -154,7 +153,7 @@ public enum Dir implements LocalDirection, StringRepresentable {
      * @return The offset BlockPos
      */
     @SuppressWarnings("null")
-    @Nonnull
+    @NotNull
     public BlockPos applyConnection(BlockPos pos, Direction side) {
         return pos.offset(getOffset(side));
     }
@@ -180,7 +179,7 @@ public enum Dir implements LocalDirection, StringRepresentable {
     }
     
     @Override
-    @Nonnull
+    @NotNull
     public BlockPos getOffset(Direction normal) {
         return offsets[normal.ordinal()];
     }

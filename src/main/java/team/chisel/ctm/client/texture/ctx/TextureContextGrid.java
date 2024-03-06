@@ -2,7 +2,6 @@ package team.chisel.ctm.client.texture.ctx;
 
 import java.util.EnumMap;
 
-import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.google.common.base.Preconditions;
@@ -11,6 +10,7 @@ import lombok.Value;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
+import org.jetbrains.annotations.NotNull;
 import team.chisel.ctm.client.texture.render.TextureMap;
 import team.chisel.ctm.client.util.FaceOffset;
 
@@ -107,7 +107,7 @@ public abstract class TextureContextGrid extends TextureContextPosition {
         }
         
         long serialized = 0;
-        for (@Nonnull Direction side : Direction.values()) {
+        for (@NotNull Direction side : Direction.values()) {
             BlockPos modifiedPosition = position.offset(FaceOffset.getBlockPosOffsetFromFaceOffset(side, tex.getXOffset(), tex.getYOffset()));
 
             Point2i coords = calculateTextureCoord(modifiedPosition, tex.getXSize(), tex.getYSize(), side);

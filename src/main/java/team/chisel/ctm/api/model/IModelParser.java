@@ -1,12 +1,11 @@
 package team.chisel.ctm.api.model;
 
-import javax.annotation.Nonnull;
-
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
+import org.jetbrains.annotations.NotNull;
 
 public interface IModelParser {
 
-    @Nonnull
+    @NotNull
     IModelCTM fromJson(JsonDeserializationContext ctx, JsonObject json);
 }

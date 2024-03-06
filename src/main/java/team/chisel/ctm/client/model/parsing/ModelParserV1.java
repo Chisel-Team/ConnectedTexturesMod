@@ -4,8 +4,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.annotation.Nonnull;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -16,6 +14,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import lombok.SneakyThrows;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import org.jetbrains.annotations.NotNull;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.model.IModelParser;
 import team.chisel.ctm.client.model.ModelCTM;
@@ -26,7 +25,7 @@ public class ModelParserV1 implements IModelParser {
     private static final Gson GSON = new Gson();
     
     @Override
-    @Nonnull
+    @NotNull
     @SneakyThrows
     public IModelCTM fromJson(JsonDeserializationContext ctx, JsonObject json) {
     	BlockModel modelinfo = ctx.deserialize(json, BlockModel.class);
