@@ -39,6 +39,7 @@ import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.geometry.IGeometryBakingContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
@@ -217,5 +218,10 @@ public class ModelCTM implements IModelCTM {
     @Nullable
     public ICTMTexture<?> getOverrideTexture(int tintIndex, ResourceLocation sprite) {
         return textureOverrides.get(Pair.of(tintIndex, sprite));
+    }
+
+    @Override
+    public void resolveParents(@NotNull Function<ResourceLocation, UnbakedModel> modelGetter, @NotNull IGeometryBakingContext context) {
+        vanillamodel.resolveParents(modelGetter);
     }
 }
