@@ -12,7 +12,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import team.chisel.ctm.Configurations;
-import team.chisel.ctm.api.IFacade;
 import team.chisel.ctm.client.util.CTMLogic.StateComparisonCallback;
 
 @Accessors(fluent = true, chain = true)
@@ -106,9 +105,7 @@ public class ConnectionCheck {
 
     public BlockState getConnectionState(BlockAndTintGetter world, BlockPos pos, @Nullable Direction side, BlockPos connection) {
         BlockState state = world.getBlockState(pos);
-        if (state.getBlock() instanceof IFacade facade) {
-            return facade.getFacade(world, pos, side, connection);
-        } else if (side != null) {
+        if (side != null) {
             return state.getAppearance(world, pos, side, world.getBlockState(connection), connection);
         }
         return state;
