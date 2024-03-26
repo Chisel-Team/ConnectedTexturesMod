@@ -62,14 +62,12 @@ import team.chisel.ctm.client.util.ProfileUtil;
 
 public abstract class AbstractCTMBakedModel extends BakedModelWrapper<BakedModel> {
 
-    private static Cache<ModelResourceLocation, AbstractCTMBakedModel> itemcache = CacheBuilder.newBuilder()
+    private static final Cache<ModelResourceLocation, AbstractCTMBakedModel> itemcache = CacheBuilder.newBuilder()
             .expireAfterAccess(10, TimeUnit.SECONDS)
-            .maximumSize(0)
             .build();
-    private static Cache<State, AbstractCTMBakedModel> modelcache = CacheBuilder.newBuilder()
+    private static final Cache<State, AbstractCTMBakedModel> modelcache = CacheBuilder.newBuilder()
             .expireAfterAccess(1, TimeUnit.MINUTES)
-//            .maximumSize(5000)
-            .maximumSize(0)
+            .maximumSize(5000)
             .build();
 
     public static void invalidateCaches()
