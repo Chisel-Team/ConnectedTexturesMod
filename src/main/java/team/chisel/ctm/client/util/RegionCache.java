@@ -11,12 +11,14 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.material.FluidState;
 import net.neoforged.neoforge.client.model.data.ModelDataManager;
+import net.neoforged.neoforge.common.world.AuxiliaryLightManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,6 +98,11 @@ public class RegionCache implements BlockAndTintGetter {
     }
 
     @Override
+    public float getShade(float normalX, float normalY, float normalZ, boolean shade) {
+        return getPassthrough().getShade(normalX, normalY, normalZ, shade);
+    }
+
+    @Override
     public LevelLightEngine getLightEngine() {
         return getPassthrough().getLightEngine();
     }
@@ -112,5 +119,11 @@ public class RegionCache implements BlockAndTintGetter {
         // we need to make sure to provide the model data manager so that mods that may query it from IForgeBlock#getAppearance
         // can get their block's model data appropriately
         return getPassthrough().getModelDataManager();
+    }
+
+    @Nullable
+    @Override
+    public AuxiliaryLightManager getAuxLightManager(ChunkPos pos) {
+        return getPassthrough().getAuxLightManager(pos);
     }
 }
