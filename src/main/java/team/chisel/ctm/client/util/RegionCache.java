@@ -74,7 +74,14 @@ public class RegionCache implements BlockAndTintGetter {
     @Override
     public BlockState getBlockState(BlockPos pos) {
         long address = pos.asLong();
-        return stateCache.computeIfAbsent(address, a -> getPassthrough().getBlockState(pos));
+        var state = stateCache.get(address);
+
+        if (state == null) {
+            state = getPassthrough().getBlockState(pos);
+            stateCache.put(address, state);
+        }
+
+        return state;
     }
 
 	@Override
