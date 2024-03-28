@@ -6,7 +6,7 @@ import java.util.List;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockAndTintGetter;
 import team.chisel.ctm.api.IOffsetProvider;
 
 @ParametersAreNonnullByDefault
@@ -20,7 +20,7 @@ public enum OffsetProviderRegistry {
         this.providers.add(provider);
     }
     
-    public BlockPos getOffset(Level world, BlockPos pos) {
+    public BlockPos getOffset(BlockAndTintGetter world, BlockPos pos) {
         BlockPos ret = BlockPos.ZERO;
         for (IOffsetProvider p : providers) {
             ret = ret.offset(p.getOffset(world, pos));

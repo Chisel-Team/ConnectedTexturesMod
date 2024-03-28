@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -57,7 +58,6 @@ import org.jetbrains.annotations.Nullable;
 import team.chisel.ctm.api.model.IModelCTM;
 import team.chisel.ctm.api.texture.ICTMTexture;
 import team.chisel.ctm.api.util.RenderContextList;
-import team.chisel.ctm.client.state.CTMContext;
 import team.chisel.ctm.client.util.ProfileUtil;
 
 public abstract class AbstractCTMBakedModel extends BakedModelWrapper<BakedModel> {
@@ -115,30 +115,10 @@ public abstract class AbstractCTMBakedModel extends BakedModelWrapper<BakedModel
         public boolean equals(Object obj) {
             if (this == obj)
                 return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
+            if (obj == null || getClass() != obj.getClass())
                 return false;
             State other = (State) obj;
-            
-            if (cleanState != other.cleanState) {
-                return false;
-            }
-            if (parent != other.parent) {
-                return false;
-            }
-            if (layer != other.layer) {
-                return false;
-            }
-
-            if (serializedContext == null) {
-                if (other.serializedContext != null) {
-                    return false;
-                }
-            } else if (!serializedContext.equals(other.serializedContext)) {
-                return false;
-            }
-            return true;
+            return cleanState == other.cleanState && parent == other.parent && layer == other.layer && Objects.equals(serializedContext, other.serializedContext);
         }
         
         @Override
@@ -171,7 +151,7 @@ public abstract class AbstractCTMBakedModel extends BakedModelWrapper<BakedModel
 //    private final EnumMap<Direction, ImmutableList<BakedQuad>> noLayerCache = new EnumMap<>(Direction.class);
 //    private ImmutableList<BakedQuad> noSideNoLayerCache;
     
-    protected static final ModelProperty<CTMContext> CTM_CONTEXT = new ModelProperty<>();
+    public static final ModelProperty<RenderContextList> CTM_CONTEXT = new ModelProperty<>();
 
     @NotNull
     @Override
@@ -190,25 +170,16 @@ public abstract class AbstractCTMBakedModel extends BakedModelWrapper<BakedModel
         try {
             if (state == null) {
                 return quadLookup(side, layer);
-            } else if (Minecraft.getInstance().level != null && extraData.has(CTM_CONTEXT)) {
-	            ProfileUtil.start("state_creation");
-	            RenderContextList ctxList = extraData.get(CTM_CONTEXT).getContextList(state, this);
-	
-	            Object2LongMap<ICTMTexture<?>> serialized = ctxList.serialized();
-	            ProfileUtil.endAndStart("model_creation"); // state_creation
-	            baked = modelcache.get(new State(state, serialized, parent, layer), () -> createModel(state, model, parent, ctxList, rand, extraData, layer));
-	            ProfileUtil.end(); // model_creation
-	        } else {
-	            ProfileUtil.start("model_creation");
-	            baked = modelcache.get(new State(state, null, parent, layer), () -> createModel(state, model, parent, null, rand, extraData, layer));
-	            ProfileUtil.end(); // model_creation
-	        }
+            }
+            RenderContextList ctmCtx = extraData.get(CTM_CONTEXT);
+            Object2LongMap<ICTMTexture<?>> serialized = ctmCtx == null ? null : ctmCtx.serialized();
+            ProfileUtil.start("model_creation");
+            baked = modelcache.get(new State(state, serialized, parent, layer), () -> createModel(state, model, parent, ctmCtx, rand, extraData, layer));
+            ProfileUtil.end(); // model_creation
         } catch (Exception e) {
             Throwables.throwIfUnchecked(e);
         	throw new RuntimeException(e);
         }
-        
-        ProfileUtil.end(); // ctm_models
         
         var quads = baked.quadLookup(side, layer);
 //        System.out.println(Objects.toString(state) + "/" + Objects.toString(side) + "/" + Objects.toString(layer == null ? layer : layer.toString().substring(11, 17)) + "/" + (baked.layer == null ? "null" : baked.layer.toString().substring(11, 17)) + ": " + quads.size());
@@ -226,12 +197,11 @@ public abstract class AbstractCTMBakedModel extends BakedModelWrapper<BakedModel
             }
         }
         ProfileUtil.end(); // quad_lookup
+        ProfileUtil.end(); // ctm_models
         
         if (ret == null) {
             throw new IllegalStateException("getQuads called on a model that was not properly initialized - by using getOverrides and/or getModelData");
         }
-        
-        ProfileUtil.end(); // ctm_models
         return ret;
     }
 
@@ -279,8 +249,10 @@ public abstract class AbstractCTMBakedModel extends BakedModelWrapper<BakedModel
         //Add any extra model data the parent model may be expecting or want to add
         tileData = super.getModelData(world, pos, state, tileData);
     	if (!tileData.has(CTM_CONTEXT)) {
-    		//Ensure the position is immutable in case another mod persists the model data longer than the position
-    		tileData = tileData.derive().with(CTM_CONTEXT, new CTMContext(world, pos.immutable())).build();
+            ProfileUtil.start("ctm_state_creation");
+            RenderContextList ctmCtx = new RenderContextList(state, getCTMTextures(), world, pos);
+            ProfileUtil.end();//ctm_state_creation
+            tileData = tileData.derive().with(CTM_CONTEXT, ctmCtx).build();
     	}
     	return tileData;
     }

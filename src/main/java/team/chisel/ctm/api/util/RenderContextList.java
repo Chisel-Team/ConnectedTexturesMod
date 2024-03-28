@@ -10,6 +10,7 @@ import com.google.common.collect.Maps;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenCustomHashMap;
+import lombok.EqualsAndHashCode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,6 +25,7 @@ import team.chisel.ctm.client.util.RegionCache;
 /**
  * List of IBlockRenderContext's
  */
+@EqualsAndHashCode(of = "serialized")
 @ParametersAreNonnullByDefault
 public class RenderContextList {
     
