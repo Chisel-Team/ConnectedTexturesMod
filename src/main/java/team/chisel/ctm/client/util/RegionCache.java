@@ -60,8 +60,8 @@ public class RegionCache implements BlockAndTintGetter {
         // We do NOT use getPassthrough() here so as to skip the null-validation - it's obviously valid to be null here
         if (this.passthrough.get() != passthrough) {
             stateCache.clear();
+            this.passthrough = new WeakReference<>(passthrough);
         }
-        this.passthrough = new WeakReference<>(passthrough);
         return this;
     }
 
