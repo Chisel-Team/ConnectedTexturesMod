@@ -102,9 +102,7 @@ public class TextureCustomCTM<T extends TextureTypeCustom> extends AbstractTextu
     }
 
     private ISubmap getFallbackUvs() {
-        //TODO: Is this the proper submap to use when not a proxy (no, causes texture replacing to not properly shrink it for say white concrete in the test)?
-        // Without the isProxy check though then glass ends up rendering incorrectly
-        return isProxy ? type.getFallbackUvs() : Submap.X1;
+        return sprites.length == 1 ? type.getFallbackUvs() : Submap.X1;
     }
 
     @Override
