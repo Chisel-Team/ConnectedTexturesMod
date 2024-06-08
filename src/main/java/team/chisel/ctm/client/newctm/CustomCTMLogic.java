@@ -22,7 +22,7 @@ public class CustomCTMLogic implements ICTMLogic {
     public final int[][] lookups;
     private final OutputFace[] tiles;
     private final LocalDirection[] directions;
-    private ConnectionCheck connectionCheck = new ConnectionCheck();
+    private final ConnectionCheck connectionCheck = new ConnectionCheck();
     
     private class Cache implements ILogicCache {
 
@@ -56,22 +56,24 @@ public class CustomCTMLogic implements ICTMLogic {
 
         @Override
         public void buildConnectionMap(BlockAndTintGetter world, BlockPos pos, Direction side) {
-            ConnectionCheck oldConnectionCheck = connectionCheck;
-            if (connectionCheckOverride != null) {
-                connectionCheck = connectionCheckOverride;
-            }
-            this.cachedSubmapIds = CustomCTMLogic.this.getSubmapIds(world, pos, side);
-            this.cachedSubmaps = CustomCTMLogic.this.getSubmaps(world, pos, side);
-            connectionCheck = oldConnectionCheck;
+            this.cachedSubmapIds = CustomCTMLogic.this.getSubmapIds(world, pos, side, connectionCheckOverride);
+            //Manually call with the computed submap ids to avoid having to calculate them a second type
+            // like getSubmaps(BlockAndTintGetter, BlockPos, Direction) needs to do, and allows us to use
+            // data that is based on our connection check override
+            this.cachedSubmaps = CustomCTMLogic.this.getSubmaps(this.cachedSubmapIds);
         }
     }
 
     @Override
     public int[] getSubmapIds(BlockAndTintGetter world, BlockPos pos, Direction side) {
+        return getSubmapIds(world, pos, side, connectionCheck);
+    }
+
+    private int[] getSubmapIds(BlockAndTintGetter world, BlockPos pos, Direction side, ConnectionCheck connectionCheck) {
         int key = 0;
         for (int i = 0; i < directions.length; i++) {
-            BlockPos conPos = pos.offset(directions[i].getOffset(side));
-            key |= (connectionCheck.isConnected(world, pos, conPos, side) ? 1 : 0) << i;
+            boolean isConnected = directions[i].isConnected(connectionCheck, world, pos, side);
+            key |= (isConnected ? 1 : 0) << i;
         }
         if (key >= lookups.length || lookups[key] == null) {
             throw new IllegalStateException("Input state found that is not in lookup table: " + Integer.toBinaryString(key));
@@ -82,6 +84,10 @@ public class CustomCTMLogic implements ICTMLogic {
     @Override
     public OutputFace[] getSubmaps(BlockAndTintGetter world, BlockPos pos, Direction side) {
         var tileIds = getSubmapIds(world, pos, side);
+        return getSubmaps(tileIds);
+    }
+
+    private OutputFace[] getSubmaps(int[] tileIds) {
         OutputFace[] ret = new OutputFace[tileIds.length];
         for (int i = 0; i < ret.length; i++) {
             ret[i] = tiles[tileIds[i]];

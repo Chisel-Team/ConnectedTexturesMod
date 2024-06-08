@@ -165,7 +165,7 @@ public class CTMTransformer implements IClassTransformer {
         	while (methods.hasNext()) {
         		MethodNode m = methods.next();
         		if (m.name.equals(GET_TEXTURES_METHOD_NAME) && m.localVariables.stream().filter(lv -> lv.index == 1).anyMatch(lv -> lv.desc.contains("IModel"))) {
-        		    System.out.println("Correct local variable found - this must be forge <2772");
+        		    CTM.logger.info("Correct local variable found - this must be forge <2772");
         			for (int i = 0; i < m.instructions.size(); i++) {
         				AbstractInsnNode next = m.instructions.get(i);
 
@@ -227,7 +227,7 @@ public class CTMTransformer implements IClassTransformer {
     }
 
     private ClassNode preTransform(String transformedName, String methodName, byte[] basicClass) {
-        System.out.println("Transforming Class [" + transformedName + "], Method [" + methodName + "]");
+        CTM.logger.info("Transforming Class [{}], Method [{}]", transformedName, methodName);
 
         ClassNode classNode = new ClassNode();
         ClassReader classReader = new ClassReader(basicClass);
@@ -239,7 +239,7 @@ public class CTMTransformer implements IClassTransformer {
     private byte[] finishTransform(String transformedName, ClassNode classNode, int flags) {
         ClassWriter cw = new ClassWriter(flags);
         classNode.accept(cw);
-        System.out.println("Transforming " + transformedName + " Finished.");
+        CTM.logger.info("Transforming {} Finished.", transformedName);
         return cw.toByteArray();
     }
 }

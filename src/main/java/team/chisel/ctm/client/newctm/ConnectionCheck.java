@@ -64,13 +64,15 @@ public class ConnectionCheck {
 //      if (CTMLib.chiselLoaded() && connectionBlocked(world, x, y, z, dir.ordinal())) {
 //          return false;
 //      }
-      
-        BlockPos obscuringPos = connection.relative(dir);
-
-        boolean disableObscured = disableObscuredFaceCheck.orElseGet(Configurations::connectInsideCTM);
 
         BlockState con = getConnectionState(world, connection, dir, current);
-        BlockState obscuring = disableObscured ? null : getConnectionState(world, obscuringPos, dir, current);
+        BlockState obscuring;
+        if (disableObscuredFaceCheck.orElseGet(Configurations::connectInsideCTM)) {
+            obscuring = null;
+        } else {
+            BlockPos obscuringPos = connection.relative(dir);
+            obscuring = getConnectionState(world, obscuringPos, dir, current);
+        }
 
         // bad API user
         if (con == null) {

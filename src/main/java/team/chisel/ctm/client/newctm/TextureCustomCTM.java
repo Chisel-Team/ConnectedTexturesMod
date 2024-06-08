@@ -102,7 +102,8 @@ public class TextureCustomCTM<T extends TextureTypeCustom> extends AbstractTextu
     }
 
     private ISubmap getFallbackUvs() {
-        //TODO: Is this the proper submap to use when not a proxy?
+        //TODO: Is this the proper submap to use when not a proxy (no, causes texture replacing to not properly shrink it for say white concrete in the test)?
+        // Without the isProxy check though then glass ends up rendering incorrectly
         return isProxy ? type.getFallbackUvs() : Submap.X1;
     }
 
@@ -116,7 +117,7 @@ public class TextureCustomCTM<T extends TextureTypeCustom> extends AbstractTextu
         OutputFace[] ctm = ((TextureContextCustomCTM)context).getCTM(bq.getDirection()).getCachedSubmaps();
         List<BakedQuad> ret = new ArrayList<>();
         for (var face : ctm) {
-            //System.out.println(bq.getDirection() + "\t" + face.getFace() + ": " + face.getTex() + "@ " + face.getUvs());
+            //CTM.logger.info("{}\t{}: {}@ {}", bq.getDirection(), face.getFace(), face.getTex(), face.getUvs());
             Quad sub = quad.subsect(face.getFace());
             if (sub != null) {
                 ret.add(sub.setUVs(sprites[face.getTex()], face.getUvs()).rebake());

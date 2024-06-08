@@ -182,7 +182,7 @@ public abstract class AbstractCTMBakedModel extends BakedModelWrapper<BakedModel
         }
         
         var quads = baked.quadLookup(side, layer);
-//        System.out.println(Objects.toString(state) + "/" + Objects.toString(side) + "/" + Objects.toString(layer == null ? layer : layer.toString().substring(11, 17)) + "/" + (baked.layer == null ? "null" : baked.layer.toString().substring(11, 17)) + ": " + quads.size());
+        //CTM.logger.info("{}/{}/{}/{}: {}", state, side, layer == null ? "null" : layer.toString().substring(11, 17), baked.layer == null ? "null" : baked.layer.toString().substring(11, 17), quads.size());
         return quads;
     }
 

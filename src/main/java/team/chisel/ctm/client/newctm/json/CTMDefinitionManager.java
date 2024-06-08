@@ -113,11 +113,14 @@ public class CTMDefinitionManager {
             }
         }
         for (var e : def.faces().entrySet()) {
-            e.getValue().forName(e.getKey()).forEach(p -> faceNames.put(p.getLeft(), p.getRight()));
+            for (var p : e.getValue().forName(e.getKey())) {
+                faceNames.put(p.getLeft(), p.getRight());
+            }
         }
         for (var rule : def.rules()) {
-            var submap = submapNames.get(rule.output()).getLeft();
-            var ruleId = submapNames.get(rule.output()).getRight();
+            var submapData = submapNames.get(rule.output());
+            var submap = submapData.getLeft();
+            var ruleId = submapData.getRight();
             bakery.output(ruleId, rule.from(), submap, rule.at().map(faceNames::get).orElse(Submap.X1));
             for (var connected : rule.connected()) {
                 bakery.when(bitNames.getInt(connected), true);
