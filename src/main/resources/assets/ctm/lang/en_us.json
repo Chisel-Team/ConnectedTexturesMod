@@ -1,0 +1,9 @@
+{
+  "ctm.configuration.title": "CTM Configuration",
+  "ctm.configuration.section.ctm.toml.title": "CTM Configuration",
+  "ctm.configuration.section.ctm.toml": "CTM Configuration",
+  "configuration.ctm.disable": "Disable CTM",
+  "configuration.ctm.disable.tooltip": "Disable connected textures entirely",
+  "configuration.ctm.connect_inside": "Connect Inside CTM",
+  "configuration.ctm.connect_inside.tooltip": "Choose whether the inside corner is disconnected on a CTM block - https://imgur.com/eUywLZ4"
+}

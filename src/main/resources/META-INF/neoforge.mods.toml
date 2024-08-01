@@ -20,6 +20,6 @@ license="GPL-2.0"
 [[dependencies.ctm]]
     modId="neoforge"
     type="required"
-    versionRange="[21.0.82-beta,)"
+    versionRange="[21.0.146,)"
     ordering="NONE"
     side="BOTH"
