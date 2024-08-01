@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.client.newctm.CTMLogicBakery.OutputFace;
@@ -55,8 +56,8 @@ public class CustomCTMLogic implements ICTMLogic {
         }
 
         @Override
-        public void buildConnectionMap(BlockAndTintGetter world, BlockPos pos, Direction side) {
-            this.cachedSubmapIds = CustomCTMLogic.this.getSubmapIds(world, pos, side, connectionCheckOverride);
+        public void buildConnectionMap(BlockAndTintGetter world, BlockPos pos, BlockState state, Direction side) {
+            this.cachedSubmapIds = CustomCTMLogic.this.getSubmapIds(world, pos, state, side, connectionCheckOverride);
             //Manually call with the computed submap ids to avoid having to calculate them a second type
             // like getSubmaps(BlockAndTintGetter, BlockPos, Direction) needs to do, and allows us to use
             // data that is based on our connection check override
@@ -65,14 +66,14 @@ public class CustomCTMLogic implements ICTMLogic {
     }
 
     @Override
-    public int[] getSubmapIds(BlockAndTintGetter world, BlockPos pos, Direction side) {
-        return getSubmapIds(world, pos, side, connectionCheck);
+    public int[] getSubmapIds(BlockAndTintGetter world, BlockPos pos, BlockState state, Direction side) {
+        return getSubmapIds(world, pos, state, side, connectionCheck);
     }
 
-    private int[] getSubmapIds(BlockAndTintGetter world, BlockPos pos, Direction side, ConnectionCheck connectionCheck) {
+    private int[] getSubmapIds(BlockAndTintGetter world, BlockPos pos, BlockState state, Direction side, ConnectionCheck connectionCheck) {
         int key = 0;
         for (int i = 0; i < directions.length; i++) {
-            boolean isConnected = directions[i].isConnected(connectionCheck, world, pos, side);
+            boolean isConnected = directions[i].isConnected(connectionCheck, world, pos, state, side);
             key |= (isConnected ? 1 : 0) << i;
         }
         if (key >= lookups.length || lookups[key] == null) {
@@ -82,8 +83,8 @@ public class CustomCTMLogic implements ICTMLogic {
     }
 
     @Override
-    public OutputFace[] getSubmaps(BlockAndTintGetter world, BlockPos pos, Direction side) {
-        var tileIds = getSubmapIds(world, pos, side);
+    public OutputFace[] getSubmaps(BlockAndTintGetter world, BlockPos pos, BlockState state, Direction side) {
+        var tileIds = getSubmapIds(world, pos, state, side);
         return getSubmaps(tileIds);
     }
 

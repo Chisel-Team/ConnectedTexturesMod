@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -77,25 +78,26 @@ public class NewCTMLogicTest {
         
         var world = new TestBlockGetter();
         OutputFace[] output;
-        world.addBlock(BlockPos.ZERO, Blocks.STONE.defaultBlockState());
+        BlockState stoneState = Blocks.STONE.defaultBlockState();
+        world.addBlock(BlockPos.ZERO, stoneState);
         // Simple case of one connection upwards
-        world.addBlock(BlockPos.ZERO.above(), Blocks.STONE.defaultBlockState());
-        output = test.getSubmaps(world, BlockPos.ZERO, Direction.EAST);
+        world.addBlock(BlockPos.ZERO.above(), stoneState);
+        output = test.getSubmaps(world, BlockPos.ZERO, stoneState, Direction.EAST);
         assertEquals(1, output.length);
         assertEquals(reference[36], output[0].uvs());
         // Add a diagonal connection that should not affect the result
-        world.addBlock(BlockPos.ZERO.above().north(), Blocks.STONE.defaultBlockState());
-        output = test.getSubmaps(world, BlockPos.ZERO, Direction.EAST);
+        world.addBlock(BlockPos.ZERO.above().north(), stoneState);
+        output = test.getSubmaps(world, BlockPos.ZERO, stoneState, Direction.EAST);
         assertEquals(1, output.length);
         assertEquals(reference[36], output[0].uvs());
         // Add a sideways connection to make it a L shape with no inner corner
-        world.addBlock(BlockPos.ZERO.north(), Blocks.STONE.defaultBlockState());
-        output = test.getSubmaps(world, BlockPos.ZERO, Direction.EAST);
+        world.addBlock(BlockPos.ZERO.north(), stoneState);
+        output = test.getSubmaps(world, BlockPos.ZERO, stoneState, Direction.EAST);
         assertEquals(1, output.length);
         assertEquals(reference[37], output[0].uvs());
         // Remove the diagonal connection to test inner corner
         world.removeBlock(BlockPos.ZERO.above().north());
-        output = test.getSubmaps(world, BlockPos.ZERO, Direction.EAST);
+        output = test.getSubmaps(world, BlockPos.ZERO, stoneState, Direction.EAST);
         assertEquals(1, output.length);
         assertEquals(reference[16], output[0].uvs());
     }

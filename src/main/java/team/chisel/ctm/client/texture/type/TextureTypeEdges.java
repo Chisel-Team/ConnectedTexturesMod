@@ -60,18 +60,18 @@ public class TextureTypeEdges extends TextureTypeCTM {
         private boolean obscured;
         
         @Override
-        public boolean isConnected(BlockAndTintGetter world, BlockPos current, BlockPos connection, Direction dir, BlockState state) {
+        public boolean isConnected(BlockAndTintGetter world, BlockPos current, BlockState currentState, BlockPos connection, Direction dir, BlockState state) {
             if (isObscured()) {
                 return false;
             }
-            BlockState obscuring = getConnectionState(world, current.relative(dir), dir, current);
+            BlockState obscuring = getConnectionState(world, current.relative(dir), dir, current, currentState);
             if (stateComparator(state, obscuring, dir)) {
                 setObscured(true);
                 return false;
             }
 
-            BlockState con = getConnectionState(world, connection, dir, current);
-            BlockState obscuringcon = getConnectionState(world, connection.relative(dir), dir, current);
+            BlockState con = getConnectionState(world, connection, dir, current, currentState);
+            BlockState obscuringcon = getConnectionState(world, connection.relative(dir), dir, current, currentState);
             
             if (stateComparator(state, con, dir) || stateComparator(state, obscuringcon, dir)) {
                 Vec3 difference = Vec3.atLowerCornerOf(connection.subtract(current));
@@ -91,8 +91,8 @@ public class TextureTypeEdges extends TextureTypeCTM {
                     }
                     BlockPos posA = BlockPos.containing(vA).offset(current);
                     BlockPos posB = BlockPos.containing(vB).offset(current);
-                    return (getConnectionState(world, posA, dir, current) == state && !stateComparator(state, getConnectionState(world, posA.relative(dir), dir, current), dir))
-                        || (getConnectionState(world, posB, dir, current) == state && !stateComparator(state, getConnectionState(world, posB.relative(dir), dir, current), dir));
+                    return (getConnectionState(world, posA, dir, current, currentState) == state && !stateComparator(state, getConnectionState(world, posA.relative(dir), dir, current, currentState), dir))
+                        || (getConnectionState(world, posB, dir, current, currentState) == state && !stateComparator(state, getConnectionState(world, posB.relative(dir), dir, current, currentState), dir));
                 } else {
                     return true;
                 }

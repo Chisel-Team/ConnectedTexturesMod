@@ -148,12 +148,12 @@ public class CTMLogic implements ICTMLogic, ILogicCache {
 	 *         Indeces are in counter-clockwise order starting at bottom left.
 	 */
 	@Override
-    public int[] getSubmapIds(@Nullable BlockAndTintGetter world, BlockPos pos, Direction side) {
+    public int[] getSubmapIds(@Nullable BlockAndTintGetter world, BlockPos pos, BlockState state, Direction side) {
 		if (world == null) {
             return submapCache;
         }
 
-		buildConnectionMap(world, pos, side);
+		buildConnectionMap(world, pos, state, side);
 
 		// Map connections to submap indeces
 		for (int i = 0; i < 4; i++) {
@@ -205,7 +205,7 @@ public class CTMLogic implements ICTMLogic, ILogicCache {
      * Builds the connection map and stores it in this CTM instance. The {@link #connected(Dir)}, {@link #connectedAnd(Dir...)}, and {@link #connectedOr(Dir...)} methods can be used to access it.
      */
     @Override
-    public void buildConnectionMap(BlockAndTintGetter world, BlockPos pos, Direction side) {
+    public void buildConnectionMap(BlockAndTintGetter world, BlockPos pos, BlockState state, Direction side) {
         //BlockState state = connectionCheck.getConnectionState(world, pos, side, pos);
         // TODO this naive check doesn't work for models that have unculled faces.
         // Perhaps a smarter optimization could be done eventually?
@@ -214,7 +214,7 @@ public class CTMLogic implements ICTMLogic, ILogicCache {
                 //Note: We can't cache the state that we are checking about connection for as we want to ensure that
                 // we can take into account the side of the block we want to know the "state" of as if the block is
                 // a facade of some sort it might return different results based on where it is being queried from
-                setConnectedState(dir, dir.isConnected(connectionCheck, world, pos, side));
+                setConnectedState(dir, dir.isConnected(connectionCheck, world, pos, state, side));
             }
 //        }
     }
@@ -318,7 +318,7 @@ public class CTMLogic implements ICTMLogic, ILogicCache {
 
     @Override
     @Deprecated
-    public OutputFace[] getSubmaps(BlockAndTintGetter world, BlockPos pos, Direction side) {
+    public OutputFace[] getSubmaps(BlockAndTintGetter world, BlockPos pos, BlockState state, Direction side) {
         return new OutputFace[0];
     }
     
