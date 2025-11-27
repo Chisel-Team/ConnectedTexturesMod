@@ -115,7 +115,7 @@ public enum TextureMetadataHandler {
             UnbakedModel rootModel = modelBakery.topLevelModels.get(mrl);
             if (rootModel != null) {
             	BakedModel baked = entry.getValue();
-            	if (baked instanceof AbstractCTMBakedModel) {
+            	if (baked == null || baked instanceof AbstractCTMBakedModel) {
             		continue;
             	}
             	if (baked.isCustomRenderer()) { // Nothing we can add to builtin models
