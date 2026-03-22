@@ -3,8 +3,11 @@ package team.chisel.ctm.client.texture.render;
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
 import lombok.Getter;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 import team.chisel.ctm.api.texture.ISubmap;
 import team.chisel.ctm.api.texture.ITextureContext;
 import team.chisel.ctm.api.util.TextureInfo;
@@ -58,7 +61,7 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
             }
             
             @Override
-            public ITextureContext getContext(@Nonnull BlockPos pos, @Nonnull TextureMap tex) {
+            public ITextureContext getContext(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull TextureMap tex) {
                 return new TextureContextGrid.Random(pos, tex, true);
             }
         },
@@ -94,17 +97,58 @@ public class TextureMap extends AbstractTexture<TextureTypeMap> {
             }
             
             @Override
-            public ITextureContext getContext(@Nonnull BlockPos pos, @Nonnull TextureMap tex) {
-                return new TextureContextGrid.Patterned(pos, tex, true);
+            public ITextureContext getContext(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull TextureMap tex) {
+                return new TextureContextGrid.Patterned(pos, findPatternOrigin(state, world, pos), tex, true);
             }
         };
 
         protected abstract List<BakedQuad> transformQuad(TextureMap tex, BakedQuad quad, @Nullable ITextureContext context, int quadGoal);
         
         @Nonnull
-        public ITextureContext getContext(@Nonnull BlockPos pos, @Nonnull TextureMap tex) {
+        public ITextureContext getContext(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull TextureMap tex) {
             return new TextureContextPosition(pos);
         }
+    }
+
+    private static BlockPos findPatternOrigin(IBlockState state, IBlockAccess world, BlockPos start) {
+        java.util.ArrayDeque<BlockPos> pending = new java.util.ArrayDeque<>();
+        java.util.HashSet<BlockPos> visited = new java.util.HashSet<>();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        BlockPos origin = start;
+
+        pending.add(start);
+        visited.add(start);
+
+        while (!pending.isEmpty()) {
+            BlockPos current = pending.removeFirst();
+            if (compareForPatternOrigin(current, origin) < 0) {
+                origin = current;
+            }
+
+            for (EnumFacing facing : EnumFacing.VALUES) {
+                cursor.setPos(current).move(facing);
+                BlockPos next = cursor.toImmutable();
+                if (visited.add(next) && world.getBlockState(next) == state) {
+                    pending.addLast(next);
+                }
+            }
+        }
+
+        return origin;
+    }
+
+    private static int compareForPatternOrigin(BlockPos left, BlockPos right) {
+        int yCompare = Integer.compare(left.getY(), right.getY());
+        if (yCompare != 0) {
+            return yCompare;
+        }
+
+        int zCompare = Integer.compare(left.getZ(), right.getZ());
+        if (zCompare != 0) {
+            return zCompare;
+        }
+
+        return Integer.compare(left.getX(), right.getX());
     }
 
     @Getter

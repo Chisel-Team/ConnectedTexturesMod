@@ -1,6 +1,7 @@
 package team.chisel.ctm.client.texture.ctx;
 
 import com.google.common.base.Preconditions;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumFacing.Axis;
 import net.minecraft.util.math.BlockPos;
@@ -18,15 +19,16 @@ public abstract class TextureContextGrid extends TextureContextPosition {
     
     public static class Patterned extends TextureContextGrid {
 
-        public Patterned(BlockPos pos, TextureMap tex, boolean applyOffset) {
-            super(pos, tex, applyOffset);
+        public Patterned(BlockPos pos, BlockPos origin, TextureMap tex, boolean applyOffset) {
+            super(pos, origin, tex, applyOffset);
         }
 
         @Override
         protected Point2i calculateTextureCoord(BlockPos pos, int w, int h, EnumFacing side) {
-            int x = pos.getX();
-            int y = pos.getY();
-            int z = pos.getZ();
+            BlockPos relativePos = pos.subtract(origin);
+            int x = relativePos.getX();
+            int y = relativePos.getY();
+            int z = relativePos.getZ();
 
             int tx, ty;
 
@@ -86,16 +88,25 @@ public abstract class TextureContextGrid extends TextureContextPosition {
     
     private final EnumMap<EnumFacing, Point2i> textureCoords = new EnumMap<>(EnumFacing.class);    
     private final long serialized;
+    protected BlockPos origin;
 
     @SuppressWarnings("null")
     public TextureContextGrid(BlockPos pos, TextureMap tex, boolean applyOffset) {
+        this(pos, pos, tex, applyOffset);
+    }
+
+    @SuppressWarnings("null")
+    public TextureContextGrid(BlockPos pos, BlockPos origin, TextureMap tex, boolean applyOffset) {
         super(pos);
+        this.origin = origin;
 
         // Since we can only return a long, we must limit to 10 bits of data per face = 60 bits
         Preconditions.checkArgument(tex.getXSize() * tex.getYSize() < 1024, "V* Texture size too large for texture %s", tex.getParticle());
         
         if (applyOffset) {
-            applyOffset();
+            BlockPos offset = OffsetProviderRegistry.INSTANCE.getOffset(Minecraft.getMinecraft().world, position);
+            this.position = position.add(offset);
+            this.origin = origin.add(offset);
         }
         
         long serialized = 0;
