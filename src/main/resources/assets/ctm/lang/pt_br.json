@@ -1,0 +1,9 @@
+{
+  "ctm.configuration.title": "Configuração do CTM",
+  "ctm.configuration.section.ctm.toml.title": "Configuração do CTM",
+  "ctm.configuration.section.ctm.toml": "Configuração do CTM",
+  "configuration.ctm.disable": "Desativar CTM",
+  "configuration.ctm.disable.tooltip": "Desativar texturas conectadas completamente",
+  "configuration.ctm.connect_inside": "Conectar Interior do CTM",
+  "configuration.ctm.connect_inside.tooltip": "Escolha se o canto interno é desconectado em um bloco CTM - https://imgur.com/eUywLZ4"
+}
